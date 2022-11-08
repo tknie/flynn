@@ -15,6 +15,10 @@ TIMEOUT     = 2000
 .PHONY: all
 all: prepare fmt lint lib $(EXECS) test-build
 
+.PHONY: clean
+clean: ; $(info $(M) cleaning…)    @ ## Cleanup everything
+	@rm -rf bin pkg logs test promote
+
 exec: $(EXECS)
 
 lib: $(LIBS) $(CEXEC)
@@ -73,6 +77,7 @@ fmt: ; $(info $(M) running fmt…) @ ## Run go fmt on all source files
 	 done ; exit $$ret
 
 test-build: prepare ; $(info $(M) building $(NAME:%=% )tests…) @ ## Build tests
+	$(GO) test -c -o $(BINTESTS)/db.test$(GOEXE) -tags $(GO_TAGS) ./...
 	$Q cd $(CURDIR) && for pkg in $(TESTPKGSDIR); do echo "Build $$pkg in $(CURDIR)"; \
 	LD_LIBRARY_PATH="$(LD_LIBRARY_PATH):$(ACLDIR)/lib" \
 		DYLD_LIBRARY_PATH="$(DYLD_LIBRARY_PATH):$(ACLDIR)/lib" \

@@ -1,0 +1,40 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, build with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Destination directories
+bin
+pkg
+vendor
+vendor/
+.vendor-new
+.vscode/
+tmp_gopath/
+
+# Ignore log files
+*.log
+*.log.swp
+
+# Ignore system specific objects (obsolete)
+*.syso
+*.swo
+*.o
+
+# Ignore Apple Mac cacheing
+.DS_Store
+
+# Ignore Go checkstyle output
+gostyle.xml
+
+test/
+logs/
+promote/

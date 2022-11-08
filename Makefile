@@ -16,9 +16,15 @@ GOOS              ?= $(shell $(GO) env GOOS)
 GOEXE             ?= $(shell $(GO) env GOEXE)
 GOBIN             ?= $(HOME)/go/bin
 
+DATE              ?= $(shell date +%FT%T%z)
+
+BIN                = $(CURDIR)/bin/$(GOOS)_$(GOARCH)
+BINTOOLS           = $(CURDIR)/bin/tools/$(GOOS)_$(GOARCH)
+BINTESTS           = $(CURDIR)/bin/tests/$(GOOS)_$(GOARCH)
+
+OBJECTS            = *.go postgres/*.go definition/*.go
+
+TESTPKGSDIR        = db
 include $(CURDIR)/make/common.mk
 
-.PHONY: clean
-clean: ; $(info $(M) cleaning…)    @ ## Cleanup everything
-	@rm -rf bin pkg logs test promote
 

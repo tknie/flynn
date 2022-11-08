@@ -23,5 +23,5 @@ func TestInitDatabases(t *testing.T) {
 	pg := fmt.Sprintf("postgres://%s:%s@%s:%d/%s", "admin", "Test123", postgresHost, port, "Bitgarten")
 	x, err := Register("postgres", pg)
 	assert.NoError(t, err)
-	assert.NotNil(t, x)
+	assert.True(t, x > 0)
 }
