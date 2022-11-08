@@ -10,6 +10,8 @@
 #       http://www.apache.org/licenses/LICENSE-2.0
 #
 
+GO_TAGS     = db
+
 TIMEOUT     = 2000
 
 .PHONY: all
@@ -77,7 +79,7 @@ fmt: ; $(info $(M) running fmt…) @ ## Run go fmt on all source files
 	 done ; exit $$ret
 
 test-build: prepare ; $(info $(M) building $(NAME:%=% )tests…) @ ## Build tests
-	$(GO) test -c -o $(BINTESTS)/db.test$(GOEXE) -tags $(GO_TAGS) ./...
+	$(GO) test -c -o $(BINTESTS)/db.test$(GOEXE) -tags $(GO_TAGS) .
 	$Q cd $(CURDIR) && for pkg in $(TESTPKGSDIR); do echo "Build $$pkg in $(CURDIR)"; \
 	LD_LIBRARY_PATH="$(LD_LIBRARY_PATH):$(ACLDIR)/lib" \
 		DYLD_LIBRARY_PATH="$(DYLD_LIBRARY_PATH):$(ACLDIR)/lib" \

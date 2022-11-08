@@ -24,7 +24,7 @@ BINTESTS           = $(CURDIR)/bin/tests/$(GOOS)_$(GOARCH)
 
 OBJECTS            = *.go postgres/*.go definition/*.go
 
-TESTPKGSDIR        = db
+TESTPKGSDIR        = postgres definition
 include $(CURDIR)/make/common.mk
 
 
