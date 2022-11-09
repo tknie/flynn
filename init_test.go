@@ -26,6 +26,25 @@ func TestInitDatabases(t *testing.T) {
 	x, err := Register("postgres", pg)
 	assert.NoError(t, err)
 	assert.True(t, x > 0)
+	assert.Len(t, databases, 1)
+	err = Unregister(x)
+	if !assert.NoError(t, err) {
+		return
+	}
+	x, err = Register("postgres", pg)
+	assert.NoError(t, err)
+	assert.True(t, x > 0)
+	pg2 := fmt.Sprintf("postgres://%s:%s@%s:%d/%s", "admin", postgresPassword, postgresHost, port, "Bitgarten")
+	x2, err := Register("postgres", pg2)
+	assert.NoError(t, err)
+	assert.True(t, x2 > 0)
+	assert.Len(t, databases, 2)
+	err = Unregister(x)
+	assert.NoError(t, err)
+	assert.Len(t, databases, 1)
+	err = Unregister(x2)
+	assert.NoError(t, err)
+	assert.Len(t, databases, 0)
 }
 
 func TestInitWrongDatabases(t *testing.T) {
@@ -39,4 +58,5 @@ func TestInitWrongDatabases(t *testing.T) {
 	x, err := Register("postgres", pg)
 	assert.Error(t, err)
 	assert.Equal(t, def.RegDbID(0), x)
+	assert.Len(t, databases, 0)
 }

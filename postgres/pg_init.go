@@ -31,7 +31,8 @@ func (pg *PostGres) URL() string {
 	return pg.dbURL
 }
 func (pg *PostGres) Maps() ([]string, error) {
-	return make([]string, 0), nil
+
+	return pg.dbTableNames, nil
 }
 
 func (pg *PostGres) check() error {
