@@ -32,7 +32,7 @@ $(LIBS): | ; $(info $(M) building libraries…) @ ## Build program binary
 	$Q cd $(CURDIR) && \
 	    CGO_CFLAGS="$(CGO_CFLAGS)" CGO_LDFLAGS="$(CGO_LDFLAGS) $(CGO_EXT_LDFLAGS)" $(GO) build $(GO_FLAGS) \
 		-buildmode=c-shared \
-		-ldflags '-X $(PACKAGE)/common.Version=$(ADARESTVERSION) -X $(PACKAGE)/common.BuildVersion=$(VERSION) -X $(PACKAGE)/common.BuildDate=$(DATE)' \
+		-ldflags '-X $(PACKAGE)/common.Version=$(VERSION) -X $(PACKAGE)/common.BuildVersion=$(VERSION) -X $(PACKAGE)/common.BuildDate=$(DATE)' \
 		-o $(BIN)/$(GOOS)/$@.so $@.go
 
 $(EXECS): $(OBJECTS) ; $(info $(M) building executable…) @ ## Build program binary
@@ -143,3 +143,12 @@ test-coverage: fmt lint test-coverage-tools ; $(info $(M) running coverage tests
 	$Q $(GOCOVMERGE) $(COVERAGE_DIR)/coverage/*.cover > $(COVERAGE_PROFILE)
 	$Q $(GO) tool cover -html=$(COVERAGE_PROFILE) -o $(COVERAGE_HTML)
 	$Q $(GOCOV) convert $(COVERAGE_PROFILE) | $(GOCOVXML) > $(COVERAGE_XML)
+
+.PHONY: vendor-update
+vendor-update:
+	@echo "Uses GO modules"
+	CGO_CFLAGS="$(CGO_CFLAGS)" CGO_LDFLAGS="$(CGO_LDFLAGS) $(CGO_EXT_LDFLAGS)" $(GO) get -d -u ./...
+
+.PHONY: version
+version:
+	@echo "Version: $(VERSION)"

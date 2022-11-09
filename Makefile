@@ -22,6 +22,8 @@ BIN                = $(CURDIR)/bin/$(GOOS)_$(GOARCH)
 BINTOOLS           = $(CURDIR)/bin/tools/$(GOOS)_$(GOARCH)
 BINTESTS           = $(CURDIR)/bin/tests/$(GOOS)_$(GOARCH)
 
+VERSION            = v0.1
+
 OBJECTS            = *.go postgres/*.go definition/*.go
 
 TESTPKGSDIR        = postgres definition
