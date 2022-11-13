@@ -1,27 +1,18 @@
 package db
 
 import (
-	"fmt"
 	"sync/atomic"
 
-	def "github.com/tknie/db/definition"
+	def "github.com/tknie/db/common"
 	"github.com/tknie/db/postgres"
 )
 
-type Database interface {
-	ID() def.RegDbID
-	URL() string
-	Maps() ([]string, error)
-}
-
 var globalRegID = def.RegDbID(0)
-
-var databases = make([]Database, 0)
 
 func Register(typeName, url string) (def.RegDbID, error) {
 	id := def.RegDbID(atomic.AddUint64((*uint64)(&globalRegID), 1))
 
-	var db Database
+	var db def.Database
 	var err error
 	switch typeName {
 	case "postgres":
@@ -30,17 +21,18 @@ func Register(typeName, url string) (def.RegDbID, error) {
 			return 0, err
 		}
 	}
-	databases = append(databases, db)
+	def.Databases = append(def.Databases, db)
 	return db.ID(), nil
 }
 
 func Maps() []string {
 	databaseMaps := make([]string, 0)
-	for _, database := range databases {
-		fmt.Println(database.URL())
+	for _, database := range def.Databases {
+		def.Log.Debugf(database.URL())
 		subMaps, err := database.Maps()
 		if err != nil {
-			fmt.Println("Error reading sub maps:", err)
+			def.Log.Errorf("Error reading sub maps: %v", err)
+			continue
 		}
 		databaseMaps = append(databaseMaps, subMaps...)
 	}
@@ -48,19 +40,18 @@ func Maps() []string {
 }
 
 func Unregister(id def.RegDbID) error {
-	for i, d := range databases {
-		fmt.Println(id, "check to", d.ID())
+	for i, d := range def.Databases {
 		if d.ID() == id {
-			newDatabases := make([]Database, 0)
+			newDatabases := make([]def.Database, 0)
 			if i > 0 {
-				newDatabases = append(newDatabases, databases[0:i-1]...)
+				newDatabases = append(newDatabases, def.Databases[0:i-1]...)
 			}
-			if len(databases)-1 > i {
-				newDatabases = append(newDatabases, databases[i+1:]...)
+			if len(def.Databases)-1 > i {
+				newDatabases = append(newDatabases, def.Databases[i+1:]...)
 			}
-			databases = newDatabases
+			def.Databases = newDatabases
 			return nil
 		}
 	}
-	return fmt.Errorf("ID not found")
+	return def.NewError(1)
 }

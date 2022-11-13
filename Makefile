@@ -24,9 +24,9 @@ BINTESTS           = $(CURDIR)/bin/tests/$(GOOS)_$(GOARCH)
 
 VERSION            = v0.1
 
-OBJECTS            = *.go postgres/*.go definition/*.go
+OBJECTS            = *.go postgres/*.go adabas/*.go definition/*.go
 
-TESTPKGSDIR        = postgres definition
+TESTPKGSDIR        = postgres adabas definition
 include $(CURDIR)/make/common.mk
 
 

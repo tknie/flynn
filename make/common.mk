@@ -12,6 +12,7 @@
 
 GO_TAGS     = db
 
+TEST_RUN    = $(if $(TEST),-test.run $(TEST),)
 TIMEOUT     = 2000
 
 .PHONY: all
@@ -20,6 +21,10 @@ all: prepare fmt lint lib $(EXECS) test-build
 .PHONY: clean
 clean: ; $(info $(M) cleaning…)    @ ## Cleanup everything
 	@rm -rf bin pkg logs test promote
+
+.PHONY: cleanCache
+cleanCache: clean ; $(info $(M) cleaning GO cache…)    @ ## Cleanup everything
+	@$(GO) clean -cache -testcache -modcache
 
 exec: $(EXECS)
 
@@ -102,7 +107,7 @@ check test tests: fmt lint ; $(info $(M) running $(NAME:%=% )tests…) @ ## Run 
 		DYLD_LIBRARY_PATH="$(DYLD_LIBRARY_PATH):$(ACLDIR)/lib" \
 	    CGO_CFLAGS="$(CGO_CFLAGS)" CGO_LDFLAGS="$(CGO_LDFLAGS) $(CGO_EXT_LDFLAGS)" \
 	    TESTFILES=$(TESTFILES) GO_ADA_MESSAGES=$(MESSAGES) LOGPATH=$(LOGPATH) REFERENCES=$(REFERENCES) \
-	    $(GO) test -timeout $(TIMEOUT)s -tags $(GO_TAGS) $(ARGS) ./...
+	    $(GO) test -timeout $(TIMEOUT)s $(TEST_RUN) -tags $(GO_TAGS) $(ARGS) ./...
 
 TEST_XML_TARGETS := test-xml-bench
 .PHONY: $(TEST_XML_TARGETS) test-xml
