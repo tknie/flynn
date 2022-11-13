@@ -18,6 +18,7 @@ var messageHash = make(map[uint64]*Message)
 type Error struct {
 	nr   uint64
 	args []interface{}
+	err  error
 }
 
 //go:embed messages
@@ -48,7 +49,15 @@ func init() {
 }
 
 func NewError(errNr uint64, args ...interface{}) error {
-	return &Error{nr: errNr, args: args}
+	var err error
+	if len(args) > 0 {
+		switch e := args[len(args)-1].(type) {
+		case error:
+			err = e
+		default:
+		}
+	}
+	return &Error{nr: errNr, args: args, err: err}
 }
 
 func (e *Error) Error() string {
