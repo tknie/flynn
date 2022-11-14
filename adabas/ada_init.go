@@ -52,7 +52,11 @@ func (ada *Adabas) check() error {
 	return nil
 }
 
-func (ada *Adabas) Insert(fields []string, values []any) error {
+func (ada *Adabas) Insert(insert *def.Entries) error {
+	return def.NewError(65535)
+}
+
+func (ada *Adabas) Delete(remove *def.Entries) error {
 	return def.NewError(65535)
 }
 

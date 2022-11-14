@@ -251,11 +251,11 @@ func TestMariaDBSearchRows(t *testing.T) {
 		counter++
 		switch counter {
 		case 1:
-			assert.Equal(t, "5. Klasse", ns.String)
+			assert.Equal(t, "1.Hälfte Sommerferien 2019 sind vorbei", ns.String)
 		case 10:
-			assert.Equal(t, "Es ist Herbst.", ns.String)
+			assert.Equal(t, "Ferien 2017", ns.String)
 		case 48:
-			assert.Equal(t, "Vito", ns.String)
+			assert.Equal(t, "Zwischen den Jahren", ns.String)
 		default:
 			assert.NotEqual(t, "blabla", ns.String)
 		}

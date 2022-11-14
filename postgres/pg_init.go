@@ -60,7 +60,11 @@ func (pg *PostGres) check() error {
 	return nil
 }
 
-func (pg *PostGres) Insert(fields []string, values []any) error {
+func (pg *PostGres) Insert(insert *def.Entries) error {
+	return def.NewError(65535)
+}
+
+func (pg *PostGres) Delete(remove *def.Entries) error {
 	return def.NewError(65535)
 }
 

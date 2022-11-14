@@ -5,6 +5,7 @@ import (
 
 	"github.com/tknie/db/adabas"
 	def "github.com/tknie/db/common"
+	"github.com/tknie/db/mysql"
 	"github.com/tknie/db/postgres"
 )
 
@@ -18,6 +19,8 @@ func Register(typeName, url string) (def.RegDbID, error) {
 	switch typeName {
 	case "postgres":
 		db, err = postgres.New(id, url)
+	case "mysql":
+		db, err = mysql.New(id, url)
 	case "adabas":
 		db, err = adabas.New(id, url)
 	default:

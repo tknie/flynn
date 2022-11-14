@@ -20,11 +20,17 @@ type Result struct {
 	Data any
 }
 
+type Entries struct {
+	Fields []string
+	Values []any
+}
+
 type Database interface {
 	ID() RegDbID
 	URL() string
 	Maps() ([]string, error)
-	Insert(fields []string, values []any) error
+	Insert(insert *Entries) error
+	Delete(remove *Entries) error
 	Query(search *Query, f ResultFunction) error
 }
 
@@ -40,6 +46,22 @@ func (id RegDbID) Query(query *Query, f ResultFunction) error {
 		return err
 	}
 	return driver.Query(query, f)
+}
+
+func (id RegDbID) Insert(insert *Entries) error {
+	driver, err := searchDataDriver(id)
+	if err != nil {
+		return err
+	}
+	return driver.Insert(insert)
+}
+
+func (id RegDbID) Delete(remove *Entries) error {
+	driver, err := searchDataDriver(id)
+	if err != nil {
+		return err
+	}
+	return driver.Delete(remove)
 }
 
 func (result *Result) GenerateColumnByStruct(search *Query, rows *sql.Rows) error {

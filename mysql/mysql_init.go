@@ -1,4 +1,4 @@
-package postgres
+package mysql
 
 import (
 	"database/sql"
@@ -60,7 +60,11 @@ func (mysql *Mysql) check() error {
 	return nil
 }
 
-func (mysql *Mysql) Insert(fields []string, values []any) error {
+func (mysql *Mysql) Insert(insert *def.Entries) error {
+	return def.NewError(65535)
+}
+
+func (mysql *Mysql) Delete(remove *def.Entries) error {
 	return def.NewError(65535)
 }
 

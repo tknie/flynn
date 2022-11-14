@@ -37,9 +37,9 @@ func mysqlTarget(t *testing.T) (string, error) {
 	assert.NotEmpty(t, mysqlPort)
 	port, err := strconv.Atoi(mysqlPort)
 	if !assert.NoError(t, err) {
-		return "", fmt.Errorf("Postgres Port not set")
+		return "", fmt.Errorf("MYSQL Port not set")
 	}
-	pg := fmt.Sprintf("%s:%s@%s:%d/%s", "admin", mysqlPassword, mysqlHost, port, "Bitgarten")
+	pg := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", "admin", mysqlPassword, mysqlHost, port, "Bitgarten")
 
 	return pg, nil
 }
