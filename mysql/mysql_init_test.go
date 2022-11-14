@@ -31,8 +31,12 @@ func TestMysqlInit(t *testing.T) {
 	assert.NoError(t, err)
 	pg, err := New(1, url)
 	assert.NoError(t, err)
-	assert.NotNil(t, pg)
+	if !assert.NotNil(t, pg) {
+		return
+	}
 	m, err := pg.Maps()
 	assert.NoError(t, err)
-	assert.Equal(t, []string{"albums", "albumpictures", "picturelocations", "pictures"}, m)
+	assert.Equal(t, []string{"AlbumPictures", "Albums",
+		"PictureLocations", "PictureTag", "PictureTags",
+		"Pictures", "Tags"}, m)
 }

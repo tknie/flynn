@@ -44,7 +44,7 @@ func (mysql *Mysql) check() error {
 
 	mysql.dbTableNames = make([]string, 0)
 
-	rows, err := db.Query("SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'")
+	rows, err := db.Query("SHOW TABLES")
 	if err != nil {
 		return err
 	}
