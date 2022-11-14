@@ -27,6 +27,40 @@ func postgresTarget(t *testing.T) (string, error) {
 	return pg, nil
 }
 
+func mysqlTarget(t *testing.T) (string, error) {
+	mysqlHost := os.Getenv("MYSQL_HOST")
+	mysqlPort := os.Getenv("MYSQL_PORT")
+	mysqlPassword := os.Getenv("MYSQL_PWD")
+	if !assert.NotEmpty(t, mysqlHost) {
+		return "", fmt.Errorf("MySQL Host not set")
+	}
+	assert.NotEmpty(t, mysqlPort)
+	port, err := strconv.Atoi(mysqlPort)
+	if !assert.NoError(t, err) {
+		return "", fmt.Errorf("Postgres Port not set")
+	}
+	pg := fmt.Sprintf("%s:%s@%s:%d/%s", "admin", mysqlPassword, mysqlHost, port, "Bitgarten")
+
+	return pg, nil
+}
+
+func adabasTarget(t *testing.T) (string, error) {
+	adabasHost := os.Getenv("ADABAS_HOST")
+	adabasPort := os.Getenv("ADABAS_PORT")
+	// adabasPassword := os.Getenv("ADABAS_PWD")
+	if !assert.NotEmpty(t, adabasHost) {
+		return "", fmt.Errorf("Adabas Host not set")
+	}
+	assert.NotEmpty(t, adabasPort)
+	port, err := strconv.Atoi(adabasPort)
+	if !assert.NoError(t, err) {
+		return "", fmt.Errorf("Adabaas Port not set")
+	}
+	ada := fmt.Sprintf("acj;map;config=[adatcp://%s:%d,4]", adabasHost, port)
+
+	return ada, nil
+}
+
 func TestInitDatabases(t *testing.T) {
 	pg, err := postgresTarget(t)
 	if !assert.NoError(t, err) {

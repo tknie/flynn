@@ -7,6 +7,7 @@ require github.com/jackc/pgx/v5 v5.0.4
 require (
 	github.com/blockloop/scan v1.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/go-sql-driver/mysql v1.6.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20200714003250-2b9c44734f2b // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect

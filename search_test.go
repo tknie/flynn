@@ -9,7 +9,7 @@ import (
 	def "github.com/tknie/db/common"
 )
 
-func TestSearchRows(t *testing.T) {
+func TestPgSearchRows(t *testing.T) {
 	pg, err := postgresTarget(t)
 	if !assert.NoError(t, err) {
 		return
@@ -53,7 +53,7 @@ type TestString struct {
 	Title string
 }
 
-func TestSearchStruct(t *testing.T) {
+func TestPgSearchStruct(t *testing.T) {
 	pg, err := postgresTarget(t)
 	if !assert.NoError(t, err) {
 		return
@@ -95,7 +95,7 @@ func TestSearchStruct(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestSearchPtrStruct(t *testing.T) {
+func TestPgSearchPtrStruct(t *testing.T) {
 	pg, err := postgresTarget(t)
 	if !assert.NoError(t, err) {
 		return
@@ -139,4 +139,128 @@ func TestSearchPtrStruct(t *testing.T) {
 	})
 	assert.NoError(t, err)
 	assert.Equal(t, 49, counter)
+}
+
+func TestAdaSearchStruct(t *testing.T) {
+	ada, err := adabasTarget(t)
+	if !assert.NoError(t, err) {
+		return
+	}
+
+	x, err := Register("adabas", ada)
+	if !assert.NoError(t, err) {
+		return
+	}
+	defer Unregister(x)
+
+	q := &def.Query{TableName: "Albums",
+		Search: "",
+		Fields: []string{"Title"}}
+	counter := 0
+	err = x.Query(q, func(search *def.Query, result *def.Result) error {
+		assert.NotNil(t, search)
+		assert.NotNil(t, result)
+		assert.Nil(t, result.Data)
+		counter++
+		title := result.Rows[0].(string)
+		switch counter {
+		case 1:
+			assert.Equal(t, "5. Klasse", title)
+		case 10:
+			assert.Equal(t, "Es ist Herbst.", result.Rows[0])
+		case 48:
+			assert.Equal(t, "Vito", result.Rows[0])
+		default:
+			assert.NotEqual(t, "blabla", result.Rows[0])
+		}
+		return nil
+	})
+	assert.NoError(t, err)
+	assert.Equal(t, 49, counter)
+}
+
+type Albums struct {
+	Title string
+}
+
+func TestAdaPtrSearchStruct(t *testing.T) {
+	ada, err := adabasTarget(t)
+	if !assert.NoError(t, err) {
+		return
+	}
+
+	x, err := Register("adabas", ada)
+	if !assert.NoError(t, err) {
+		return
+	}
+	defer Unregister(x)
+
+	q := &def.Query{TableName: "Albums",
+		Search:     "",
+		DataStruct: &Albums{Title: "blabla"},
+		Fields:     []string{"Title"}}
+	counter := 0
+	err = x.Query(q, func(search *def.Query, result *def.Result) error {
+		assert.NotNil(t, search)
+		assert.NotNil(t, result)
+		assert.NotNil(t, result.Data)
+		if !assert.IsType(t, &Albums{}, result.Data) {
+			return fmt.Errorf("Result type wrong")
+		}
+		counter++
+		title := result.Data.(*Albums).Title
+		switch counter {
+		case 1:
+			assert.Equal(t, "5. Klasse", title)
+		case 10:
+			assert.Equal(t, "Es ist Herbst.", title)
+		case 48:
+			assert.Equal(t, "Vito", title)
+		default:
+			assert.NotEqual(t, "blabla", title)
+		}
+		return nil
+	})
+	assert.NoError(t, err)
+	assert.Equal(t, 49, counter)
+}
+
+func TestMariaDBSearchRows(t *testing.T) {
+	db, err := mysqlTarget(t)
+	if !assert.NoError(t, err) {
+		return
+	}
+
+	x, err := Register("mysql", db)
+	if !assert.NoError(t, err) {
+		return
+	}
+	defer Unregister(x)
+
+	q := &def.Query{TableName: "Albums",
+		Search: "",
+		Fields: []string{"Title"}}
+	counter := 0
+	err = x.Query(q, func(search *def.Query, result *def.Result) error {
+		assert.NotNil(t, search)
+		assert.NotNil(t, result)
+		if !assert.IsType(t, &sql.NullString{}, result.Rows[0]) {
+			return fmt.Errorf("Nullstring expected")
+		}
+		ns := result.Rows[0].(*sql.NullString)
+		counter++
+		switch counter {
+		case 1:
+			assert.Equal(t, "5. Klasse", ns.String)
+		case 10:
+			assert.Equal(t, "Es ist Herbst.", ns.String)
+		case 48:
+			assert.Equal(t, "Vito", ns.String)
+		default:
+			assert.NotEqual(t, "blabla", ns.String)
+		}
+
+		return nil
+	})
+	assert.NoError(t, err)
 }

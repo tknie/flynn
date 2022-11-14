@@ -1,6 +1,9 @@
 package common
 
-import "database/sql"
+import (
+	"database/sql"
+	"time"
+)
 
 type RegDbID uint64
 
@@ -45,4 +48,64 @@ func (result *Result) GenerateColumnByStruct(search *Query, rows *sql.Rows) erro
 	result.Rows = ti.RowValues
 	result.Data = ti.DataType
 	return nil
+}
+
+func (search *Query) QueryRows(rows *sql.Rows, f ResultFunction) (err error) {
+	result := &Result{}
+
+	result.Data = search.DataStruct
+	if search.DataStruct == nil {
+		result.Rows, err = generateColumnByValues(rows)
+	} else {
+		err = result.GenerateColumnByStruct(search, rows)
+	}
+	if err != nil {
+		return err
+	}
+	for rows.Next() {
+		err := rows.Scan(result.Rows...)
+		if err != nil {
+			return err
+		}
+		err = f(search, result)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func generateColumnByValues(rows *sql.Rows) ([]any, error) {
+	colsType, err := rows.ColumnTypes()
+	if err != nil {
+		if Log.IsDebugLevel() {
+			Log.Debugf("Error cols read: %v", err)
+		}
+		return nil, err
+	}
+	colsValue := make([]any, 0)
+	for nr, col := range colsType {
+		len, ok := col.Length()
+		if Log.IsDebugLevel() {
+			Log.Debugf("Colnr=%d name=%s len=%d ok=%v", nr, col.Name(), len, ok)
+		}
+		switch col.DatabaseTypeName() {
+		case "VARCHAR2":
+			s := ""
+			colsValue = append(colsValue, &s)
+		case "NUMBER":
+			s := int64(0)
+			colsValue = append(colsValue, &s)
+		case "LONG":
+			s := ""
+			colsValue = append(colsValue, &s)
+		case "DATE":
+			n := time.Now()
+			colsValue = append(colsValue, &n)
+		default:
+			s := sql.NullString{}
+			colsValue = append(colsValue, &s)
+		}
+	}
+	return colsValue, nil
 }

@@ -3,46 +3,46 @@ package postgres
 import (
 	"database/sql"
 
-	_ "github.com/jackc/pgx/v5/stdlib"
+	_ "github.com/go-sql-driver/mysql"
+
 	def "github.com/tknie/db/common"
 )
 
-type PostGres struct {
+type Mysql struct {
 	def.CommonDatabase
 	dbURL        string
 	dbTableNames []string
 }
 
 func New(id def.RegDbID, url string) (def.Database, error) {
-	pg := &PostGres{def.CommonDatabase{RegDbID: id}, url, nil}
-	err := pg.check()
+	mysql := &Mysql{def.CommonDatabase{RegDbID: id}, url, nil}
+	err := mysql.check()
 	if err != nil {
 		return nil, err
 	}
-	return pg, nil
+	return mysql, nil
 }
 
-func (pg *PostGres) ID() def.RegDbID {
-	return pg.RegDbID
+func (mysql *Mysql) ID() def.RegDbID {
+	return mysql.RegDbID
 }
 
-func (pg *PostGres) URL() string {
-	return pg.dbURL
+func (mysql *Mysql) URL() string {
+	return mysql.dbURL
 }
-func (pg *PostGres) Maps() ([]string, error) {
+func (mysql *Mysql) Maps() ([]string, error) {
 
-	return pg.dbTableNames, nil
+	return mysql.dbTableNames, nil
 }
 
-func (pg *PostGres) check() error {
-
-	db, err := sql.Open("pgx", pg.dbURL)
+func (mysql *Mysql) check() error {
+	db, err := sql.Open("mysql", mysql.dbURL)
 	if err != nil {
 		return def.NewError(3, err)
 	}
 	defer db.Close()
 
-	pg.dbTableNames = make([]string, 0)
+	mysql.dbTableNames = make([]string, 0)
 
 	rows, err := db.Query("SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'")
 	if err != nil {
@@ -54,18 +54,18 @@ func (pg *PostGres) check() error {
 		if err != nil {
 			return err
 		}
-		pg.dbTableNames = append(pg.dbTableNames, tableName)
+		mysql.dbTableNames = append(mysql.dbTableNames, tableName)
 	}
 
 	return nil
 }
 
-func (pg *PostGres) Insert(fields []string, values []any) error {
+func (mysql *Mysql) Insert(fields []string, values []any) error {
 	return def.NewError(65535)
 }
 
-func (pg *PostGres) Query(search *def.Query, f def.ResultFunction) error {
-	db, err := sql.Open("pgx", pg.dbURL)
+func (mysql *Mysql) Query(search *def.Query, f def.ResultFunction) error {
+	db, err := sql.Open("mysql", mysql.dbURL)
 	if err != nil {
 		return err
 	}

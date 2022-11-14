@@ -3,6 +3,7 @@ package db
 import (
 	"sync/atomic"
 
+	"github.com/tknie/db/adabas"
 	def "github.com/tknie/db/common"
 	"github.com/tknie/db/postgres"
 )
@@ -17,9 +18,13 @@ func Register(typeName, url string) (def.RegDbID, error) {
 	switch typeName {
 	case "postgres":
 		db, err = postgres.New(id, url)
-		if err != nil {
-			return 0, err
-		}
+	case "adabas":
+		db, err = adabas.New(id, url)
+	default:
+		return 0, def.NewError(65535)
+	}
+	if err != nil {
+		return 0, err
 	}
 	def.Databases = append(def.Databases, db)
 	return db.ID(), nil
