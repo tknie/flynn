@@ -38,10 +38,12 @@ func init() {
 			lines := strings.Split(string(byteValue), "\n")
 			for _, line := range lines {
 				index := strings.IndexByte(line, '=')
-				id, err := strconv.ParseUint(line[:index], 0, 64)
+				id, err := strconv.ParseUint(line[:index], 10, 64)
 				if err == nil {
 					text := line[index+1:]
 					messageHash[id] = &Message{id, text}
+				} else {
+					fmt.Println("Error init msg:", err)
 				}
 			}
 		}
@@ -62,6 +64,9 @@ func NewError(errNr uint64, args ...interface{}) error {
 
 func (e *Error) Error() string {
 	outLine := messageHash[e.nr]
+	if outLine == nil {
+		return fmt.Sprintf("Unknown error ...%05d", e.nr)
+	}
 	m := outLine.text
 	if len(e.args) > 0 {
 		m = outLine.convertArgs(e.args...)

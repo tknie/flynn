@@ -20,5 +20,6 @@ func TestErrors(t *testing.T) {
 	assert.Equal(t, "DB003: Error db open: abc", xerr.Error())
 	assert.Error(t, xerr.(*Error).err)
 	assert.Equal(t, err, xerr.(*Error).err)
-
+	err = NewError(65535)
+	assert.Equal(t, "DB65535: not implemented", err.Error())
 }
