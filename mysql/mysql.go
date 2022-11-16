@@ -68,6 +68,10 @@ func (mysql *Mysql) Delete(remove *def.Entries) error {
 	return def.NewError(65535)
 }
 
+func (mysql *Mysql) GetTableColumn(tableName string) ([]string, error) {
+	return nil, def.NewError(65535)
+}
+
 func (mysql *Mysql) Query(search *def.Query, f def.ResultFunction) error {
 	db, err := sql.Open("mysql", mysql.dbURL)
 	if err != nil {

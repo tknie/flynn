@@ -60,6 +60,10 @@ func (ada *Adabas) Delete(remove *def.Entries) error {
 	return def.NewError(65535)
 }
 
+func (ada *Adabas) GetTableColumn(tableName string) ([]string, error) {
+	return nil, def.NewError(65535)
+}
+
 func (ada *Adabas) Query(search *def.Query, f def.ResultFunction) error {
 	con, err := adabas.NewConnection(ada.URL())
 	if err != nil {

@@ -29,6 +29,7 @@ type Database interface {
 	ID() RegDbID
 	URL() string
 	Maps() ([]string, error)
+	GetTableColumn(tableName string) ([]string, error)
 	Insert(insert *Entries) error
 	Delete(remove *Entries) error
 	Query(search *Query, f ResultFunction) error
@@ -62,6 +63,14 @@ func (id RegDbID) Delete(remove *Entries) error {
 		return err
 	}
 	return driver.Delete(remove)
+}
+
+func (id RegDbID) GetTableColumn(tableName string) ([]string, error) {
+	driver, err := searchDataDriver(id)
+	if err != nil {
+		return nil, err
+	}
+	return driver.GetTableColumn(tableName)
 }
 
 func (result *Result) GenerateColumnByStruct(search *Query, rows *sql.Rows) error {

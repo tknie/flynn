@@ -68,6 +68,32 @@ func (pg *PostGres) Delete(remove *def.Entries) error {
 	return def.NewError(65535)
 }
 
+func (pg *PostGres) GetTableColumn(tableName string) ([]string, error) {
+	db, err := sql.Open("pgx", pg.dbURL)
+	if err != nil {
+		return nil, def.NewError(3, err)
+	}
+	defer db.Close()
+
+	rows, err := db.Query(`SELECT table_schema, table_name, column_name, data_type 
+	FROM INFORMATION_SCHEMA.COLUMNS 
+	WHERE table_name = '` + tableName + `'`)
+	if err != nil {
+		return nil, err
+	}
+	tableRows := make([]string, 0)
+	tableRow := ""
+	for rows.Next() {
+		err = rows.Scan(&tableRow)
+		if err != nil {
+			return nil, err
+		}
+		tableRows = append(tableRows, tableRow)
+	}
+
+	return tableRows, nil
+}
+
 func (pg *PostGres) Query(search *def.Query, f def.ResultFunction) error {
 	db, err := sql.Open("pgx", pg.dbURL)
 	if err != nil {

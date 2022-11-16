@@ -9,19 +9,35 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestPostgresInit(t *testing.T) {
+func PostgresTable(t *testing.T) string {
 	postgresHost := os.Getenv("POSTGRES_HOST")
 	postgresPort := os.Getenv("POSTGRES_PORT")
 	postgresPassword := os.Getenv("POSTGRES_PWD")
 	port, err := strconv.Atoi(postgresPort)
 	if !assert.NoError(t, err) {
-		return
+		return ""
 	}
 	url := fmt.Sprintf("postgres://%s:%s@%s:%d/%s", "admin", postgresPassword, postgresHost, port, "Bitgarten")
+	return url
+}
+
+func TestPostgresInit(t *testing.T) {
+	url := PostgresTable(t)
 	pg, err := New(1, url)
 	assert.NoError(t, err)
 	assert.NotNil(t, pg)
 	m, err := pg.Maps()
 	assert.NoError(t, err)
 	assert.Equal(t, []string{"albums", "albumpictures", "picturelocations", "pictures"}, m)
+}
+
+func TestPostgresTableColumns(t *testing.T) {
+	url := PostgresTable(t)
+	pg, err := New(1, url)
+	assert.NoError(t, err)
+	assert.NotNil(t, pg)
+	m, err := pg.GetTableColumn("Albums")
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"albums", "albumpictures", "picturelocations", "pictures"}, m)
+
 }
