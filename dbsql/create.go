@@ -9,6 +9,7 @@ import (
 
 type DBsql interface {
 	Reference() (string, string)
+	IndexNeeded() bool
 }
 
 func CreateTable(dbsql DBsql, name string, columns []*def.Column) error {

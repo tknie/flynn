@@ -23,6 +23,10 @@ func New(id def.RegDbID, url string) (def.Database, error) {
 	return mysql, nil
 }
 
+func (mysql *Mysql) IndexNeeded() bool {
+	return false
+}
+
 func (mysql *Mysql) Reference() (string, string) {
 	return "mysql", mysql.dbURL
 }
@@ -65,7 +69,7 @@ func (mysql *Mysql) check() error {
 }
 
 func (mysql *Mysql) Insert(name string, insert *def.Entries) error {
-	return def.NewError(65535)
+	return dbsql.Insert(mysql, name, insert)
 }
 
 func (mysql *Mysql) Delete(name string, remove *def.Entries) error {

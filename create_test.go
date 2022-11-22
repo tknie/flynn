@@ -26,11 +26,11 @@ func getTestTargets(t *testing.T) (targets []*target) {
 		return nil
 	}
 	targets = append(targets, &target{"postgres", url})
-	url, err = adabasTarget(t)
-	if !assert.NoError(t, err) {
-		return nil
-	}
-	targets = append(targets, &target{"adabas", url})
+	// url, err = adabasTarget(t)
+	// if !assert.NoError(t, err) {
+	// 	return nil
+	// }
+	// targets = append(targets, &target{"adabas", url})
 	return
 }
 

@@ -2,12 +2,11 @@ package postgres
 
 import (
 	"database/sql"
-	"fmt"
-	"strconv"
 	"strings"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 	def "github.com/tknie/db/common"
+	"github.com/tknie/db/dbsql"
 )
 
 type PostGres struct {
@@ -27,6 +26,10 @@ func New(id def.RegDbID, url string) (def.Database, error) {
 
 func (pg *PostGres) Reference() (string, string) {
 	return "pgx", pg.dbURL
+}
+
+func (pg *PostGres) IndexNeeded() bool {
+	return true
 }
 
 func (pg *PostGres) ID() def.RegDbID {
@@ -132,75 +135,13 @@ func (pg *PostGres) Query(search *def.Query, f def.ResultFunction) error {
 }
 
 func (pg *PostGres) CreateTable(name string, columns []*def.Column) error {
-	db, err := sql.Open("pgx", pg.dbURL)
-	if err != nil {
-		return err
-	}
-	defer db.Close()
-	createCmd := `CREATE TABLE ` + name + ` (`
-	for i, c := range columns {
-		if i > 0 {
-			createCmd += ","
-		}
-		createCmd += c.Name
-		switch c.DataType {
-		case def.Alpha:
-			createCmd += fmt.Sprintf(" %s(%d)\n", c.DataType.SqlType(), c.Length)
-		default:
-			return def.NewError(50001, "Data type unknown "+c.DataType.SqlType())
-		}
-	}
-	createCmd += ")"
-	def.Log.Debugf(pg.dbURL+": Create cmd", createCmd)
-	_, err = db.Query(createCmd)
-	if err != nil {
-		return err
-	}
-	return nil
+	return dbsql.CreateTable(pg, name, columns)
 }
 
 func (pg *PostGres) DeleteTable(name string) error {
-	db, err := sql.Open("pgx", pg.dbURL)
-	if err != nil {
-		return err
-	}
-	defer db.Close()
-
-	fmt.Println("Drop table " + name)
-
-	_, err = db.Query("DROP TABLE " + name)
-	if err != nil {
-		return err
-	}
-	return nil
+	return dbsql.DeleteTable(pg, name)
 }
 
 func (pg *PostGres) Insert(name string, insert *def.Entries) error {
-	db, err := sql.Open("pgx", pg.dbURL)
-	if err != nil {
-		return err
-	}
-	defer db.Close()
-
-	insertCmd := "INSERT INTO " + name + " ("
-	values := "("
-	for i, field := range insert.Fields {
-		if i > 0 {
-			insertCmd += ","
-			values += ","
-		}
-		insertCmd += field
-		values += "$" + strconv.Itoa(i+1)
-	}
-	values += ")"
-	insertCmd += ") VALUES " + values
-	for _, v := range insert.Values {
-		fmt.Printf("%s: %#v\n", insertCmd, v)
-		av := v.([]any)
-		_, err = db.Exec(insertCmd, av...)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+	return dbsql.Insert(pg, name, insert)
 }
