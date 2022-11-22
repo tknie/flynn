@@ -52,11 +52,11 @@ func (ada *Adabas) check() error {
 	return nil
 }
 
-func (ada *Adabas) Insert(insert *def.Entries) error {
+func (ada *Adabas) Insert(name string, insert *def.Entries) error {
 	return def.NewError(65535)
 }
 
-func (ada *Adabas) Delete(remove *def.Entries) error {
+func (ada *Adabas) Delete(name string, remove *def.Entries) error {
 	return def.NewError(65535)
 }
 
@@ -138,4 +138,12 @@ func (ada *Adabas) Query(search *def.Query, f def.ResultFunction) error {
 		}
 	}
 	return nil
+}
+
+func (ada *Adabas) CreateTable(string, []*def.Column) error {
+	return def.NewError(65535)
+}
+
+func (ada *Adabas) DeleteTable(string) error {
+	return def.NewError(65535)
 }

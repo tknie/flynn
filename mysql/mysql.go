@@ -4,8 +4,8 @@ import (
 	"database/sql"
 
 	_ "github.com/go-sql-driver/mysql"
-
 	def "github.com/tknie/db/common"
+	"github.com/tknie/db/dbsql"
 )
 
 type Mysql struct {
@@ -21,6 +21,10 @@ func New(id def.RegDbID, url string) (def.Database, error) {
 		return nil, err
 	}
 	return mysql, nil
+}
+
+func (mysql *Mysql) Reference() (string, string) {
+	return "mysql", mysql.dbURL
 }
 
 func (mysql *Mysql) ID() def.RegDbID {
@@ -60,11 +64,11 @@ func (mysql *Mysql) check() error {
 	return nil
 }
 
-func (mysql *Mysql) Insert(insert *def.Entries) error {
+func (mysql *Mysql) Insert(name string, insert *def.Entries) error {
 	return def.NewError(65535)
 }
 
-func (mysql *Mysql) Delete(remove *def.Entries) error {
+func (mysql *Mysql) Delete(name string, remove *def.Entries) error {
 	return def.NewError(65535)
 }
 
@@ -103,4 +107,12 @@ func (mysql *Mysql) Query(search *def.Query, f def.ResultFunction) error {
 		return err
 	}
 	return search.QueryRows(rows, f)
+}
+
+func (mysql *Mysql) CreateTable(name string, columns []*def.Column) error {
+	return dbsql.CreateTable(mysql, name, columns)
+}
+
+func (mysql *Mysql) DeleteTable(name string) error {
+	return dbsql.DeleteTable(mysql, name)
 }

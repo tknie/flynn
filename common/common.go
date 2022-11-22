@@ -30,9 +30,18 @@ type Database interface {
 	URL() string
 	Maps() ([]string, error)
 	GetTableColumn(tableName string) ([]string, error)
-	Insert(insert *Entries) error
-	Delete(remove *Entries) error
+	CreateTable(string, []*Column) error
+	DeleteTable(string) error
+	Insert(name string, insert *Entries) error
+	Delete(name string, remove *Entries) error
 	Query(search *Query, f ResultFunction) error
+}
+
+type Column struct {
+	Name       string
+	DataType   DataType
+	Length     uint16
+	SubColumns []*Column
 }
 
 type ResultFunction func(search *Query, result *Result) error
@@ -49,20 +58,36 @@ func (id RegDbID) Query(query *Query, f ResultFunction) error {
 	return driver.Query(query, f)
 }
 
-func (id RegDbID) Insert(insert *Entries) error {
+func (id RegDbID) CreateTable(tableName string, columns []*Column) error {
 	driver, err := searchDataDriver(id)
 	if err != nil {
 		return err
 	}
-	return driver.Insert(insert)
+	return driver.CreateTable(tableName, columns)
 }
 
-func (id RegDbID) Delete(remove *Entries) error {
+func (id RegDbID) DeleteTable(tableName string) error {
 	driver, err := searchDataDriver(id)
 	if err != nil {
 		return err
 	}
-	return driver.Delete(remove)
+	return driver.DeleteTable(tableName)
+}
+
+func (id RegDbID) Insert(name string, insert *Entries) error {
+	driver, err := searchDataDriver(id)
+	if err != nil {
+		return err
+	}
+	return driver.Insert(name, insert)
+}
+
+func (id RegDbID) Delete(name string, remove *Entries) error {
+	driver, err := searchDataDriver(id)
+	if err != nil {
+		return err
+	}
+	return driver.Delete(name, remove)
 }
 
 func (id RegDbID) GetTableColumn(tableName string) ([]string, error) {

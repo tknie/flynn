@@ -25,7 +25,9 @@ func TestPostgresInit(t *testing.T) {
 	url := PostgresTable(t)
 	pg, err := New(1, url)
 	assert.NoError(t, err)
-	assert.NotNil(t, pg)
+	if !assert.NotNil(t, pg) {
+		return
+	}
 	m, err := pg.Maps()
 	assert.NoError(t, err)
 	assert.Equal(t, []string{"albums", "albumpictures", "picturelocations", "pictures"}, m)
@@ -35,9 +37,13 @@ func TestPostgresTableColumns(t *testing.T) {
 	url := PostgresTable(t)
 	pg, err := New(1, url)
 	assert.NoError(t, err)
-	assert.NotNil(t, pg)
+	if !assert.NotNil(t, pg) {
+		return
+	}
 	m, err := pg.GetTableColumn("Albums")
 	assert.NoError(t, err)
-	assert.Equal(t, []string{"albums", "albumpictures", "picturelocations", "pictures"}, m)
+	assert.Equal(t, []string{"id", "created", "updated_at",
+		"directory", "title", "description", "option", "thumbnail",
+		"albumtype", "albumkey"}, m)
 
 }
