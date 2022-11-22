@@ -60,7 +60,7 @@ func TestCreate(t *testing.T) {
 		err = id.Insert("TESTTABLE", &def.Entries{Fields: []string{"name", "firstname"},
 			Values: list})
 		assert.NoError(t, err, "insert fail using "+target.layer)
-		// deleteTable(t, id, "TESTTABLE", target.layer)
+		deleteTable(t, id, "TESTTABLE", target.layer)
 		unregisterDatabase(t, id)
 	}
 }
