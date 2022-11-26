@@ -41,6 +41,7 @@ type Column struct {
 	Name       string
 	DataType   DataType
 	Length     uint16
+	Digits     uint8
 	SubColumns []*Column
 }
 

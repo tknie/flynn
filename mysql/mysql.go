@@ -27,6 +27,10 @@ func (mysql *Mysql) IndexNeeded() bool {
 	return false
 }
 
+func (mysql *Mysql) ByteArrayAvailable() bool {
+	return false
+}
+
 func (mysql *Mysql) Reference() (string, string) {
 	return "mysql", mysql.dbURL
 }

@@ -32,6 +32,10 @@ func (pg *PostGres) IndexNeeded() bool {
 	return true
 }
 
+func (pg *PostGres) ByteArrayAvailable() bool {
+	return true
+}
+
 func (pg *PostGres) ID() def.RegDbID {
 	return pg.RegDbID
 }

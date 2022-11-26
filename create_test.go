@@ -26,11 +26,11 @@ func getTestTargets(t *testing.T) (targets []*target) {
 		return nil
 	}
 	targets = append(targets, &target{"postgres", url})
-	// url, err = adabasTarget(t)
-	// if !assert.NoError(t, err) {
-	// 	return nil
-	// }
-	// targets = append(targets, &target{"adabas", url})
+	url, err = adabasTarget(t)
+	if !assert.NoError(t, err) {
+		return nil
+	}
+	targets = append(targets, &target{"adabas", url})
 	return
 }
 
@@ -41,6 +41,9 @@ func TestCreate(t *testing.T) {
 
 	for _, target := range getTestTargets(t) {
 		fmt.Println("Work on " + target.layer)
+		if target.layer == "adabas" {
+			continue
+		}
 		id, err := Register(target.layer, target.url)
 		if !assert.NoError(t, err, "register fail using "+target.layer) {
 			return

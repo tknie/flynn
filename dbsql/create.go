@@ -10,6 +10,7 @@ import (
 type DBsql interface {
 	Reference() (string, string)
 	IndexNeeded() bool
+	ByteArrayAvailable() bool
 }
 
 func CreateTable(dbsql DBsql, name string, columns []*def.Column) error {
@@ -22,17 +23,23 @@ func CreateTable(dbsql DBsql, name string, columns []*def.Column) error {
 	createCmd := `CREATE TABLE ` + name + ` (`
 	for i, c := range columns {
 		if i > 0 {
-			createCmd += ","
+			createCmd += ", "
 		}
-		createCmd += c.Name
+		createCmd += c.Name + " "
 		switch c.DataType {
-		case def.Alpha:
-			createCmd += fmt.Sprintf(" %s(%d)\n", c.DataType.SqlType(), c.Length)
+		case def.Alpha, def.Bit:
+			createCmd += c.DataType.SqlType(c.Length)
+		case def.Decimal:
+			createCmd += c.DataType.SqlType(c.Length, c.Digits)
+		case def.Bytes:
+			createCmd += c.DataType.SqlType(dbsql.ByteArrayAvailable(),
+				c.Length)
 		default:
-			return def.NewError(50001, "Data type unknown "+c.DataType.SqlType())
+			createCmd += c.DataType.SqlType()
 		}
 	}
 	createCmd += ")"
+	fmt.Println(createCmd)
 	def.Log.Debugf(url+": Create cmd", createCmd)
 	_, err = db.Query(createCmd)
 	if err != nil {
