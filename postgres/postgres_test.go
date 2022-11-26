@@ -30,7 +30,8 @@ func TestPostgresInit(t *testing.T) {
 	}
 	m, err := pg.Maps()
 	assert.NoError(t, err)
-	assert.Equal(t, []string{"albums", "albumpictures", "picturelocations", "pictures"}, m)
+	assert.Equal(t, []string{"albums", "albumpictures",
+		"picturelocations", "pictures", "testtabledata"}, m)
 }
 
 func TestPostgresTableColumns(t *testing.T) {
