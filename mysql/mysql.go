@@ -115,7 +115,7 @@ func (mysql *Mysql) Query(search *def.Query, f def.ResultFunction) (*common.Resu
 	if err != nil {
 		return nil, err
 	}
-	return search.QueryRows(rows, f)
+	return search.ParseRows(rows, f)
 }
 
 func (mysql *Mysql) CreateTable(name string, columns any) error {

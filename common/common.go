@@ -117,12 +117,14 @@ func (result *Result) GenerateColumnByStruct(search *Query, rows *sql.Rows) erro
 	return nil
 }
 
-func (search *Query) QueryRows(rows *sql.Rows, f ResultFunction) (result *Result, err error) {
+func (search *Query) ParseRows(rows *sql.Rows, f ResultFunction) (result *Result, err error) {
 	result = &Result{}
 
 	result.Data = search.DataStruct
+	// rows := make([]any, len(result.Rows))
+	var scanRows []any
 	if search.DataStruct == nil {
-		result.Rows, err = generateColumnByValues(rows)
+		scanRows, err = generateColumnByValues(rows)
 	} else {
 		err = result.GenerateColumnByStruct(search, rows)
 	}
@@ -134,9 +136,58 @@ func (search *Query) QueryRows(rows *sql.Rows, f ResultFunction) (result *Result
 		return nil, err
 	}
 	for rows.Next() {
-		err := rows.Scan(result.Rows...)
+		err := rows.Scan(scanRows...)
 		if err != nil {
 			return nil, err
+		}
+		result.Rows = make([]any, len(scanRows))
+		for i, r := range scanRows {
+			switch n := r.(type) {
+			case *sql.NullByte:
+				if n.Valid {
+					result.Rows[i] = n.Byte
+				} else {
+					result.Rows[i] = nil
+				}
+			case *sql.NullBool:
+				if n.Valid {
+					result.Rows[i] = n.Bool
+				} else {
+					result.Rows[i] = nil
+				}
+			case *sql.NullString:
+				if n.Valid {
+					result.Rows[i] = n.String
+				} else {
+					result.Rows[i] = nil
+				}
+			case *sql.NullInt32:
+				if n.Valid {
+					result.Rows[i] = n.Int32
+				} else {
+					result.Rows[i] = nil
+				}
+			case *sql.NullInt64:
+				if n.Valid {
+					result.Rows[i] = n.Int64
+				} else {
+					result.Rows[i] = nil
+				}
+			case *sql.NullInt16:
+				if n.Valid {
+					result.Rows[i] = n.Int16
+				} else {
+					result.Rows[i] = nil
+				}
+			case *sql.NullTime:
+				if n.Valid {
+					result.Rows[i] = n.Time
+				} else {
+					result.Rows[i] = nil
+				}
+			default:
+				result.Rows[i] = r
+			}
 		}
 		err = f(search, result)
 		if err != nil {
@@ -170,7 +221,7 @@ func generateColumnByValues(rows *sql.Rows) ([]any, error) {
 		case "LONG":
 			s := ""
 			colsValue = append(colsValue, &s)
-		case "DATE":
+		case "DATE", "TIMESTAMP":
 			n := time.Now()
 			colsValue = append(colsValue, &n)
 		default:

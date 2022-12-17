@@ -124,7 +124,7 @@ func (pg *PostGres) Query(search *def.Query, f def.ResultFunction) (*common.Resu
 		selectCmd = "select "
 		for i, s := range search.Fields {
 			if i > 0 {
-				s += ","
+				selectCmd += ","
 			}
 			selectCmd += s
 		}
@@ -136,7 +136,7 @@ func (pg *PostGres) Query(search *def.Query, f def.ResultFunction) (*common.Resu
 	if err != nil {
 		return nil, err
 	}
-	return search.QueryRows(rows, f)
+	return search.ParseRows(rows, f)
 }
 
 func (pg *PostGres) CreateTable(name string, columns any) error {

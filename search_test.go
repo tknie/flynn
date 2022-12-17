@@ -4,10 +4,30 @@ import (
 	"database/sql"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	def "github.com/tknie/db/common"
 )
+
+func TestQuery(t *testing.T) {
+	pg, err := postgresTarget(t)
+	if !assert.NoError(t, err) {
+		return
+	}
+
+	x, err := Register("postgres", pg)
+	if !assert.NoError(t, err) {
+		return
+	}
+	defer Unregister(x)
+
+	columns, err := x.GetTableColumn("Albums")
+	if !assert.NoError(t, err) {
+		return
+	}
+	assert.Len(t, columns, 10)
+}
 
 func TestPgSearchRows(t *testing.T) {
 	pg, err := postgresTarget(t)
@@ -23,26 +43,28 @@ func TestPgSearchRows(t *testing.T) {
 
 	q := &def.Query{TableName: "Albums",
 		Search: "",
-		Fields: []string{"Title"}}
+		Fields: []string{"Title", "created"}}
 	counter := 0
 	_, err = x.Query(q, func(search *def.Query, result *def.Result) error {
 		assert.NotNil(t, search)
 		assert.NotNil(t, result)
-		assert.Len(t, result.Fields, 1)
-		if !assert.IsType(t, &sql.NullString{}, result.Rows[0]) {
-			return fmt.Errorf("Nullstring expected")
-		}
-		ns := result.Rows[0].(*sql.NullString)
+		assert.Len(t, result.Fields, 2)
+		fmt.Println("RESULT:", result.Rows)
+		ns := result.Rows[0].(string)
+		ts := result.Rows[1].(*time.Time)
 		counter++
 		switch counter {
 		case 1:
-			assert.Equal(t, "5. Klasse", ns.String)
+			assert.Equal(t, "5. Klasse", ns)
+			assert.Equal(t, "2022-11-06 18:12:02.764303 +0000 UTC", ts.String())
 		case 10:
-			assert.Equal(t, "Es ist Herbst.", ns.String)
+			assert.Equal(t, "Es ist Herbst.", ns)
+			assert.Equal(t, "2022-11-06 18:12:04.228919 +0000 UTC", ts.String())
 		case 48:
-			assert.Equal(t, "Vito", ns.String)
+			assert.Equal(t, "Vito", ns)
+			assert.Equal(t, "2022-11-06 18:12:11.216235 +0000 UTC", ts.String())
 		default:
-			assert.NotEqual(t, "blabla", ns.String)
+			assert.NotEqual(t, "blabla", ns)
 		}
 
 		return nil
