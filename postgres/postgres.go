@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"database/sql"
+	"fmt"
 	"strings"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -120,7 +121,7 @@ func (pg *PostGres) Query(search *def.Query, f def.ResultFunction) (*common.Resu
 		search.TypeInfo = ti
 		selectCmd += ti.CreateQueryFields()
 		selectCmd += " from " + search.TableName
-	case search.Search == "":
+	default:
 		selectCmd = "select "
 		for i, s := range search.Fields {
 			if i > 0 {
@@ -129,12 +130,11 @@ func (pg *PostGres) Query(search *def.Query, f def.ResultFunction) (*common.Resu
 			selectCmd += s
 		}
 		selectCmd += " from " + search.TableName
-	default:
-		selectCmd = search.Search
 	}
 	if search.Search != "" {
 		selectCmd += " where " + search.Search
 	}
+	fmt.Println(selectCmd)
 	rows, err := db.Query(selectCmd)
 	if err != nil {
 		return nil, err

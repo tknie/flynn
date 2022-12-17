@@ -72,6 +72,43 @@ func TestPgSearchRows(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestPgSearchCriteriaRows(t *testing.T) {
+	pg, err := postgresTarget(t)
+	if !assert.NoError(t, err) {
+		return
+	}
+
+	x, err := Register("postgres", pg)
+	if !assert.NoError(t, err) {
+		return
+	}
+	defer Unregister(x)
+
+	q := &def.Query{TableName: "Albums",
+		Search: "id=1",
+		Fields: []string{"Title", "created"}}
+	counter := 0
+	_, err = x.Query(q, func(search *def.Query, result *def.Result) error {
+		assert.NotNil(t, search)
+		assert.NotNil(t, result)
+		assert.Len(t, result.Fields, 2)
+		fmt.Println("RESULT:", result.Rows)
+		ns := result.Rows[0].(string)
+		ts := result.Rows[1].(*time.Time)
+		counter++
+		switch counter {
+		case 1:
+			assert.Equal(t, "5. Klasse", ns)
+			assert.Equal(t, "2022-11-06 18:12:02.764303 +0000 UTC", ts.String())
+		default:
+			assert.Fail(t, "Should not come here")
+		}
+
+		return nil
+	})
+	assert.NoError(t, err)
+}
+
 type TestString struct {
 	Title string
 }
