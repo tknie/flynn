@@ -3,12 +3,46 @@ package db
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	def "github.com/tknie/db/common"
 )
 
 const testTable = "TestTableData"
+const testStructTable = "TestStructTableData"
+
+type TestData struct {
+	ID          string    `dbsql:"::10"`
+	Name        string    `dbsql:"::200"`
+	MiddleName  string    `dbsql:"::50"`
+	FirstName   string    `dbsql:"::50"`
+	PersonnelNo uint64    `dbsql:"::4"`
+	CardNo      [8]byte   `dbsql:"::8"`
+	Signature   string    `dbsql:"::20"`
+	Sex         string    `dbsql:"::1"`
+	MarrieState string    `dbsql:"::1"`
+	Street      string    `dbsql:"::200"`
+	Address     string    `dbsql:"::200"`
+	City        string    `dbsql:"::200"`
+	PostCode    string    `dbsql:"::10"`
+	Birth       time.Time `dbsql:"::10"`
+	Account     float64   `dbsql:"::10, Digits: 2"`
+	Description string    `dbsql:"::0"`
+	Flags       byte      `dbsql:"::8"`
+	AreaCode    int       `dbsql:"::8"`
+	Phone       int       `dbsql:"::8"`
+	Department  string    `dbsql:"::6"`
+	JobTitle    string    `dbsql:"::20"`
+	Currency    string    `dbsql:"::2"`
+	Salary      uint64    `dbsql:"::8"`
+	Bonus       uint64    `dbsql:"::8"`
+	LeaveDue    uint64    `dbsql:"::2"`
+	LeaveTaken  uint64    `dbsql:"::2"`
+	LeaveStart  time.Time
+	LeaveEnd    time.Time
+	Language    uint64 `dbsql:"::8"`
+}
 
 func TestInsertInitTestTable(t *testing.T) {
 	for _, target := range getTestTargets(t) {
@@ -16,6 +50,9 @@ func TestInsertInitTestTable(t *testing.T) {
 			continue
 		}
 		if checkTableAvailablefunc(t, target) != nil {
+			return
+		}
+		if checkStructTableAvailablefunc(t, target) != nil {
 			return
 		}
 	}
@@ -37,7 +74,7 @@ func checkTableAvailablefunc(t *testing.T, target *target) error {
 		Search: "",
 		Fields: []string{"Name"}}
 	counter := 0
-	err = x.Query(q, func(search *def.Query, result *def.Result) error {
+	_, err = x.Query(q, func(search *def.Query, result *def.Result) error {
 		counter++
 		return nil
 	})
@@ -45,7 +82,7 @@ func checkTableAvailablefunc(t *testing.T, target *target) error {
 		return nil
 	}
 	if counter == 0 {
-		err = createTestTable(t, target)
+		err = createColumnTestTable(t, target)
 		if !assert.NoError(t, err) {
 			return err
 		}
@@ -53,7 +90,7 @@ func checkTableAvailablefunc(t *testing.T, target *target) error {
 	return nil
 }
 
-func createTestTable(t *testing.T, target *target) error {
+func createColumnTestTable(t *testing.T, target *target) error {
 	columns := make([]*def.Column, 0)
 	columns = append(columns, &def.Column{Name: "ID", DataType: def.Alpha, Length: 10})
 	columns = append(columns, &def.Column{Name: "Name", DataType: def.Alpha, Length: 200})
@@ -94,6 +131,54 @@ func createTestTable(t *testing.T, target *target) error {
 	defer unregisterDatabase(t, id)
 	id.DeleteTable(testTable)
 	err = id.CreateTable(testTable, columns)
+	if !assert.NoError(t, err, "create test table fail using "+target.layer) {
+		return err
+	}
+	return nil
+}
+
+func checkStructTableAvailablefunc(t *testing.T, target *target) error {
+	pg, err := postgresTarget(t)
+	if !assert.NoError(t, err) {
+		return err
+	}
+
+	x, err := Register("postgres", pg)
+	if !assert.NoError(t, err) {
+		return err
+	}
+	defer Unregister(x)
+
+	q := &def.Query{TableName: testStructTable,
+		Search: "",
+		Fields: []string{"Name"}}
+	counter := 0
+	_, err = x.Query(q, func(search *def.Query, result *def.Result) error {
+		counter++
+		return nil
+	})
+	if err == nil {
+		return nil
+	}
+	if counter == 0 {
+		err = createStructTestTable(t, target)
+		if !assert.NoError(t, err) {
+			return err
+		}
+	}
+	return nil
+}
+
+func createStructTestTable(t *testing.T, target *target) error {
+	fmt.Println("Create database table")
+
+	id, err := Register(target.layer, target.url)
+	if !assert.NoError(t, err, "register fail using "+target.layer) {
+		return err
+	}
+	defer unregisterDatabase(t, id)
+	id.DeleteTable(testStructTable)
+	err = id.CreateTable(testStructTable, &TestData{})
 	if !assert.NoError(t, err, "create test table fail using "+target.layer) {
 		return err
 	}

@@ -16,8 +16,9 @@ type Query struct {
 }
 
 type Result struct {
-	Rows []any
-	Data any
+	Fields []string
+	Rows   []any
+	Data   any
 }
 
 type Entries struct {
@@ -30,11 +31,12 @@ type Database interface {
 	URL() string
 	Maps() ([]string, error)
 	GetTableColumn(tableName string) ([]string, error)
-	CreateTable(string, []*Column) error
+	CreateTable(string, any) error
 	DeleteTable(string) error
 	Insert(name string, insert *Entries) error
 	Delete(name string, remove *Entries) error
-	Query(search *Query, f ResultFunction) error
+	BatchSQL(batch string) error
+	Query(search *Query, f ResultFunction) (*Result, error)
 }
 
 type Column struct {
@@ -51,15 +53,15 @@ type CommonDatabase struct {
 	RegDbID RegDbID
 }
 
-func (id RegDbID) Query(query *Query, f ResultFunction) error {
+func (id RegDbID) Query(query *Query, f ResultFunction) (*Result, error) {
 	driver, err := searchDataDriver(id)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	return driver.Query(query, f)
 }
 
-func (id RegDbID) CreateTable(tableName string, columns []*Column) error {
+func (id RegDbID) CreateTable(tableName string, columns any) error {
 	driver, err := searchDataDriver(id)
 	if err != nil {
 		return err
@@ -73,6 +75,14 @@ func (id RegDbID) DeleteTable(tableName string) error {
 		return err
 	}
 	return driver.DeleteTable(tableName)
+}
+
+func (id RegDbID) BatchSQL(batch string) error {
+	driver, err := searchDataDriver(id)
+	if err != nil {
+		return err
+	}
+	return driver.BatchSQL(batch)
 }
 
 func (id RegDbID) Insert(name string, insert *Entries) error {
@@ -107,8 +117,8 @@ func (result *Result) GenerateColumnByStruct(search *Query, rows *sql.Rows) erro
 	return nil
 }
 
-func (search *Query) QueryRows(rows *sql.Rows, f ResultFunction) (err error) {
-	result := &Result{}
+func (search *Query) QueryRows(rows *sql.Rows, f ResultFunction) (result *Result, err error) {
+	result = &Result{}
 
 	result.Data = search.DataStruct
 	if search.DataStruct == nil {
@@ -117,19 +127,23 @@ func (search *Query) QueryRows(rows *sql.Rows, f ResultFunction) (err error) {
 		err = result.GenerateColumnByStruct(search, rows)
 	}
 	if err != nil {
-		return err
+		return nil, err
+	}
+	result.Fields, err = rows.Columns()
+	if err != nil {
+		return nil, err
 	}
 	for rows.Next() {
 		err := rows.Scan(result.Rows...)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		err = f(search, result)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
-	return nil
+	return
 }
 
 func generateColumnByValues(rows *sql.Rows) ([]any, error) {

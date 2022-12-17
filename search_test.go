@@ -25,9 +25,10 @@ func TestPgSearchRows(t *testing.T) {
 		Search: "",
 		Fields: []string{"Title"}}
 	counter := 0
-	err = x.Query(q, func(search *def.Query, result *def.Result) error {
+	_, err = x.Query(q, func(search *def.Query, result *def.Result) error {
 		assert.NotNil(t, search)
 		assert.NotNil(t, result)
+		assert.Len(t, result.Fields, 1)
 		if !assert.IsType(t, &sql.NullString{}, result.Rows[0]) {
 			return fmt.Errorf("Nullstring expected")
 		}
@@ -70,7 +71,7 @@ func TestPgSearchStruct(t *testing.T) {
 		DataStruct: TestString{Title: "blabla"},
 		Fields:     []string{"Title"}}
 	counter := 0
-	err = x.Query(q, func(search *def.Query, result *def.Result) error {
+	_, err = x.Query(q, func(search *def.Query, result *def.Result) error {
 		assert.NotNil(t, search)
 		assert.NotNil(t, result)
 		assert.IsType(t, &TestString{}, result.Data)
@@ -112,7 +113,7 @@ func TestPgSearchPtrStruct(t *testing.T) {
 		DataStruct: &TestString{Title: "blabla"},
 		Fields:     []string{"Title"}}
 	counter := 0
-	err = x.Query(q, func(search *def.Query, result *def.Result) error {
+	_, err = x.Query(q, func(search *def.Query, result *def.Result) error {
 		assert.NotNil(t, search)
 		assert.NotNil(t, result)
 		assert.IsType(t, &TestString{}, result.Data)
@@ -157,7 +158,7 @@ func TestAdaSearchStruct(t *testing.T) {
 		Search: "",
 		Fields: []string{"Title"}}
 	counter := 0
-	err = x.Query(q, func(search *def.Query, result *def.Result) error {
+	_, err = x.Query(q, func(search *def.Query, result *def.Result) error {
 		assert.NotNil(t, search)
 		assert.NotNil(t, result)
 		assert.Nil(t, result.Data)
@@ -200,7 +201,7 @@ func TestAdaPtrSearchStruct(t *testing.T) {
 		DataStruct: &Albums{Title: "blabla"},
 		Fields:     []string{"Title"}}
 	counter := 0
-	err = x.Query(q, func(search *def.Query, result *def.Result) error {
+	_, err = x.Query(q, func(search *def.Query, result *def.Result) error {
 		assert.NotNil(t, search)
 		assert.NotNil(t, result)
 		assert.NotNil(t, result.Data)
@@ -241,7 +242,7 @@ func TestMariaDBSearchRows(t *testing.T) {
 		Search: "",
 		Fields: []string{"Title"}}
 	counter := 0
-	err = x.Query(q, func(search *def.Query, result *def.Result) error {
+	_, err = x.Query(q, func(search *def.Query, result *def.Result) error {
 		assert.NotNil(t, search)
 		assert.NotNil(t, result)
 		if !assert.IsType(t, &sql.NullString{}, result.Rows[0]) {

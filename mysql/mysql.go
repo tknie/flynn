@@ -4,6 +4,7 @@ import (
 	"database/sql"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/tknie/db/common"
 	def "github.com/tknie/db/common"
 	"github.com/tknie/db/dbsql"
 )
@@ -84,10 +85,10 @@ func (mysql *Mysql) GetTableColumn(tableName string) ([]string, error) {
 	return nil, def.NewError(65535)
 }
 
-func (mysql *Mysql) Query(search *def.Query, f def.ResultFunction) error {
+func (mysql *Mysql) Query(search *def.Query, f def.ResultFunction) (*common.Result, error) {
 	db, err := sql.Open("mysql", mysql.dbURL)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	selectCmd := ""
 	defer db.Close()
@@ -112,15 +113,19 @@ func (mysql *Mysql) Query(search *def.Query, f def.ResultFunction) error {
 	}
 	rows, err := db.Query(selectCmd)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	return search.QueryRows(rows, f)
 }
 
-func (mysql *Mysql) CreateTable(name string, columns []*def.Column) error {
+func (mysql *Mysql) CreateTable(name string, columns any) error {
 	return dbsql.CreateTable(mysql, name, columns)
 }
 
 func (mysql *Mysql) DeleteTable(name string) error {
 	return dbsql.DeleteTable(mysql, name)
+}
+
+func (mysql *Mysql) BatchSQL(batch string) error {
+	return dbsql.BatchSQL(mysql, batch)
 }

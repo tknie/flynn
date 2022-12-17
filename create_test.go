@@ -34,7 +34,7 @@ func getTestTargets(t *testing.T) (targets []*target) {
 	return
 }
 
-func TestCreate(t *testing.T) {
+func TestCreateStringArray(t *testing.T) {
 	columns := make([]*def.Column, 0)
 	columns = append(columns, &def.Column{Name: "Name", DataType: def.Alpha, Length: 10})
 	columns = append(columns, &def.Column{Name: "FirstName", DataType: def.Alpha, Length: 20})
@@ -76,4 +76,46 @@ func unregisterDatabase(t *testing.T, id def.RegDbID) {
 func deleteTable(t *testing.T, id def.RegDbID, name, layer string) {
 	err := id.DeleteTable(name)
 	assert.NoError(t, err, "delete fail using "+layer)
+}
+
+func TestCreateStruct(t *testing.T) {
+	columns := struct {
+		XY        uint64 `dbsql:"ID::SERIAL"`
+		Name      string
+		FirstName string
+		LastName  string
+		Address   string `dbsql:"Street"`
+		Salary    uint64 `dbsql:"Salary"`
+		Bonus     int64
+	}{Name: "Gellanger",
+		FirstName: "Bob"}
+	for _, target := range getTestTargets(t) {
+		fmt.Println("Work on " + target.layer)
+		if target.layer == "adabas" {
+			continue
+		}
+		id, err := Register(target.layer, target.url)
+		if !assert.NoError(t, err, "register fail using "+target.layer) {
+			return
+		}
+		id.DeleteTable("TESTTABLE")
+		err = id.CreateTable("TESTTABLE", columns)
+		if !assert.NoError(t, err, "create fail using "+target.layer) {
+			unregisterDatabase(t, id)
+			continue
+		}
+		list := make([]any, 0)
+		list = append(list, []any{"Eins", "Ernie"})
+		for i := 1; i < 100; i++ {
+			list = append(list, []any{strconv.Itoa(i), "Graf Zahl " + strconv.Itoa(i)})
+		}
+		list = append(list, []any{"Letztes", "Anton"})
+		err = id.Insert("TESTTABLE", &def.Entries{Fields: []string{"name", "firstname"},
+			Values: list})
+		assert.NoError(t, err, "insert fail using "+target.layer)
+		err = id.BatchSQL("SELECT NAME FROM TESTTABLE")
+		assert.NoError(t, err, "select fail using "+target.layer)
+		deleteTable(t, id, "TESTTABLE", target.layer)
+		unregisterDatabase(t, id)
+	}
 }

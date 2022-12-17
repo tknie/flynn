@@ -5,6 +5,7 @@ import (
 
 	"github.com/tknie/adabas-go-api/adabas"
 	"github.com/tknie/adabas-go-api/adatypes"
+	"github.com/tknie/db/common"
 	def "github.com/tknie/db/common"
 )
 
@@ -64,23 +65,23 @@ func (ada *Adabas) GetTableColumn(tableName string) ([]string, error) {
 	return nil, def.NewError(65535)
 }
 
-func (ada *Adabas) Query(search *def.Query, f def.ResultFunction) error {
+func (ada *Adabas) Query(search *def.Query, f def.ResultFunction) (*common.Result, error) {
 	con, err := adabas.NewConnection(ada.URL())
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer con.Close()
 	var request *adabas.ReadRequest
 	if search.DataStruct != nil {
 		request, err = con.CreateMapReadRequest(search.DataStruct)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 	} else {
 		request, err = con.CreateMapReadRequest(search.TableName)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 	}
@@ -93,29 +94,29 @@ func (ada *Adabas) Query(search *def.Query, f def.ResultFunction) error {
 	}
 	err = request.QueryFields(buffer.String())
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	cursor, err := request.ReadPhysicalWithCursoring()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	result := &def.Result{}
 	for cursor.HasNextRecord() {
 		if search.DataStruct != nil {
 			record, err := cursor.NextData()
 			if err != nil {
-				return err
+				return nil, err
 			}
 			result.Data = record
 			err = f(search, result)
 			if err != nil {
-				return err
+				return nil, err
 			}
 		} else {
 			record, err := cursor.NextRecord()
 			if err != nil {
-				return err
+				return nil, err
 			}
 			result.Rows = make([]any, 0)
 			for _, v := range record.Value {
@@ -133,17 +134,21 @@ func (ada *Adabas) Query(search *def.Query, f def.ResultFunction) error {
 			}
 			err = f(search, result)
 			if err != nil {
-				return err
+				return nil, err
 			}
 		}
 	}
-	return nil
+	return result, nil
 }
 
-func (ada *Adabas) CreateTable(string, []*def.Column) error {
+func (ada *Adabas) CreateTable(string, any) error {
 	return def.NewError(65535)
 }
 
 func (ada *Adabas) DeleteTable(string) error {
+	return def.NewError(65535)
+}
+
+func (ada *Adabas) BatchSQL(batch string) error {
 	return def.NewError(65535)
 }

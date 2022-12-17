@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/tknie/db/common"
 	def "github.com/tknie/db/common"
 	"github.com/tknie/db/dbsql"
 )
@@ -105,10 +106,10 @@ func (pg *PostGres) GetTableColumn(tableName string) ([]string, error) {
 	return tableRows, nil
 }
 
-func (pg *PostGres) Query(search *def.Query, f def.ResultFunction) error {
+func (pg *PostGres) Query(search *def.Query, f def.ResultFunction) (*common.Result, error) {
 	db, err := sql.Open("pgx", pg.dbURL)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	selectCmd := ""
 	defer db.Close()
@@ -133,12 +134,12 @@ func (pg *PostGres) Query(search *def.Query, f def.ResultFunction) error {
 	}
 	rows, err := db.Query(selectCmd)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	return search.QueryRows(rows, f)
 }
 
-func (pg *PostGres) CreateTable(name string, columns []*def.Column) error {
+func (pg *PostGres) CreateTable(name string, columns any) error {
 	return dbsql.CreateTable(pg, name, columns)
 }
 
@@ -148,4 +149,8 @@ func (pg *PostGres) DeleteTable(name string) error {
 
 func (pg *PostGres) Insert(name string, insert *def.Entries) error {
 	return dbsql.Insert(pg, name, insert)
+}
+
+func (pg *PostGres) BatchSQL(batch string) error {
+	return dbsql.BatchSQL(pg, batch)
 }
