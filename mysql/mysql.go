@@ -103,13 +103,16 @@ func (mysql *Mysql) Query(search *def.Query, f def.ResultFunction) (*common.Resu
 		selectCmd = "select "
 		for i, s := range search.Fields {
 			if i > 0 {
-				s += ","
+				selectCmd += ","
 			}
 			selectCmd += s
 		}
 		selectCmd += " from " + search.TableName
 	default:
 		selectCmd = search.Search
+	}
+	if search.Search != "" {
+		selectCmd += " where " + search.Search
 	}
 	rows, err := db.Query(selectCmd)
 	if err != nil {

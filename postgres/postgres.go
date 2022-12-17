@@ -132,6 +132,9 @@ func (pg *PostGres) Query(search *def.Query, f def.ResultFunction) (*common.Resu
 	default:
 		selectCmd = search.Search
 	}
+	if search.Search != "" {
+		selectCmd += " where " + search.Search
+	}
 	rows, err := db.Query(selectCmd)
 	if err != nil {
 		return nil, err
