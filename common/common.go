@@ -207,7 +207,7 @@ func (search *Query) ParseRows(rows *sql.Rows, f ResultFunction) (result *Result
 func generateColumnByValues(rows *sql.Rows) ([]any, error) {
 	colsType, err := rows.ColumnTypes()
 	if err != nil {
-		if Log.IsDebugLevel() {
+		if IsDebugLevel() {
 			Log.Debugf("Error cols read: %v", err)
 		}
 		return nil, err
@@ -216,7 +216,7 @@ func generateColumnByValues(rows *sql.Rows) ([]any, error) {
 	colsValue := make([]any, 0)
 	for nr, col := range colsType {
 		len, ok := col.Length()
-		if Log.IsDebugLevel() {
+		if IsDebugLevel() {
 			Log.Debugf("Colnr=%d name=%s len=%d ok=%v", nr, col.Name(), len, ok)
 		}
 		switch col.DatabaseTypeName() {

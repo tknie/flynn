@@ -127,7 +127,7 @@ func (ada *Adabas) Query(search *def.Query, f def.ResultFunction) (*common.Resul
 				default:
 					vi = v.Value()
 				}
-				if def.Log.IsDebugLevel() {
+				if common.IsDebugLevel() {
 					def.Log.Debugf("%v %s %T", v, v.Type().Name(), v)
 				}
 				result.Rows = append(result.Rows, vi)

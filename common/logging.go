@@ -31,14 +31,13 @@ type LogI interface {
 	Infof(format string, args ...interface{})
 	Errorf(format string, args ...interface{})
 	Fatal(args ...interface{})
-	IsDebugLevel() bool
 }
 
 // Central central configuration
 var Log = LogI(lognil())
 var debug = false
 
-func (log *nilLogger) IsDebugLevel() bool {
+func IsDebugLevel() bool {
 	return debug
 }
 
@@ -52,7 +51,7 @@ func (log *nilLogger) SetDebugLevel(debugIn bool) {
 // LogMultiLineString log multi line string to log. This prevent the \n display in log.
 // Instead multiple lines are written to log
 func LogMultiLineString(debug bool, logOutput string) {
-	if debug && !Log.IsDebugLevel() {
+	if debug && !IsDebugLevel() {
 		return
 	}
 	columns := strings.Split(logOutput, "\n")
