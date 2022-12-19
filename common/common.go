@@ -134,6 +134,7 @@ func (search *Query) ParseRows(rows *sql.Rows, f ResultFunction) (result *Result
 		Log.Debugf("Error generating column: %v", err)
 		return nil, err
 	}
+	fmt.Println("Parse rows")
 	Log.Debugf("Parse columns rows")
 	result.Fields, err = rows.Columns()
 	if err != nil {
@@ -142,6 +143,7 @@ func (search *Query) ParseRows(rows *sql.Rows, f ResultFunction) (result *Result
 	for rows.Next() {
 		err := rows.Scan(scanRows...)
 		if err != nil {
+			fmt.Println("Error scanning rows", scanRows)
 			Log.Debugf("Error during scan: %v", err)
 			return nil, err
 		}

@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"database/sql"
+	"fmt"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/tknie/db/common"
@@ -87,6 +88,7 @@ func (mysql *Mysql) GetTableColumn(tableName string) ([]string, error) {
 
 func (mysql *Mysql) Query(search *def.Query, f def.ResultFunction) (*common.Result, error) {
 	common.Log.Debugf("Query mysql database")
+	fmt.Println("msql")
 	db, err := sql.Open("mysql", mysql.dbURL)
 	if err != nil {
 		return nil, err

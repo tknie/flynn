@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"database/sql"
+	"fmt"
 	"strings"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -108,6 +109,7 @@ func (pg *PostGres) GetTableColumn(tableName string) ([]string, error) {
 
 func (pg *PostGres) Query(search *def.Query, f def.ResultFunction) (*common.Result, error) {
 	common.Log.Debugf("Query postgres database")
+	fmt.Println("msql")
 	db, err := sql.Open("pgx", pg.dbURL)
 	if err != nil {
 		return nil, err
