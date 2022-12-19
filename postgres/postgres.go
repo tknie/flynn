@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"database/sql"
-	"fmt"
 	"strings"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -112,29 +111,9 @@ func (pg *PostGres) Query(search *def.Query, f def.ResultFunction) (*common.Resu
 	if err != nil {
 		return nil, err
 	}
-	selectCmd := ""
 	defer db.Close()
-	switch {
-	case search.DataStruct != nil:
-		selectCmd = "select "
-		ti := def.CreateInterface(search.DataStruct)
-		search.TypeInfo = ti
-		selectCmd += ti.CreateQueryFields()
-		selectCmd += " from " + search.TableName
-	default:
-		selectCmd = "select "
-		for i, s := range search.Fields {
-			if i > 0 {
-				selectCmd += ","
-			}
-			selectCmd += s
-		}
-		selectCmd += " from " + search.TableName
-	}
-	if search.Search != "" {
-		selectCmd += " where " + search.Search
-	}
-	fmt.Println(selectCmd)
+	selectCmd := search.Select()
+
 	rows, err := db.Query(selectCmd)
 	if err != nil {
 		return nil, err

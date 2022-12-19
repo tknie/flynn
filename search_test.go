@@ -299,7 +299,7 @@ func TestMariaDBSearchRows(t *testing.T) {
 
 	q := &def.Query{TableName: "Albums",
 		Search: "",
-		Fields: []string{"Title"}}
+		Fields: []string{"Title", "created"}}
 	counter := 0
 	_, err = x.Query(q, func(search *def.Query, result *def.Result) error {
 		assert.NotNil(t, search)
@@ -308,10 +308,13 @@ func TestMariaDBSearchRows(t *testing.T) {
 			return fmt.Errorf("Nullstring expected")
 		}
 		ns := result.Rows[0].(*sql.NullString)
+		ts := result.Rows[1].(*time.Time)
+
 		counter++
 		switch counter {
 		case 1:
 			assert.Equal(t, "1.Hälfte Sommerferien 2019 sind vorbei", ns.String)
+			assert.Equal(t, "2022-11-06 18:12:02.764303 +0000 UTC", ts.String())
 		case 10:
 			assert.Equal(t, "Ferien 2017", ns.String)
 		case 48:

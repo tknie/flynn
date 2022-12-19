@@ -2,6 +2,7 @@ package common
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
 )
 
@@ -11,6 +12,7 @@ type Query struct {
 	TableName  string
 	Search     string
 	Fields     []string
+	Limit      uint32
 	DataStruct any
 	TypeInfo   any
 }
@@ -138,6 +140,7 @@ func (search *Query) ParseRows(rows *sql.Rows, f ResultFunction) (result *Result
 	for rows.Next() {
 		err := rows.Scan(scanRows...)
 		if err != nil {
+			Log.Debugf("Scan error during scan: %v", err)
 			return nil, err
 		}
 		result.Rows = make([]any, len(scanRows))
@@ -230,4 +233,32 @@ func generateColumnByValues(rows *sql.Rows) ([]any, error) {
 		}
 	}
 	return colsValue, nil
+}
+
+func (q *Query) Select() string {
+	selectCmd := ""
+	switch {
+	case q.DataStruct != nil:
+		selectCmd = "select "
+		ti := CreateInterface(q.DataStruct)
+		q.TypeInfo = ti
+		selectCmd += ti.CreateQueryFields()
+		selectCmd += " from " + q.TableName
+	default:
+		selectCmd = "select "
+		for i, s := range q.Fields {
+			if i > 0 {
+				selectCmd += ","
+			}
+			selectCmd += s
+		}
+		selectCmd += " from " + q.TableName
+	}
+	if q.Search != "" {
+		selectCmd += " where " + q.Search
+	}
+	if q.Limit > 0 {
+		selectCmd += fmt.Sprintf(" limit = %d", q.Limit)
+	}
+	return selectCmd
 }
