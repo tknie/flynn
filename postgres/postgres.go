@@ -107,6 +107,7 @@ func (pg *PostGres) GetTableColumn(tableName string) ([]string, error) {
 }
 
 func (pg *PostGres) Query(search *def.Query, f def.ResultFunction) (*common.Result, error) {
+	common.Log.Debugf("Query postgres database")
 	db, err := sql.Open("pgx", pg.dbURL)
 	if err != nil {
 		return nil, err

@@ -86,6 +86,7 @@ func (mysql *Mysql) GetTableColumn(tableName string) ([]string, error) {
 }
 
 func (mysql *Mysql) Query(search *def.Query, f def.ResultFunction) (*common.Result, error) {
+	common.Log.Debugf("Query mysql database")
 	db, err := sql.Open("mysql", mysql.dbURL)
 	if err != nil {
 		return nil, err
