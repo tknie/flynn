@@ -131,8 +131,10 @@ func (search *Query) ParseRows(rows *sql.Rows, f ResultFunction) (result *Result
 		err = result.GenerateColumnByStruct(search, rows)
 	}
 	if err != nil {
+		Log.Debugf("Error generating column: %v", err)
 		return nil, err
 	}
+	Log.Debugf("Parse columns rows")
 	result.Fields, err = rows.Columns()
 	if err != nil {
 		return nil, err
@@ -140,7 +142,7 @@ func (search *Query) ParseRows(rows *sql.Rows, f ResultFunction) (result *Result
 	for rows.Next() {
 		err := rows.Scan(scanRows...)
 		if err != nil {
-			Log.Debugf("Scan error during scan: %v", err)
+			Log.Debugf("Error during scan: %v", err)
 			return nil, err
 		}
 		result.Rows = make([]any, len(scanRows))
@@ -208,6 +210,7 @@ func generateColumnByValues(rows *sql.Rows) ([]any, error) {
 		}
 		return nil, err
 	}
+	Log.Debugf("Create columns values")
 	colsValue := make([]any, 0)
 	for nr, col := range colsType {
 		len, ok := col.Length()
