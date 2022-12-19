@@ -34,7 +34,7 @@ type LogI interface {
 }
 
 // Central central configuration
-var Log = lognil()
+var Log = LogI(lognil())
 var debug = false
 
 func (log *nilLogger) IsDebugLevel() bool {
