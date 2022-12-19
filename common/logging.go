@@ -31,6 +31,7 @@ type LogI interface {
 	Infof(format string, args ...interface{})
 	Errorf(format string, args ...interface{})
 	Fatal(args ...interface{})
+	IsDebugLevel() bool
 }
 
 // Central central configuration
