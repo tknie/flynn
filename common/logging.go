@@ -41,10 +41,10 @@ func IsDebugLevel() bool {
 	return debug
 }
 
-func (log *nilLogger) SetDebugLevel(debugIn bool) {
+func SetDebugLevel(debugIn bool) {
 	debug = debugIn
 	if debug {
-		fmt.Println("Warning debug is enabled")
+		fmt.Println("Warning DB debug is enabled")
 	}
 }
 
