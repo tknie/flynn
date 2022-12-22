@@ -1,16 +1,99 @@
 package db
 
 import (
-	"database/sql"
+	"encoding/json"
 	"fmt"
+	"net/url"
+	"os"
+	"path/filepath"
+	"runtime"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/tknie/db/common"
 	def "github.com/tknie/db/common"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
-func TestQuery(t *testing.T) {
+func init() {
+	err := initLog("search.log")
+	if err != nil {
+		fmt.Println("ERROR : ", err)
+		return
+	}
+}
+
+func newWinFileSink(u *url.URL) (zap.Sink, error) {
+	// Remove leading slash left by url.Parse()
+	return os.OpenFile(u.Path[1:], os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
+}
+
+func initLog(fileName string) (err error) {
+	switch common.Log.(type) {
+	case *zap.SugaredLogger:
+		return
+	default:
+	}
+
+	p := os.Getenv("LOGPATH")
+	if p == "" {
+		p = os.TempDir()
+	}
+
+	var name string
+	if runtime.GOOS == "windows" {
+		zap.RegisterSink("winfile", newWinFileSink)
+		//		OutputPaths: []string{"stdout", "winfile:///" + filepath.Join(GlobalConfigDir.Path, "info.log.json")},
+		name = "winfile:///" + p + string(os.PathSeparator) + fileName
+	} else {
+		name = "file://" + filepath.ToSlash(p+string(os.PathSeparator)+fileName)
+	}
+
+	level := zapcore.ErrorLevel
+	ed := os.Getenv("ENABLE_DEBUG")
+	if ed == "1" {
+		level = zapcore.DebugLevel
+		common.SetDebugLevel(true)
+		fmt.Printf("Enable debug logging into %s\n", name)
+	} else {
+		fmt.Printf("Logging to file %s\n", name)
+	}
+
+	rawJSON := []byte(`{
+		"level": "error",
+		"encoding": "console",
+		"outputPaths": [ "XXX"],
+		"errorOutputPaths": ["stderr"],
+		"encoderConfig": {
+		  "messageKey": "message",
+		  "levelKey": "level",
+		  "levelEncoder": "lowercase"
+		}
+	  }`)
+
+	var cfg zap.Config
+	if err := json.Unmarshal(rawJSON, &cfg); err != nil {
+		panic(err)
+	}
+	cfg.Level.SetLevel(level)
+	cfg.OutputPaths = []string{name}
+	logger, err := cfg.Build()
+	if err != nil {
+		panic(err)
+	}
+	defer logger.Sync()
+
+	sugar := logger.Sugar()
+
+	sugar.Infof("logger construction succeeded %s", "xx")
+	common.Log = sugar
+
+	return
+}
+
+func TestSearchQuery(t *testing.T) {
 	pg, err := postgresTarget(t)
 	if !assert.NoError(t, err) {
 		return
@@ -29,7 +112,7 @@ func TestQuery(t *testing.T) {
 	assert.Len(t, columns, 10)
 }
 
-func TestPgSearchRows(t *testing.T) {
+func TestSearchPgRows(t *testing.T) {
 	pg, err := postgresTarget(t)
 	if !assert.NoError(t, err) {
 		return
@@ -50,7 +133,7 @@ func TestPgSearchRows(t *testing.T) {
 		assert.NotNil(t, result)
 		assert.Len(t, result.Fields, 2)
 		fmt.Println("RESULT:", result.Rows)
-		ns := result.Rows[0].(string)
+		ns := *(result.Rows[0].(*string))
 		ts := result.Rows[1].(*time.Time)
 		counter++
 		switch counter {
@@ -72,7 +155,7 @@ func TestPgSearchRows(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestPgSearchCriteriaRows(t *testing.T) {
+func TestSearchPgCriteriaRows(t *testing.T) {
 	pg, err := postgresTarget(t)
 	if !assert.NoError(t, err) {
 		return
@@ -93,7 +176,7 @@ func TestPgSearchCriteriaRows(t *testing.T) {
 		assert.NotNil(t, result)
 		assert.Len(t, result.Fields, 2)
 		fmt.Println("RESULT:", result.Rows)
-		ns := result.Rows[0].(string)
+		ns := *(result.Rows[0].(*string))
 		ts := result.Rows[1].(*time.Time)
 		counter++
 		switch counter {
@@ -113,7 +196,7 @@ type TestString struct {
 	Title string
 }
 
-func TestPgSearchStruct(t *testing.T) {
+func TestSearchPgStruct(t *testing.T) {
 	pg, err := postgresTarget(t)
 	if !assert.NoError(t, err) {
 		return
@@ -135,14 +218,14 @@ func TestPgSearchStruct(t *testing.T) {
 		assert.NotNil(t, result)
 		assert.IsType(t, &TestString{}, result.Data)
 		td := result.Data.(*TestString)
-		x := &td.Title
-		if !assert.Equal(t, x, result.Rows[0]) {
-			return fmt.Errorf("Error found")
-		}
+		// x := &td.Title
+		// if !assert.Equal(t, x, result.Rows[0]) {
+		// 	return fmt.Errorf("Error found")
+		// }
 		counter++
 		switch counter {
 		case 1:
-			assert.Equal(t, td.Title, "5. Klasse")
+			assert.Equal(t, td.Title, "Spontane Ausflüge")
 		case 10:
 			assert.Equal(t, td.Title, "Es ist Herbst.")
 		case 48:
@@ -155,7 +238,7 @@ func TestPgSearchStruct(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestPgSearchPtrStruct(t *testing.T) {
+func TestSearchPgPtrStruct(t *testing.T) {
 	pg, err := postgresTarget(t)
 	if !assert.NoError(t, err) {
 		return
@@ -178,12 +261,12 @@ func TestPgSearchPtrStruct(t *testing.T) {
 		assert.IsType(t, &TestString{}, result.Data)
 		//rs := result.Rows[0].(*string)
 		td := result.Data.(*TestString)
-		x := &td.Title
+		//x := &td.Title
 		//fmt.Printf("Row=%s oldData=%v newDaa=%v oldStruct=%p newStruct=%p field is=%p must=%p\n",
 		//	*rs, search.DataStruct, td, search.DataStruct, td, result.Rows[0], x)
-		if !assert.Equal(t, x, result.Rows[0]) {
-			return fmt.Errorf("Error found")
-		}
+		// if !assert.Equal(t, x, result.Rows[0]) {
+		// 	return fmt.Errorf("Error found")
+		// }
 		counter++
 		switch counter {
 		case 1:
@@ -201,7 +284,7 @@ func TestPgSearchPtrStruct(t *testing.T) {
 	assert.Equal(t, 49, counter)
 }
 
-func TestAdaSearchStruct(t *testing.T) {
+func TestSearchAdaStruct(t *testing.T) {
 	ada, err := adabasTarget(t)
 	if !assert.NoError(t, err) {
 		return
@@ -243,7 +326,7 @@ type Albums struct {
 	Title string
 }
 
-func TestAdaPtrSearchStruct(t *testing.T) {
+func TestSearchAdaPtrStruct(t *testing.T) {
 	ada, err := adabasTarget(t)
 	if !assert.NoError(t, err) {
 		return
@@ -264,9 +347,6 @@ func TestAdaPtrSearchStruct(t *testing.T) {
 		assert.NotNil(t, search)
 		assert.NotNil(t, result)
 		assert.NotNil(t, result.Data)
-		if !assert.IsType(t, &Albums{}, result.Data) {
-			return fmt.Errorf("Result type wrong")
-		}
 		counter++
 		title := result.Data.(*Albums).Title
 		switch counter {
@@ -285,7 +365,8 @@ func TestAdaPtrSearchStruct(t *testing.T) {
 	assert.Equal(t, 49, counter)
 }
 
-func TestMariaDBSearchRows(t *testing.T) {
+func TestSearchMariaDBRows(t *testing.T) {
+
 	db, err := mysqlTarget(t)
 	if !assert.NoError(t, err) {
 		return
@@ -304,23 +385,22 @@ func TestMariaDBSearchRows(t *testing.T) {
 	_, err = x.Query(q, func(search *def.Query, result *def.Result) error {
 		assert.NotNil(t, search)
 		assert.NotNil(t, result)
-		if !assert.IsType(t, &sql.NullString{}, result.Rows[0]) {
-			return fmt.Errorf("Nullstring expected")
-		}
-		ns := result.Rows[0].(*sql.NullString)
+		ns := result.Rows[0].(string)
 		ts := result.Rows[1].(*time.Time)
 
 		counter++
 		switch counter {
 		case 1:
-			assert.Equal(t, "1.Hälfte Sommerferien 2019 sind vorbei", ns.String)
-			assert.Equal(t, "2022-11-06 18:12:02.764303 +0000 UTC", ts.String())
+			assert.Equal(t, "5. Klasse", ns)
+			assert.Equal(t, "2022-10-27 15:15:10 +0000 UTC", ts.String())
+		case 2:
+			assert.Equal(t, "Spontane Ausflüge", ns)
 		case 10:
-			assert.Equal(t, "Ferien 2017", ns.String)
+			assert.Equal(t, "Es ist Herbst.", ns)
 		case 48:
-			assert.Equal(t, "Zwischen den Jahren", ns.String)
+			assert.Equal(t, "Vito", ns)
 		default:
-			assert.NotEqual(t, "blabla", ns.String)
+			assert.NotEqual(t, "blabla", ns)
 		}
 
 		return nil

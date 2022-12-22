@@ -79,6 +79,9 @@ func (dynamic *typeInterface) createQueryValues(dataType interface{}) {
 			dynamic.RowValues = append(dynamic.RowValues, ptr.Interface())
 		}
 	}
+	if IsDebugLevel() {
+		Log.Debugf("Len row values: %d", len(dynamic.RowValues))
+	}
 }
 
 // generateFieldNames examine all structure-tags in the given structure and build up

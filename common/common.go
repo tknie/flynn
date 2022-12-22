@@ -3,7 +3,10 @@ package common
 import (
 	"database/sql"
 	"fmt"
+	"reflect"
 	"time"
+
+	"github.com/blockloop/scan"
 )
 
 type RegDbID uint64
@@ -134,7 +137,6 @@ func (search *Query) ParseRows(rows *sql.Rows, f ResultFunction) (result *Result
 		Log.Debugf("Error generating column: %v", err)
 		return nil, err
 	}
-	fmt.Println("Parse rows")
 	Log.Debugf("Parse columns rows")
 	result.Fields, err = rows.Columns()
 	if err != nil {
@@ -144,7 +146,7 @@ func (search *Query) ParseRows(rows *sql.Rows, f ResultFunction) (result *Result
 		err := rows.Scan(scanRows...)
 		if err != nil {
 			fmt.Println("Error scanning rows", scanRows)
-			Log.Debugf("Error during scan: %v", err)
+			Log.Debugf("Error during scan rows: %v", err)
 			return nil, err
 		}
 		result.Rows = make([]any, len(scanRows))
@@ -204,6 +206,42 @@ func (search *Query) ParseRows(rows *sql.Rows, f ResultFunction) (result *Result
 	return
 }
 
+func (search *Query) ParseStruct(rows *sql.Rows, f ResultFunction) (result *Result, err error) {
+	if search.DataStruct == nil {
+		return search.ParseRows(rows, f)
+	}
+	result = &Result{}
+
+	result.Data = search.DataStruct
+	// rows := make([]any, len(result.Rows))
+	err = result.GenerateColumnByStruct(search, rows)
+	if err != nil {
+		Log.Debugf("Error generating column: %v", err)
+		return nil, err
+	}
+	Log.Debugf("Parse columns rows")
+	result.Fields, err = rows.Columns()
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		copy := reflect.New(reflect.TypeOf(search.DataStruct)).Interface()
+		err := scan.Row(copy, rows)
+		// err := rows.Scan(copy)
+		if err != nil {
+			fmt.Println("Error scanning structs", copy)
+			Log.Debugf("Error during scan of struct: %v", err)
+			return nil, err
+		}
+		result.Data = copy
+		err = f(search, result)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return
+}
+
 func generateColumnByValues(rows *sql.Rows) ([]any, error) {
 	colsType, err := rows.ColumnTypes()
 	if err != nil {
@@ -216,13 +254,22 @@ func generateColumnByValues(rows *sql.Rows) ([]any, error) {
 	colsValue := make([]any, 0)
 	for nr, col := range colsType {
 		len, ok := col.Length()
+		_, nullOk := col.Nullable()
 		if IsDebugLevel() {
-			Log.Debugf("Colnr=%d name=%s len=%d ok=%v", nr, col.Name(), len, ok)
+			Log.Debugf("Colnr=%d name=%s len=%d ok=%v null=%v typeName=%s",
+				nr, col.Name(), len, ok, nullOk, col.DatabaseTypeName())
 		}
 		switch col.DatabaseTypeName() {
-		case "VARCHAR2":
-			s := ""
-			colsValue = append(colsValue, &s)
+		case "VARCHAR2", "VARCHAR":
+			if nullOk {
+				s := sql.NullString{}
+				colsValue = append(colsValue, &s)
+				Log.Debugf("Create null string value")
+			} else {
+				s := ""
+				colsValue = append(colsValue, &s)
+				Log.Debugf("Create non-null string value")
+			}
 		case "NUMBER":
 			s := int64(0)
 			colsValue = append(colsValue, &s)

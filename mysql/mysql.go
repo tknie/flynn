@@ -89,7 +89,7 @@ func (mysql *Mysql) GetTableColumn(tableName string) ([]string, error) {
 func (mysql *Mysql) Query(search *def.Query, f def.ResultFunction) (*common.Result, error) {
 	common.Log.Debugf("Query mysql database")
 	fmt.Println("msql")
-	db, err := sql.Open("mysql", mysql.dbURL)
+	db, err := sql.Open("mysql", mysql.dbURL+"?parseTime=true")
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +100,10 @@ func (mysql *Mysql) Query(search *def.Query, f def.ResultFunction) (*common.Resu
 	if err != nil {
 		return nil, err
 	}
-	return search.ParseRows(rows, f)
+	if search.DataStruct == nil {
+		return search.ParseRows(rows, f)
+	}
+	return search.ParseStruct(rows, f)
 }
 
 func (mysql *Mysql) CreateTable(name string, columns any) error {

@@ -121,7 +121,10 @@ func (pg *PostGres) Query(search *def.Query, f def.ResultFunction) (*common.Resu
 	if err != nil {
 		return nil, err
 	}
-	return search.ParseRows(rows, f)
+	if search.DataStruct == nil {
+		return search.ParseRows(rows, f)
+	}
+	return search.ParseStruct(rows, f)
 }
 
 func (pg *PostGres) CreateTable(name string, columns any) error {

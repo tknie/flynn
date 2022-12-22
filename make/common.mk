@@ -14,6 +14,9 @@ GO_TAGS     = db
 
 TEST_RUN    = $(if $(TEST),-test.run $(TEST),)
 TIMEOUT     = 2000
+LOGPATH     = $(CURDIR)/logs
+
+export LOGPATH
 
 .PHONY: all
 all: prepare fmt lint lib $(EXECS) test-build
@@ -32,6 +35,9 @@ lib: $(LIBS) $(CEXEC)
 
 prepare: $(LOGPATH) $(CURLOGPATH) $(BIN) $(BINTOOLS)
 	@echo "Build architecture ${GOARCH} ${GOOS} network=${WCPHOST} GOFLAGS=$(GO_FLAGS) GOEXE=$(GOEXE)"
+
+$(LOGPATH):
+	mkdir $(LOGPATH)
 
 $(LIBS): | ; $(info $(M) building libraries…) @ ## Build program binary
 	$Q cd $(CURDIR) && \
