@@ -4,7 +4,10 @@ import (
 	"bytes"
 	"database/sql"
 	"fmt"
+	"reflect"
+	"strings"
 
+	"github.com/tknie/db/common"
 	def "github.com/tknie/db/common"
 )
 
@@ -16,6 +19,7 @@ type DBsql interface {
 
 func CreateTable(dbsql DBsql, name string, col any) error {
 	//	columns []*def.Column
+	common.Log.Debugf("Create SQL table")
 	layer, url := dbsql.Reference()
 	db, err := sql.Open(layer, url)
 	if err != nil {
@@ -35,7 +39,7 @@ func CreateTable(dbsql DBsql, name string, col any) error {
 	}
 	createCmd += ")"
 	fmt.Println(createCmd)
-	def.Log.Debugf(url+": Create cmd", createCmd)
+	common.Log.Debugf(url+": Create cmd", createCmd)
 	_, err = db.Query(createCmd)
 	if err != nil {
 		return err
@@ -51,7 +55,7 @@ func DeleteTable(dbsql DBsql, name string) error {
 	}
 	defer db.Close()
 
-	fmt.Println("Drop table " + name)
+	common.Log.Debugf("Drop table " + name)
 
 	_, err = db.Query("DROP TABLE " + name)
 	if err != nil {
@@ -83,8 +87,8 @@ func createTableByColumns(dbsql DBsql, columns []*def.Column) string {
 }
 
 func createTableByStruct(dbsql DBsql, columns any) (string, error) {
-	fmt.Println("Create table by structs")
-	return def.SqlDataType(columns)
+	common.Log.Debugf("Create table by structs")
+	return SqlDataType(dbsql, columns)
 }
 
 func BatchSQL(dbsql DBsql, batch string) error {
@@ -104,4 +108,144 @@ func BatchSQL(dbsql DBsql, batch string) error {
 		fmt.Println(rows.ColumnTypes())
 	}
 	return nil
+}
+
+func SqlDataType(dbsql DBsql, columns any) (string, error) {
+	x := reflect.TypeOf(columns)
+	if x.Kind() == reflect.Pointer {
+		x = x.Elem()
+	}
+	common.Log.Debugf("Go through data type %s", x.Name())
+	switch x.Kind() {
+	case reflect.Struct:
+		var buffer bytes.Buffer
+		for i := 0; i < x.NumField(); i++ {
+			if i > 0 {
+				buffer.WriteString(", ")
+			}
+			f := x.Field(i)
+			s, err := sqlDataTypeStructField(dbsql, f)
+			if err != nil {
+				return "", err
+			}
+			buffer.WriteString(s)
+		}
+		common.Log.Debugf("Got for type %s: %s", x.Name(), buffer.String())
+		return buffer.String(), nil
+	}
+	common.Log.Debugf("Type error, no struct: %T", columns)
+	return "", common.NewError(5, "", fmt.Sprintf("%T", columns))
+}
+
+func sqlDataTypeStructField(dbsql DBsql, field reflect.StructField) (string, error) {
+	x := field.Type
+	if x.Kind() == reflect.Pointer {
+		x = x.Elem()
+	}
+	common.Log.Debugf("Check kind %s/%s %s", x.Kind(), x.Name(), field.Name)
+	switch x.Kind() {
+	case reflect.Struct:
+		name, additional, _ := evaluateName(field, x)
+		if x.Name() == "Time" {
+			return name + " TIMESTAMP " + additional, nil
+		}
+		var buffer bytes.Buffer
+		for i := 0; i < x.NumField(); i++ {
+			if i > 0 {
+				buffer.WriteString(", ")
+			}
+			f := x.Field(i)
+			s, err := sqlDataTypeStructFieldDataType(dbsql, f)
+			if err != nil {
+				return "", err
+			}
+			buffer.WriteString(s)
+		}
+		return buffer.String(), nil
+	default:
+		return sqlDataTypeStructFieldDataType(dbsql, field)
+	}
+	// return "", NewError(5, field.Name, x.Kind())
+}
+
+func sqlDataTypeStructFieldDataType(dbsql DBsql, sf reflect.StructField) (string, error) {
+	t := sf.Type
+	name, additional, info := evaluateName(sf, t)
+	if info != "" {
+		return info, nil
+	}
+	common.Log.Debugf("dbsql name %s and kind %s", name, t.Kind())
+	switch t.Kind() {
+	case reflect.String:
+		return name + " " + common.Alpha.SqlType(255) + additional, nil
+	case reflect.Int, reflect.Int8, reflect.Int16,
+		reflect.Int32, reflect.Int64:
+		return name + " " + common.Integer.SqlType() + additional, nil
+	case reflect.Uint, reflect.Uint8, reflect.Uint16,
+		reflect.Uint32, reflect.Uint64:
+		return name + " " + common.Integer.SqlType() + additional, nil
+	case reflect.Float32, reflect.Float64:
+		return name + " " + common.Decimal.SqlType(10, 5) + additional, nil
+	case reflect.Bool:
+		return name + " " + common.Bit.SqlType(1) + additional, nil
+	case reflect.Complex64, reflect.Complex128:
+		return "", common.NewError(7)
+	case reflect.Struct:
+		var buffer bytes.Buffer
+		ty := t
+		for i := 0; i < ty.NumField(); i++ {
+			if i > 0 {
+				buffer.WriteString(", ")
+			}
+			f := ty.Field(i)
+			fmt.Println("Struct Field: " + f.Name)
+			s, err := sqlDataTypeStructFieldDataType(dbsql, f)
+			if err != nil {
+				return "", err
+			}
+
+			buffer.WriteString(s)
+		}
+		buffer.WriteString(additional)
+		return buffer.String(), nil
+	case reflect.Array:
+		common.Log.Debugf("Arrays %d", t.Len())
+		if t.Elem().Kind() == reflect.Uint8 {
+			return name + " " + def.Bytes.SqlType(dbsql.ByteArrayAvailable(), 8) + additional, nil
+		}
+		return "", common.NewError(8, sf.Name)
+	case reflect.Slice:
+		return "", common.NewError(9, sf.Name)
+	default:
+		//		return SqlDataType(t)
+		// + " CONSTRAINT " + t.Name +
+		// 	" CHECK (" + t.Name + " > 0)"
+	}
+	return "", common.NewError(6, sf.Name, t.Kind())
+}
+
+func evaluateName(sf reflect.StructField, tsf reflect.Type) (string, string, string) {
+	t := tsf
+	if t.Kind() == reflect.Pointer {
+		t = t.Elem()
+	}
+	name := sf.Name
+	additional := ""
+	common.Log.Debugf("Found name " + name)
+	if tagName, ok := sf.Tag.Lookup("dbsql"); ok {
+		tagField := strings.Split(tagName, ":")
+		if tagField[0] != "" {
+			name = tagField[0]
+		}
+		if len(tagField) > 1 {
+			additional = " " + tagField[1]
+		}
+		common.Log.Debugf("Overwrite to name " + name)
+		if len(tagField) > 2 {
+			if tagField[2] == "SERIAL" {
+				return "", "", name + " SERIAL UNIQUE"
+			}
+		}
+	}
+	return name, additional, ""
 }

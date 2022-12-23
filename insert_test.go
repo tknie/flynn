@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/tknie/db/common"
 	def "github.com/tknie/db/common"
 )
 
@@ -42,6 +43,14 @@ type TestData struct {
 	LeaveStart  time.Time
 	LeaveEnd    time.Time
 	Language    uint64 `dbsql:"::8"`
+}
+
+func init() {
+	err := initLog("insert.log")
+	if err != nil {
+		fmt.Println("ERROR : ", err)
+		return
+	}
 }
 
 func TestInsertInitTestTable(t *testing.T) {
@@ -170,7 +179,7 @@ func checkStructTableAvailablefunc(t *testing.T, target *target) error {
 }
 
 func createStructTestTable(t *testing.T, target *target) error {
-	fmt.Println("Create database table")
+	common.Log.Debugf("Create database table")
 
 	id, err := Register(target.layer, target.url)
 	if !assert.NoError(t, err, "register fail using "+target.layer) {
