@@ -38,5 +38,5 @@ func TestMysqlInit(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, []string{"AlbumPictures", "Albums",
 		"PictureLocations", "PictureTag", "PictureTags",
-		"Pictures", "Tags", "TestTableData"}, m)
+		"Pictures", "TESTTABLEy", "Tags"}, m)
 }
