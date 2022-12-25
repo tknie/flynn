@@ -33,7 +33,8 @@ func (dynamic *typeInterface) CreateQueryFields() string {
 	return buffer.String()
 }
 
-func (dynamic *typeInterface) CreateQueryValues() []any {
+func (dynamic *typeInterface) CreateQueryValues() (any, []any) {
+	Log.Debugf("Create query values")
 	rt := reflect.TypeOf(dynamic.DataType)
 	if rt.Kind() == reflect.Pointer {
 		rt = rt.Elem()
@@ -41,13 +42,17 @@ func (dynamic *typeInterface) CreateQueryValues() []any {
 	ptr2 := reflect.New(rt)
 	dynamic.DataType = ptr2.Interface()
 	dynamic.createQueryValues(dynamic.DataType)
-	return dynamic.RowValues
+	Log.Debugf("Number values created %d out of %s", len(dynamic.RowValues), dynamic.RowNames)
+	Log.Debugf("Values %#v", dynamic.RowValues)
+	return ptr2.Interface(), dynamic.RowValues
 }
 
 func (dynamic *typeInterface) createQueryValues(dataType interface{}) {
 	rv := reflect.ValueOf(dataType)
+	rt := reflect.TypeOf(dataType)
 	if rv.Kind() == reflect.Pointer {
 		rv = rv.Elem()
+		rt = rt.Elem()
 	}
 	if IsDebugLevel() {
 		rt := reflect.TypeOf(dataType)
@@ -55,8 +60,9 @@ func (dynamic *typeInterface) createQueryValues(dataType interface{}) {
 	}
 	for fi := 0; fi < rv.NumField(); fi++ {
 		cv := rv.Field(fi)
+		subRt := rt.Field(fi)
 		if IsDebugLevel() {
-			Log.Debugf("%s:%v %s %v canAddr: %v", fi, cv, cv.Type().Name(), cv.CanInterface(), cv.CanAddr())
+			Log.Debugf("Field %d:%s %v canAddr: %v %s %s", fi, cv.Type().Name(), cv.CanInterface(), cv.CanAddr(), rt.Name(), subRt.Name)
 		}
 		if cv.Kind() == reflect.Struct {
 			dynamic.createQueryValues(cv.Interface())
@@ -68,14 +74,24 @@ func (dynamic *typeInterface) createQueryValues(dataType interface{}) {
 			}
 			var ptr reflect.Value
 			if cv.CanAddr() {
+				Log.Debugf("Use Addr")
 				ptr = cv.Addr()
 			} else {
+				Log.Debugf("New Addr pointer")
 				ptr = reflect.New(cv.Type())
 				ptr.Elem().Set(cv)
 			}
 			if IsDebugLevel() {
-				Log.Debugf("FieldPTR: %T / %v / %v / %T\n", ptr.Type().Name(), ptr.Elem(), ptr.Interface(), ptr.Interface())
+				Log.Debugf("FieldPTR: %T / %T / %v\n", ptr.Type().Name(), ptr.Interface(), ptr.Interface())
 			}
+			// x := ptr.Pointer()
+			// xv := reflect.ValueOf(x)
+			// fmt.Println("PTR Kind:", xv.Kind(), xv.Kind() == reflect.Pointer)
+			// if xv.Kind() != reflect.Pointer {
+			// 	log.Fatalf("FATAL ERROR not a pointer ..... exiting FieldPTR: %T / %T / %v\n", ptr.Type().Name(), x, x)
+			// }
+			//rf := reflect.NewAt(cv.Type(), unsafe.Pointer(ptr.Pointer())) // .Elem()
+			//dynamic.RowValues = append(dynamic.RowValues, rf.Interface())
 			dynamic.RowValues = append(dynamic.RowValues, ptr.Interface())
 		}
 	}

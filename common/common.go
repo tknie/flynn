@@ -3,10 +3,7 @@ package common
 import (
 	"database/sql"
 	"fmt"
-	"reflect"
 	"time"
-
-	"github.com/blockloop/scan"
 )
 
 type RegDbID uint64
@@ -114,12 +111,12 @@ func (id RegDbID) GetTableColumn(tableName string) ([]string, error) {
 	return driver.GetTableColumn(tableName)
 }
 
-func (result *Result) GenerateColumnByStruct(search *Query, rows *sql.Rows) error {
+func (result *Result) GenerateColumnByStruct(search *Query, rows *sql.Rows) (any, []any, error) {
 	ti := search.TypeInfo.(*typeInterface)
-	ti.CreateQueryValues()
+	copy, values := ti.CreateQueryValues()
 	result.Rows = ti.RowValues
 	result.Data = ti.DataType
-	return nil
+	return copy, values, nil
 }
 
 func (search *Query) ParseRows(rows *sql.Rows, f ResultFunction) (result *Result, err error) {
@@ -131,7 +128,7 @@ func (search *Query) ParseRows(rows *sql.Rows, f ResultFunction) (result *Result
 	if search.DataStruct == nil {
 		scanRows, err = generateColumnByValues(rows)
 	} else {
-		err = result.GenerateColumnByStruct(search, rows)
+		_, scanRows, err = result.GenerateColumnByStruct(search, rows)
 	}
 	if err != nil {
 		Log.Debugf("Error generating column: %v", err)
@@ -213,8 +210,7 @@ func (search *Query) ParseStruct(rows *sql.Rows, f ResultFunction) (result *Resu
 	result = &Result{}
 
 	result.Data = search.DataStruct
-	// rows := make([]any, len(result.Rows))
-	err = result.GenerateColumnByStruct(search, rows)
+	copy, values, err := result.GenerateColumnByStruct(search, rows)
 	if err != nil {
 		Log.Debugf("Error generating column: %v", err)
 		return nil, err
@@ -225,12 +221,10 @@ func (search *Query) ParseStruct(rows *sql.Rows, f ResultFunction) (result *Resu
 		return nil, err
 	}
 	for rows.Next() {
-		copy := reflect.New(reflect.TypeOf(search.DataStruct)).Interface()
-		err := scan.Row(copy, rows)
-		// err := rows.Scan(copy)
+		err := rows.Scan(values...)
 		if err != nil {
-			fmt.Println("Error scanning structs", copy)
-			Log.Debugf("Error during scan of struct: %v", err)
+			fmt.Println("Error scanning structs", values, err)
+			Log.Debugf("Error during scan of struct: %v/%v", err, copy)
 			return nil, err
 		}
 		result.Data = copy

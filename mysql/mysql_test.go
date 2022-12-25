@@ -36,7 +36,7 @@ func TestMysqlInit(t *testing.T) {
 	}
 	m, err := pg.Maps()
 	assert.NoError(t, err)
-	assert.Equal(t, []string{"AlbumPictures", "Albums",
-		"PictureLocations", "PictureTag", "PictureTags",
-		"Pictures", "TESTTABLEy", "Tags"}, m)
+	assert.Equal(t, []string{"AlbumPictures", "Albums", "PictureLocations", "PictureTag",
+		"PictureTags", "Pictures", "Tags",
+		"TestStructTableData", "TestTableData"}, m)
 }

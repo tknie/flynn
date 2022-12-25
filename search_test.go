@@ -1,21 +1,18 @@
 package db
 
 import (
-	"encoding/json"
 	"fmt"
-	"net/url"
 	"os"
-	"path/filepath"
-	"runtime"
 	"testing"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/tknie/db/common"
 	def "github.com/tknie/db/common"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 )
+
+var log = logrus.StandardLogger()
 
 func init() {
 	err := initLog("search.log")
@@ -23,72 +20,27 @@ func init() {
 		fmt.Println("ERROR : ", err)
 		return
 	}
-}
 
-func newWinFileSink(u *url.URL) (zap.Sink, error) {
-	// Remove leading slash left by url.Parse()
-	return os.OpenFile(u.Path[1:], os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
 }
 
 func initLog(fileName string) (err error) {
-	switch common.Log.(type) {
-	case *zap.SugaredLogger:
-		return
-	default:
-	}
-
+	common.SetDebugLevel(true)
+	log.SetFormatter(&logrus.TextFormatter{
+		FullTimestamp:   true,
+		TimestampFormat: "2006-01-02T15:04:05",
+	})
+	log.SetLevel(logrus.DebugLevel)
 	p := os.Getenv("LOGPATH")
 	if p == "" {
 		p = os.TempDir()
 	}
-
-	var name string
-	if runtime.GOOS == "windows" {
-		zap.RegisterSink("winfile", newWinFileSink)
-		//		OutputPaths: []string{"stdout", "winfile:///" + filepath.Join(GlobalConfigDir.Path, "info.log.json")},
-		name = "winfile:///" + p + string(os.PathSeparator) + fileName
-	} else {
-		name = "file://" + filepath.ToSlash(p+string(os.PathSeparator)+fileName)
-	}
-
-	level := zapcore.ErrorLevel
-	ed := os.Getenv("ENABLE_DEBUG")
-	if ed == "1" {
-		level = zapcore.DebugLevel
-		common.SetDebugLevel(true)
-		fmt.Printf("Enable debug logging into %s\n", name)
-	} else {
-		fmt.Printf("Logging to file %s\n", name)
-	}
-
-	rawJSON := []byte(`{
-		"level": "error",
-		"encoding": "console",
-		"outputPaths": [ "XXX"],
-		"errorOutputPaths": ["stderr"],
-		"encoderConfig": {
-		  "messageKey": "message",
-		  "levelKey": "level",
-		  "levelEncoder": "lowercase"
-		}
-	  }`)
-
-	var cfg zap.Config
-	if err := json.Unmarshal(rawJSON, &cfg); err != nil {
-		panic(err)
-	}
-	cfg.Level.SetLevel(level)
-	cfg.OutputPaths = []string{name}
-	logger, err := cfg.Build()
+	f, err := os.OpenFile(p+"/"+fileName, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
 	if err != nil {
-		panic(err)
+		return err
 	}
-	defer logger.Sync()
-
-	sugar := logger.Sugar()
-
-	sugar.Infof("logger construction succeeded %s", "xx")
-	common.Log = sugar
+	log.SetOutput(f)
+	log.Debugf("Init logrus")
+	common.Log = log
 
 	return
 }
