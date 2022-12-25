@@ -177,7 +177,7 @@ func TestSearchPgStruct(t *testing.T) {
 		counter++
 		switch counter {
 		case 1:
-			assert.Equal(t, td.Title, "Spontane Ausflüge")
+			assert.Equal(t, td.Title, "5. Klasse")
 		case 10:
 			assert.Equal(t, td.Title, "Es ist Herbst.")
 		case 48:
