@@ -269,7 +269,7 @@ func generateColumnByValues(rows *sql.Rows) ([]any, error) {
 		case "NUMBER":
 			s := int64(0)
 			colsValue = append(colsValue, &s)
-		case "BYTEA":
+		case "BYTEA", "BLOB":
 			s := make([]byte, 0)
 			colsValue = append(colsValue, &s)
 		case "LONG":
