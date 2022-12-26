@@ -115,6 +115,7 @@ func (pg *PostGres) Query(search *def.Query, f def.ResultFunction) (*common.Resu
 	defer db.Close()
 	selectCmd := search.Select()
 
+	common.Log.Debugf("Query: %s", selectCmd)
 	rows, err := db.Query(selectCmd)
 	if err != nil {
 		return nil, err

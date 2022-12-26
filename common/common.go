@@ -134,12 +134,13 @@ func (search *Query) ParseRows(rows *sql.Rows, f ResultFunction) (result *Result
 		Log.Debugf("Error generating column: %v", err)
 		return nil, err
 	}
-	Log.Debugf("Parse columns rows")
 	result.Fields, err = rows.Columns()
 	if err != nil {
 		return nil, err
 	}
+	Log.Debugf("Parse columns rows: %d fields: %v", len(scanRows), result.Fields)
 	for rows.Next() {
+		Log.Debugf("Found record")
 		err := rows.Scan(scanRows...)
 		if err != nil {
 			fmt.Println("Error scanning rows", scanRows)
@@ -200,6 +201,7 @@ func (search *Query) ParseRows(rows *sql.Rows, f ResultFunction) (result *Result
 			return nil, err
 		}
 	}
+	Log.Debugf("Rows procession ended")
 	return
 }
 
@@ -266,6 +268,9 @@ func generateColumnByValues(rows *sql.Rows) ([]any, error) {
 			}
 		case "NUMBER":
 			s := int64(0)
+			colsValue = append(colsValue, &s)
+		case "BYTEA":
+			s := make([]byte, 0)
 			colsValue = append(colsValue, &s)
 		case "LONG":
 			s := ""
