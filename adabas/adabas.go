@@ -1,3 +1,14 @@
+/*
+* Copyright 2022 Thorsten A. Knieling
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*    http://www.apache.org/licenses/LICENSE-2.0
+*
+ */
+
 package adabas
 
 import (
@@ -53,7 +64,15 @@ func (ada *Adabas) check() error {
 	return nil
 }
 
+func (ada *Adabas) Open() (any, error) {
+	return nil, def.NewError(65535)
+}
+
 func (ada *Adabas) Insert(name string, insert *def.Entries) error {
+	return def.NewError(65535)
+}
+
+func (ada *Adabas) Update(name string, insert *def.Entries) error {
 	return def.NewError(65535)
 }
 

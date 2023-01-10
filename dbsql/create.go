@@ -1,3 +1,14 @@
+/*
+* Copyright 2022 Thorsten A. Knieling
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*    http://www.apache.org/licenses/LICENSE-2.0
+*
+ */
+
 package dbsql
 
 import (
@@ -12,9 +23,11 @@ import (
 )
 
 type DBsql interface {
+	Open() (any, error)
 	Reference() (string, string)
 	IndexNeeded() bool
 	ByteArrayAvailable() bool
+	IsTransaction() bool
 }
 
 func CreateTable(dbsql DBsql, name string, col any) error {

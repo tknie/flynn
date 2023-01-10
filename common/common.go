@@ -1,3 +1,14 @@
+/*
+* Copyright 2022 Thorsten A. Knieling
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*    http://www.apache.org/licenses/LICENSE-2.0
+*
+ */
+
 package common
 
 import (
@@ -25,7 +36,8 @@ type Result struct {
 
 type Entries struct {
 	Fields []string
-	Values []any
+	Update []string
+	Values [][]any
 }
 
 type Database interface {
@@ -35,7 +47,9 @@ type Database interface {
 	GetTableColumn(tableName string) ([]string, error)
 	CreateTable(string, any) error
 	DeleteTable(string) error
+	Open() (any, error)
 	Insert(name string, insert *Entries) error
+	Update(name string, insert *Entries) error
 	Delete(name string, remove *Entries) error
 	BatchSQL(batch string) error
 	Query(search *Query, f ResultFunction) (*Result, error)
@@ -52,7 +66,12 @@ type Column struct {
 type ResultFunction func(search *Query, result *Result) error
 
 type CommonDatabase struct {
-	RegDbID RegDbID
+	RegDbID     RegDbID
+	Transaction bool
+}
+
+func (cd *CommonDatabase) IsTransaction() bool {
+	return cd.Transaction
 }
 
 func (id RegDbID) Query(query *Query, f ResultFunction) (*Result, error) {
@@ -87,12 +106,28 @@ func (id RegDbID) BatchSQL(batch string) error {
 	return driver.BatchSQL(batch)
 }
 
+func (id RegDbID) Open() (any, error) {
+	driver, err := searchDataDriver(id)
+	if err != nil {
+		return nil, err
+	}
+	return driver.Open()
+}
+
 func (id RegDbID) Insert(name string, insert *Entries) error {
 	driver, err := searchDataDriver(id)
 	if err != nil {
 		return err
 	}
 	return driver.Insert(name, insert)
+}
+
+func (id RegDbID) Update(name string, insert *Entries) error {
+	driver, err := searchDataDriver(id)
+	if err != nil {
+		return err
+	}
+	return driver.Update(name, insert)
 }
 
 func (id RegDbID) Delete(name string, remove *Entries) error {

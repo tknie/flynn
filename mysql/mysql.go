@@ -1,3 +1,14 @@
+/*
+* Copyright 2022 Thorsten A. Knieling
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*    http://www.apache.org/licenses/LICENSE-2.0
+*
+ */
+
 package mysql
 
 import (
@@ -11,17 +22,34 @@ import (
 
 type Mysql struct {
 	def.CommonDatabase
+	openDB       any
 	dbURL        string
 	dbTableNames []string
 }
 
 func New(id def.RegDbID, url string) (def.Database, error) {
-	mysql := &Mysql{def.CommonDatabase{RegDbID: id}, url, nil}
+	mysql := &Mysql{def.CommonDatabase{RegDbID: id}, nil, url, nil}
 	err := mysql.check()
 	if err != nil {
 		return nil, err
 	}
 	return mysql, nil
+}
+
+func (mysql *Mysql) Open() (dbOpen any, err error) {
+	layer, url := mysql.Reference()
+	var db *sql.DB
+	if !mysql.IsTransaction() || mysql.openDB == nil {
+		db, err = sql.Open(layer, url)
+		if err != nil {
+			return
+		}
+		mysql.openDB = db
+		defer db.Close()
+	} else {
+		db = mysql.openDB.(*sql.DB)
+	}
+	return db, nil
 }
 
 func (mysql *Mysql) IndexNeeded() bool {
@@ -75,6 +103,10 @@ func (mysql *Mysql) check() error {
 
 func (mysql *Mysql) Insert(name string, insert *def.Entries) error {
 	return dbsql.Insert(mysql, name, insert)
+}
+
+func (mysql *Mysql) Update(name string, insert *def.Entries) error {
+	return def.NewError(65535)
 }
 
 func (mysql *Mysql) Delete(name string, remove *def.Entries) error {

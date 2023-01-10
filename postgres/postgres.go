@@ -1,3 +1,14 @@
+/*
+* Copyright 2022 Thorsten A. Knieling
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*    http://www.apache.org/licenses/LICENSE-2.0
+*
+ */
+
 package postgres
 
 import (
@@ -12,12 +23,13 @@ import (
 
 type PostGres struct {
 	def.CommonDatabase
+	openDB       any
 	dbURL        string
 	dbTableNames []string
 }
 
 func New(id def.RegDbID, url string) (def.Database, error) {
-	pg := &PostGres{def.CommonDatabase{RegDbID: id}, url, nil}
+	pg := &PostGres{def.CommonDatabase{RegDbID: id}, nil, url, nil}
 	err := pg.check()
 	if err != nil {
 		return nil, err
@@ -47,6 +59,22 @@ func (pg *PostGres) URL() string {
 func (pg *PostGres) Maps() ([]string, error) {
 
 	return pg.dbTableNames, nil
+}
+
+func (pg *PostGres) Open() (dbOpen any, err error) {
+	layer, url := pg.Reference()
+	var db *sql.DB
+	if !pg.IsTransaction() || pg.openDB == nil {
+		db, err = sql.Open(layer, url)
+		if err != nil {
+			return
+		}
+		pg.openDB = db
+		defer db.Close()
+	} else {
+		db = pg.openDB.(*sql.DB)
+	}
+	return db, nil
 }
 
 func (pg *PostGres) check() error {
@@ -136,6 +164,10 @@ func (pg *PostGres) DeleteTable(name string) error {
 
 func (pg *PostGres) Insert(name string, insert *def.Entries) error {
 	return dbsql.Insert(pg, name, insert)
+}
+
+func (pg *PostGres) Update(name string, insert *def.Entries) error {
+	return dbsql.Update(pg, name, insert)
 }
 
 func (pg *PostGres) BatchSQL(batch string) error {

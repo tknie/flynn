@@ -1,3 +1,14 @@
+/*
+* Copyright 2022 Thorsten A. Knieling
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*    http://www.apache.org/licenses/LICENSE-2.0
+*
+ */
+
 package db
 
 import (
@@ -61,7 +72,7 @@ func TestCreateStringArray(t *testing.T) {
 		}
 		list = append(list, []any{"Letztes", "Anton"})
 		err = id.Insert("TESTTABLE", &def.Entries{Fields: []string{"name", "firstname"},
-			Values: list})
+			Values: [][]any{list}})
 		assert.NoError(t, err, "insert fail using "+target.layer)
 		deleteTable(t, id, "TESTTABLE", target.layer)
 		unregisterDatabase(t, id)
@@ -111,7 +122,7 @@ func TestCreateStruct(t *testing.T) {
 		}
 		list = append(list, []any{"Letztes", "Anton"})
 		err = id.Insert("TESTTABLE", &def.Entries{Fields: []string{"name", "firstname"},
-			Values: list})
+			Values: [][]any{list}})
 		assert.NoError(t, err, "insert fail using "+target.layer)
 		err = id.BatchSQL("SELECT NAME FROM TESTTABLE")
 		assert.NoError(t, err, "select fail using "+target.layer)
