@@ -54,8 +54,8 @@ func TestPostgresTableColumns(t *testing.T) {
 	}
 	m, err := pg.GetTableColumn("Albums")
 	assert.NoError(t, err)
-	assert.Equal(t, []string{"id", "created", "updated_at",
-		"directory", "title", "description", "option", "thumbnail",
-		"albumtype", "albumkey"}, m)
+	assert.Equal(t, []string{"id", "published", "created",
+		"updated_at", "title", "description", "option", "thumbnail",
+		"albumtype", "albumkey", "directory"}, m)
 
 }
