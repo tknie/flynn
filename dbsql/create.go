@@ -19,7 +19,6 @@ import (
 	"strings"
 
 	"github.com/tknie/db/common"
-	def "github.com/tknie/db/common"
 )
 
 type DBsql interface {
@@ -41,22 +40,24 @@ func CreateTable(dbsql DBsql, name string, col any) error {
 	defer db.Close()
 	createCmd := `CREATE TABLE ` + name + ` (`
 	switch columns := col.(type) {
-	case []*def.Column:
+	case []*common.Column:
 		createCmd += createTableByColumns(dbsql, columns)
 	default:
 		c, err := createTableByStruct(dbsql, col)
 		if err != nil {
+			common.Log.Errorf("Error parsing structure: %v", err)
 			return err
 		}
 		createCmd += c
 	}
 	createCmd += ")"
-	fmt.Println(createCmd)
-	common.Log.Debugf(url+": Create cmd", createCmd)
+	common.Log.Debugf(url+": Create cmd %s", createCmd)
 	_, err = db.Query(createCmd)
 	if err != nil {
+		common.Log.Errorf("Error returned by SQL: %v", err)
 		return err
 	}
+	common.Log.Debugf("Table created")
 	return nil
 }
 
@@ -77,7 +78,7 @@ func DeleteTable(dbsql DBsql, name string) error {
 	return nil
 }
 
-func createTableByColumns(dbsql DBsql, columns []*def.Column) string {
+func createTableByColumns(dbsql DBsql, columns []*common.Column) string {
 	var buffer bytes.Buffer
 	for i, c := range columns {
 		if i > 0 {
@@ -85,11 +86,11 @@ func createTableByColumns(dbsql DBsql, columns []*def.Column) string {
 		}
 		buffer.WriteString(c.Name + " ")
 		switch c.DataType {
-		case def.Alpha, def.Bit:
+		case common.Alpha, common.Bit:
 			buffer.WriteString(c.DataType.SqlType(c.Length))
-		case def.Decimal:
+		case common.Decimal:
 			buffer.WriteString(c.DataType.SqlType(c.Length, c.Digits))
-		case def.Bytes:
+		case common.Bytes:
 			buffer.WriteString(c.DataType.SqlType(dbsql.ByteArrayAvailable(),
 				c.Length))
 		default:
@@ -117,8 +118,9 @@ func BatchSQL(dbsql DBsql, batch string) error {
 		return err
 	}
 	for rows.Next() {
-		fmt.Println(rows.Err())
-		fmt.Println(rows.ColumnTypes())
+		if rows.Err() != nil {
+			fmt.Println("Batch SQL error:", rows.Err())
+		}
 	}
 	return nil
 }
@@ -224,7 +226,7 @@ func sqlDataTypeStructFieldDataType(dbsql DBsql, sf reflect.StructField) (string
 	case reflect.Array:
 		common.Log.Debugf("Arrays %d", t.Len())
 		if t.Elem().Kind() == reflect.Uint8 {
-			return name + " " + def.Bytes.SqlType(dbsql.ByteArrayAvailable(), 8) + additional, nil
+			return name + " " + common.Bytes.SqlType(dbsql.ByteArrayAvailable(), 8) + additional, nil
 		}
 		return "", common.NewError(8, sf.Name)
 	case reflect.Slice:
@@ -238,10 +240,10 @@ func sqlDataTypeStructFieldDataType(dbsql DBsql, sf reflect.StructField) (string
 }
 
 func evaluateName(sf reflect.StructField, tsf reflect.Type) (string, string, string) {
-	t := tsf
-	if t.Kind() == reflect.Pointer {
-		t = t.Elem()
-	}
+	// t := tsf
+	// if t.Kind() == reflect.Pointer {
+	// 	t = t.Elem()
+	// }
 	name := sf.Name
 	additional := ""
 	common.Log.Debugf("Found name " + name)

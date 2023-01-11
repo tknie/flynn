@@ -14,27 +14,28 @@ package db
 import (
 	"fmt"
 	"os"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/tknie/db/common"
-	def "github.com/tknie/db/common"
 )
 
 var log = logrus.StandardLogger()
+var once = new(sync.Once)
 
 func init() {
-	err := initLog("search.log")
-	if err != nil {
-		fmt.Println("ERROR : ", err)
-		return
-	}
-
+	initLog()
 }
 
-func initLog(fileName string) (err error) {
+func initLog() {
+	once.Do(startLog)
+}
+
+func startLog() {
+	fileName := "db.trace.log"
 	common.SetDebugLevel(true)
 	log.SetFormatter(&logrus.TextFormatter{
 		FullTimestamp:   true,
@@ -47,13 +48,12 @@ func initLog(fileName string) (err error) {
 	}
 	f, err := os.OpenFile(p+"/"+fileName, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
 	if err != nil {
-		return err
+		fmt.Println("Error opening log:", err)
+		return
 	}
 	log.SetOutput(f)
-	log.Debugf("Init logrus")
+	log.Infof("Init logrus")
 	common.Log = log
-
-	return
 }
 
 func TestSearchQuery(t *testing.T) {
@@ -87,11 +87,11 @@ func TestSearchPgRows(t *testing.T) {
 	}
 	defer Unregister(x)
 
-	q := &def.Query{TableName: "Albums",
+	q := &common.Query{TableName: "Albums",
 		Search: "",
 		Fields: []string{"Title", "created"}}
 	counter := 0
-	_, err = x.Query(q, func(search *def.Query, result *def.Result) error {
+	_, err = x.Query(q, func(search *common.Query, result *common.Result) error {
 		assert.NotNil(t, search)
 		assert.NotNil(t, result)
 		assert.Len(t, result.Fields, 2)
@@ -130,11 +130,11 @@ func TestSearchPgCriteriaRows(t *testing.T) {
 	}
 	defer Unregister(x)
 
-	q := &def.Query{TableName: "Albums",
+	q := &common.Query{TableName: "Albums",
 		Search: "id=1",
 		Fields: []string{"Title", "created"}}
 	counter := 0
-	_, err = x.Query(q, func(search *def.Query, result *def.Result) error {
+	_, err = x.Query(q, func(search *common.Query, result *common.Result) error {
 		assert.NotNil(t, search)
 		assert.NotNil(t, result)
 		assert.Len(t, result.Fields, 2)
@@ -171,12 +171,12 @@ func TestSearchPgStruct(t *testing.T) {
 	}
 	defer Unregister(x)
 
-	q := &def.Query{TableName: "Albums",
+	q := &common.Query{TableName: "Albums",
 		Search:     "",
 		DataStruct: TestString{Title: "blabla"},
 		Fields:     []string{"Title"}}
 	counter := 0
-	_, err = x.Query(q, func(search *def.Query, result *def.Result) error {
+	_, err = x.Query(q, func(search *common.Query, result *common.Result) error {
 		assert.NotNil(t, search)
 		assert.NotNil(t, result)
 		assert.IsType(t, &TestString{}, result.Data)
@@ -213,12 +213,12 @@ func TestSearchPgPtrStruct(t *testing.T) {
 	}
 	defer Unregister(x)
 
-	q := &def.Query{TableName: "Albums",
+	q := &common.Query{TableName: "Albums",
 		Search:     "",
 		DataStruct: &TestString{Title: "blabla"},
 		Fields:     []string{"Title"}}
 	counter := 0
-	_, err = x.Query(q, func(search *def.Query, result *def.Result) error {
+	_, err = x.Query(q, func(search *common.Query, result *common.Result) error {
 		assert.NotNil(t, search)
 		assert.NotNil(t, result)
 		assert.IsType(t, &TestString{}, result.Data)
@@ -259,11 +259,11 @@ func TestSearchAdaStruct(t *testing.T) {
 	}
 	defer Unregister(x)
 
-	q := &def.Query{TableName: "Albums",
+	q := &common.Query{TableName: "Albums",
 		Search: "",
 		Fields: []string{"Title"}}
 	counter := 0
-	_, err = x.Query(q, func(search *def.Query, result *def.Result) error {
+	_, err = x.Query(q, func(search *common.Query, result *common.Result) error {
 		assert.NotNil(t, search)
 		assert.NotNil(t, result)
 		assert.Nil(t, result.Data)
@@ -301,12 +301,12 @@ func TestSearchAdaPtrStruct(t *testing.T) {
 	}
 	defer Unregister(x)
 
-	q := &def.Query{TableName: "Albums",
+	q := &common.Query{TableName: "Albums",
 		Search:     "",
 		DataStruct: &Albums{Title: "blabla"},
 		Fields:     []string{"Title"}}
 	counter := 0
-	_, err = x.Query(q, func(search *def.Query, result *def.Result) error {
+	_, err = x.Query(q, func(search *common.Query, result *common.Result) error {
 		assert.NotNil(t, search)
 		assert.NotNil(t, result)
 		assert.NotNil(t, result.Data)
@@ -341,11 +341,11 @@ func TestSearchMariaDBRows(t *testing.T) {
 	}
 	defer Unregister(x)
 
-	q := &def.Query{TableName: "Albums",
+	q := &common.Query{TableName: "Albums",
 		Search: "",
 		Fields: []string{"Title", "created"}}
 	counter := 0
-	_, err = x.Query(q, func(search *def.Query, result *def.Result) error {
+	_, err = x.Query(q, func(search *common.Query, result *common.Result) error {
 		assert.NotNil(t, search)
 		assert.NotNil(t, result)
 		ns := result.Rows[0].(string)

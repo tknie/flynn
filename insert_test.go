@@ -18,7 +18,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/tknie/db/common"
-	def "github.com/tknie/db/common"
 )
 
 const testTable = "TestTableData"
@@ -57,11 +56,7 @@ type TestData struct {
 }
 
 func init() {
-	err := initLog("insert.log")
-	if err != nil {
-		fmt.Println("ERROR : ", err)
-		return
-	}
+	initLog()
 }
 
 func TestInsertInitTestTable(t *testing.T) {
@@ -90,11 +85,11 @@ func checkTableAvailablefunc(t *testing.T, target *target) error {
 	}
 	defer Unregister(x)
 
-	q := &def.Query{TableName: testTable,
+	q := &common.Query{TableName: testTable,
 		Search: "",
 		Fields: []string{"Name"}}
 	counter := 0
-	_, err = x.Query(q, func(search *def.Query, result *def.Result) error {
+	_, err = x.Query(q, func(search *common.Query, result *common.Result) error {
 		counter++
 		return nil
 	})
@@ -111,36 +106,36 @@ func checkTableAvailablefunc(t *testing.T, target *target) error {
 }
 
 func createColumnTestTable(t *testing.T, target *target) error {
-	columns := make([]*def.Column, 0)
-	columns = append(columns, &def.Column{Name: "ID", DataType: def.Alpha, Length: 10})
-	columns = append(columns, &def.Column{Name: "Name", DataType: def.Alpha, Length: 200})
-	columns = append(columns, &def.Column{Name: "MiddleName", DataType: def.Alpha, Length: 50})
-	columns = append(columns, &def.Column{Name: "FirstName", DataType: def.Alpha, Length: 50})
-	columns = append(columns, &def.Column{Name: "PersonnelNo", DataType: def.Number, Length: 4})
-	columns = append(columns, &def.Column{Name: "CardNo", DataType: def.Bytes, Length: 8})
-	columns = append(columns, &def.Column{Name: "Signature", DataType: def.Alpha, Length: 20})
-	columns = append(columns, &def.Column{Name: "Sex", DataType: def.Alpha, Length: 1})
-	columns = append(columns, &def.Column{Name: "MarrieState", DataType: def.Alpha, Length: 1})
-	columns = append(columns, &def.Column{Name: "Street", DataType: def.Alpha, Length: 200})
-	columns = append(columns, &def.Column{Name: "Address", DataType: def.Alpha, Length: 200})
-	columns = append(columns, &def.Column{Name: "City", DataType: def.Alpha, Length: 200})
-	columns = append(columns, &def.Column{Name: "PostCode", DataType: def.Alpha, Length: 10})
-	columns = append(columns, &def.Column{Name: "Birth", DataType: def.Date, Length: 10})
-	columns = append(columns, &def.Column{Name: "Account", DataType: def.Decimal, Length: 10, Digits: 2})
-	columns = append(columns, &def.Column{Name: "Description", DataType: def.Text, Length: 0})
-	columns = append(columns, &def.Column{Name: "Flags", DataType: def.Bit, Length: 8})
-	columns = append(columns, &def.Column{Name: "AreaCode", DataType: def.Integer, Length: 8})
-	columns = append(columns, &def.Column{Name: "Phone", DataType: def.Integer, Length: 8})
-	columns = append(columns, &def.Column{Name: "Department", DataType: def.Alpha, Length: 6})
-	columns = append(columns, &def.Column{Name: "JobTitle", DataType: def.Alpha, Length: 20})
-	columns = append(columns, &def.Column{Name: "Currency", DataType: def.Alpha, Length: 2})
-	columns = append(columns, &def.Column{Name: "Salary", DataType: def.Integer, Length: 8})
-	columns = append(columns, &def.Column{Name: "Bonus", DataType: def.Integer, Length: 8})
-	columns = append(columns, &def.Column{Name: "LeaveDue", DataType: def.Integer, Length: 2})
-	columns = append(columns, &def.Column{Name: "LeaveTaken", DataType: def.Integer, Length: 2})
-	columns = append(columns, &def.Column{Name: "LeaveStart", DataType: def.Date})
-	columns = append(columns, &def.Column{Name: "LeaveEnd", DataType: def.Date})
-	columns = append(columns, &def.Column{Name: "Language", DataType: def.Integer, Length: 8})
+	columns := make([]*common.Column, 0)
+	columns = append(columns, &common.Column{Name: "ID", DataType: common.Alpha, Length: 10})
+	columns = append(columns, &common.Column{Name: "Name", DataType: common.Alpha, Length: 200})
+	columns = append(columns, &common.Column{Name: "MiddleName", DataType: common.Alpha, Length: 50})
+	columns = append(columns, &common.Column{Name: "FirstName", DataType: common.Alpha, Length: 50})
+	columns = append(columns, &common.Column{Name: "PersonnelNo", DataType: common.Number, Length: 4})
+	columns = append(columns, &common.Column{Name: "CardNo", DataType: common.Bytes, Length: 8})
+	columns = append(columns, &common.Column{Name: "Signature", DataType: common.Alpha, Length: 20})
+	columns = append(columns, &common.Column{Name: "Sex", DataType: common.Alpha, Length: 1})
+	columns = append(columns, &common.Column{Name: "MarrieState", DataType: common.Alpha, Length: 1})
+	columns = append(columns, &common.Column{Name: "Street", DataType: common.Alpha, Length: 200})
+	columns = append(columns, &common.Column{Name: "Address", DataType: common.Alpha, Length: 200})
+	columns = append(columns, &common.Column{Name: "City", DataType: common.Alpha, Length: 200})
+	columns = append(columns, &common.Column{Name: "PostCode", DataType: common.Alpha, Length: 10})
+	columns = append(columns, &common.Column{Name: "Birth", DataType: common.Date, Length: 10})
+	columns = append(columns, &common.Column{Name: "Account", DataType: common.Decimal, Length: 10, Digits: 2})
+	columns = append(columns, &common.Column{Name: "Description", DataType: common.Text, Length: 0})
+	columns = append(columns, &common.Column{Name: "Flags", DataType: common.Bit, Length: 8})
+	columns = append(columns, &common.Column{Name: "AreaCode", DataType: common.Integer, Length: 8})
+	columns = append(columns, &common.Column{Name: "Phone", DataType: common.Integer, Length: 8})
+	columns = append(columns, &common.Column{Name: "Department", DataType: common.Alpha, Length: 6})
+	columns = append(columns, &common.Column{Name: "JobTitle", DataType: common.Alpha, Length: 20})
+	columns = append(columns, &common.Column{Name: "Currency", DataType: common.Alpha, Length: 2})
+	columns = append(columns, &common.Column{Name: "Salary", DataType: common.Integer, Length: 8})
+	columns = append(columns, &common.Column{Name: "Bonus", DataType: common.Integer, Length: 8})
+	columns = append(columns, &common.Column{Name: "LeaveDue", DataType: common.Integer, Length: 2})
+	columns = append(columns, &common.Column{Name: "LeaveTaken", DataType: common.Integer, Length: 2})
+	columns = append(columns, &common.Column{Name: "LeaveStart", DataType: common.Date})
+	columns = append(columns, &common.Column{Name: "LeaveEnd", DataType: common.Date})
+	columns = append(columns, &common.Column{Name: "Language", DataType: common.Integer, Length: 8})
 
 	fmt.Println("Create database table")
 
@@ -169,11 +164,11 @@ func checkStructTableAvailablefunc(t *testing.T, target *target) error {
 	}
 	defer Unregister(x)
 
-	q := &def.Query{TableName: testStructTable,
+	q := &common.Query{TableName: testStructTable,
 		Search: "",
 		Fields: []string{"Name"}}
 	counter := 0
-	_, err = x.Query(q, func(search *def.Query, result *def.Result) error {
+	_, err = x.Query(q, func(search *common.Query, result *common.Result) error {
 		counter++
 		return nil
 	})

@@ -20,16 +20,18 @@ import (
 
 	"golang.org/x/exp/slices"
 
-	def "github.com/tknie/db/common"
+	"github.com/tknie/db/common"
 )
 
-func Insert(dbsql DBsql, name string, insert *def.Entries) error {
+func Insert(dbsql DBsql, name string, insert *common.Entries) error {
 	layer, url := dbsql.Reference()
 	db, err := sql.Open(layer, url)
 	if err != nil {
 		return err
 	}
 	defer db.Close()
+
+	common.Log.Debugf("Insert SQL table")
 
 	insertCmd := "INSERT INTO " + name + " ("
 	values := "("
@@ -49,17 +51,19 @@ func Insert(dbsql DBsql, name string, insert *def.Entries) error {
 	}
 	values += ")"
 	insertCmd += ") VALUES " + values
+	common.Log.Debugf("Insert pre-CMD: %s", insertCmd)
 	for _, v := range insert.Values {
 		av := v
 		_, err = db.Exec(insertCmd, av...)
 		if err != nil {
+			common.Log.Debugf("Error insert CMD: %v", err)
 			return err
 		}
 	}
 	return nil
 }
 
-func generateUpdate(indexNeeded bool, name string, updateInfo *def.Entries) (string, []int) {
+func generateUpdate(indexNeeded bool, name string, updateInfo *common.Entries) (string, []int) {
 	insertCmd := "UPDATE " + name + " SET "
 
 	whereFields := make([]int, 0)
@@ -81,7 +85,7 @@ func generateUpdate(indexNeeded bool, name string, updateInfo *def.Entries) (str
 	return insertCmd, whereFields
 }
 
-func Update(dbsql DBsql, name string, updateInfo *def.Entries) (err error) {
+func Update(dbsql DBsql, name string, updateInfo *common.Entries) (err error) {
 	dbAny, err := dbsql.Open()
 	if err != nil {
 		return err
@@ -101,7 +105,7 @@ func Update(dbsql DBsql, name string, updateInfo *def.Entries) (err error) {
 	return nil
 }
 
-func createWhere(valueIndex int, updateInfo *def.Entries, whereFields []int) string {
+func createWhere(valueIndex int, updateInfo *common.Entries, whereFields []int) string {
 	var buffer bytes.Buffer
 	for i, x := range updateInfo.Update {
 		if strings.ContainsAny(x, "=<>") {

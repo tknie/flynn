@@ -18,16 +18,10 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/tknie/db/common"
-	def "github.com/tknie/db/common"
 )
 
 func init() {
-	err := initLog("binary.log")
-	if err != nil {
-		fmt.Println("ERROR : ", err)
-		return
-	}
-
+	initLog()
 }
 
 func TestBinarySearchPgRows(t *testing.T) {
@@ -44,11 +38,11 @@ func TestBinarySearchPgRows(t *testing.T) {
 	}
 	defer Unregister(x)
 
-	q := &def.Query{TableName: "Pictures",
+	q := &common.Query{TableName: "Pictures",
 		Search: "ChecksumPicture='B64F1DDF5683608579998E618545E497        '",
 		Fields: []string{"Thumbnail"}}
 	counter := 0
-	_, err = x.Query(q, func(search *def.Query, result *def.Result) error {
+	_, err = x.Query(q, func(search *common.Query, result *common.Result) error {
 		assert.NotNil(t, search)
 		assert.NotNil(t, result)
 		assert.Len(t, result.Fields, 1)
@@ -81,11 +75,11 @@ func TestBinarySearchMariaRows(t *testing.T) {
 	}
 	defer Unregister(x)
 
-	q := &def.Query{TableName: "Pictures",
+	q := &common.Query{TableName: "Pictures",
 		Search: "ChecksumPicture='B64F1DDF5683608579998E618545E497        '",
 		Fields: []string{"Thumbnail"}}
 	counter := 0
-	_, err = x.Query(q, func(search *def.Query, result *def.Result) error {
+	_, err = x.Query(q, func(search *common.Query, result *common.Result) error {
 		assert.NotNil(t, search)
 		assert.NotNil(t, result)
 		assert.Len(t, result.Fields, 1)

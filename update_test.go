@@ -15,13 +15,13 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	def "github.com/tknie/db/common"
+	"github.com/tknie/db/common"
 )
 
 func TestUpdateInit(t *testing.T) {
-	columns := make([]*def.Column, 0)
-	columns = append(columns, &def.Column{Name: "ID", DataType: def.Alpha, Length: 10})
-	columns = append(columns, &def.Column{Name: "Name", DataType: def.Alpha, Length: 200})
+	columns := make([]*common.Column, 0)
+	columns = append(columns, &common.Column{Name: "ID", DataType: common.Alpha, Length: 10})
+	columns = append(columns, &common.Column{Name: "Name", DataType: common.Alpha, Length: 200})
 
 	pg, err := postgresTarget(t)
 	if !assert.NoError(t, err) {
@@ -33,7 +33,7 @@ func TestUpdateInit(t *testing.T) {
 		return
 	}
 	defer Unregister(x)
-	list := make([]any, 0)
-	x.Update(testStructTable, &def.Entries{Fields: []string{"ID", "Name"},
-		Values: [][]any{list}})
+	list := make([][]any, 0)
+	x.Update(testStructTable, &common.Entries{Fields: []string{"ID", "Name"},
+		Values: list})
 }

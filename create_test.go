@@ -26,6 +26,10 @@ type target struct {
 	url   string
 }
 
+func init() {
+	initLog()
+}
+
 func getTestTargets(t *testing.T) (targets []*target) {
 	url, err := mysqlTarget(t)
 	if !assert.NoError(t, err) {
@@ -65,14 +69,14 @@ func TestCreateStringArray(t *testing.T) {
 			unregisterDatabase(t, id)
 			continue
 		}
-		list := make([]any, 0)
+		list := make([][]any, 0)
 		list = append(list, []any{"Eins", "Ernie"})
 		for i := 1; i < 100; i++ {
 			list = append(list, []any{strconv.Itoa(i), "Graf Zahl " + strconv.Itoa(i)})
 		}
 		list = append(list, []any{"Letztes", "Anton"})
 		err = id.Insert("TESTTABLE", &def.Entries{Fields: []string{"name", "firstname"},
-			Values: [][]any{list}})
+			Values: list})
 		assert.NoError(t, err, "insert fail using "+target.layer)
 		deleteTable(t, id, "TESTTABLE", target.layer)
 		unregisterDatabase(t, id)
@@ -115,15 +119,17 @@ func TestCreateStruct(t *testing.T) {
 			unregisterDatabase(t, id)
 			continue
 		}
-		list := make([]any, 0)
+		list := make([][]any, 0)
 		list = append(list, []any{"Eins", "Ernie"})
 		for i := 1; i < 100; i++ {
 			list = append(list, []any{strconv.Itoa(i), "Graf Zahl " + strconv.Itoa(i)})
 		}
 		list = append(list, []any{"Letztes", "Anton"})
 		err = id.Insert("TESTTABLE", &def.Entries{Fields: []string{"name", "firstname"},
-			Values: [][]any{list}})
-		assert.NoError(t, err, "insert fail using "+target.layer)
+			Values: list})
+		if !assert.NoError(t, err, "insert fail using "+target.layer) {
+			return
+		}
 		err = id.BatchSQL("SELECT NAME FROM TESTTABLE")
 		assert.NoError(t, err, "select fail using "+target.layer)
 		deleteTable(t, id, "TESTTABLE", target.layer)
