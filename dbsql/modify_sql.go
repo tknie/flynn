@@ -96,7 +96,6 @@ func Update(dbsql DBsql, name string, updateInfo *common.Entries) (err error) {
 		whereClause := createWhere(i, updateInfo, whereFields)
 		ic := insertCmd + whereClause
 		av := v
-		fmt.Println("INSERT:", insertCmd)
 		_, err = db.Exec(ic, av...)
 		if err != nil {
 			return err

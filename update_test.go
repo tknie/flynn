@@ -19,10 +19,6 @@ import (
 )
 
 func TestUpdateInit(t *testing.T) {
-	columns := make([]*common.Column, 0)
-	columns = append(columns, &common.Column{Name: "ID", DataType: common.Alpha, Length: 10})
-	columns = append(columns, &common.Column{Name: "Name", DataType: common.Alpha, Length: 200})
-
 	pg, err := postgresTarget(t)
 	if !assert.NoError(t, err) {
 		return
@@ -34,6 +30,9 @@ func TestUpdateInit(t *testing.T) {
 	}
 	defer Unregister(x)
 	list := make([][]any, 0)
-	x.Update(testStructTable, &common.Entries{Fields: []string{"ID", "Name"},
+	err = x.Update(testStructTable, &common.Entries{Fields: []string{"ID", "Name"},
 		Values: list})
+	if !assert.NoError(t, err) {
+		return
+	}
 }
