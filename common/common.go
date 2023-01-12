@@ -48,6 +48,7 @@ type Database interface {
 	CreateTable(string, any) error
 	DeleteTable(string) error
 	Open() (any, error)
+	Close()
 	Insert(name string, insert *Entries) error
 	Update(name string, insert *Entries) error
 	Delete(name string, remove *Entries) error
@@ -112,6 +113,14 @@ func (id RegDbID) Open() (any, error) {
 		return nil, err
 	}
 	return driver.Open()
+}
+
+func (id RegDbID) Close() {
+	driver, err := searchDataDriver(id)
+	if err != nil {
+		return
+	}
+	driver.Close()
 }
 
 func (id RegDbID) Insert(name string, insert *Entries) error {

@@ -45,11 +45,17 @@ func (mysql *Mysql) Open() (dbOpen any, err error) {
 			return
 		}
 		mysql.openDB = db
-		defer db.Close()
 	} else {
 		db = mysql.openDB.(*sql.DB)
 	}
 	return db, nil
+}
+
+func (mysql *Mysql) Close() {
+	if mysql.openDB != nil {
+		mysql.openDB.(*sql.DB).Close()
+		mysql.openDB = nil
+	}
 }
 
 func (mysql *Mysql) IndexNeeded() bool {

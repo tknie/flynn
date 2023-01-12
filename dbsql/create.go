@@ -23,6 +23,7 @@ import (
 
 type DBsql interface {
 	Open() (any, error)
+	Close()
 	Reference() (string, string)
 	IndexNeeded() bool
 	ByteArrayAvailable() bool
@@ -32,12 +33,12 @@ type DBsql interface {
 func CreateTable(dbsql DBsql, name string, col any) error {
 	//	columns []*def.Column
 	common.Log.Debugf("Create SQL table")
-	layer, url := dbsql.Reference()
-	db, err := sql.Open(layer, url)
+	dbOpen, err := dbsql.Open()
 	if err != nil {
 		return err
 	}
-	defer db.Close()
+	db := dbOpen.(*sql.DB)
+	defer dbsql.Close()
 	createCmd := `CREATE TABLE ` + name + ` (`
 	switch columns := col.(type) {
 	case []*common.Column:
@@ -51,7 +52,7 @@ func CreateTable(dbsql DBsql, name string, col any) error {
 		createCmd += c
 	}
 	createCmd += ")"
-	common.Log.Debugf(url+": Create cmd %s", createCmd)
+	common.Log.Debugf("Create cmd %s", createCmd)
 	_, err = db.Query(createCmd)
 	if err != nil {
 		common.Log.Errorf("Error returned by SQL: %v", err)

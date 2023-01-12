@@ -24,12 +24,13 @@ import (
 )
 
 func Insert(dbsql DBsql, name string, insert *common.Entries) error {
-	layer, url := dbsql.Reference()
-	db, err := sql.Open(layer, url)
+	dbOpen, err := dbsql.Open()
 	if err != nil {
 		return err
 	}
-	defer db.Close()
+	defer dbsql.Close()
+
+	db := dbOpen.(*sql.DB)
 
 	common.Log.Debugf("Insert SQL table")
 
@@ -42,7 +43,7 @@ func Insert(dbsql DBsql, name string, insert *common.Entries) error {
 			insertCmd += ","
 			values += ","
 		}
-		insertCmd += field
+		insertCmd += `"` + strings.ToLower(field) + `"`
 		if indexNeed {
 			values += "$" + strconv.Itoa(i+1)
 		} else {
@@ -54,6 +55,7 @@ func Insert(dbsql DBsql, name string, insert *common.Entries) error {
 	common.Log.Debugf("Insert pre-CMD: %s", insertCmd)
 	for _, v := range insert.Values {
 		av := v
+		common.Log.Debugf("Insert values: %d", len(av))
 		_, err = db.Exec(insertCmd, av...)
 		if err != nil {
 			common.Log.Debugf("Error insert CMD: %v", err)
@@ -73,9 +75,9 @@ func generateUpdate(indexNeeded bool, name string, updateInfo *common.Entries) (
 			insertCmd += ","
 		}
 		if indexNeed {
-			insertCmd += field + "=$" + strconv.Itoa(i+1)
+			insertCmd += `"` + strings.ToLower(field) + `"` + "=$" + strconv.Itoa(i+1)
 		} else {
-			insertCmd += field + "=?"
+			insertCmd += `"` + strings.ToLower(field) + `"` + "=?"
 		}
 		if slices.Contains(updateInfo.Update, field) {
 			whereFields = append(whereFields, i)
@@ -88,8 +90,11 @@ func generateUpdate(indexNeeded bool, name string, updateInfo *common.Entries) (
 func Update(dbsql DBsql, name string, updateInfo *common.Entries) (err error) {
 	dbAny, err := dbsql.Open()
 	if err != nil {
+		common.Log.Debugf("Open error: %v", err)
 		return err
 	}
+	defer dbsql.Close()
+
 	db := dbAny.(*sql.DB)
 	insertCmd, whereFields := generateUpdate(dbsql.IndexNeeded(), name, updateInfo)
 	for i, v := range updateInfo.Values {
@@ -98,9 +103,11 @@ func Update(dbsql DBsql, name string, updateInfo *common.Entries) (err error) {
 		av := v
 		_, err = db.Exec(ic, av...)
 		if err != nil {
+			common.Log.Debugf("Update error: %s -> %v", ic, err)
 			return err
 		}
 	}
+	common.Log.Debugf("Update done")
 	return nil
 }
 
@@ -118,7 +125,7 @@ func createWhere(valueIndex int, updateInfo *common.Entries, whereFields []int) 
 		if buffer.Len() > 0 || i > 0 {
 			buffer.WriteString(" AND ")
 		}
-		buffer.WriteString(updateInfo.Fields[s])
+		buffer.WriteString(`"` + strings.ToLower(updateInfo.Fields[s]) + `"`)
 		buffer.WriteRune('=')
 		buffer.WriteString(convertString(updateInfo.Values[valueIndex][s]))
 	}
@@ -126,5 +133,10 @@ func createWhere(valueIndex int, updateInfo *common.Entries, whereFields []int) 
 }
 
 func convertString(convertToString any) string {
-	return fmt.Sprintf("%v", convertToString)
+	x := fmt.Sprintf("%v", convertToString)
+	switch convertToString.(type) {
+	case *string, string:
+		return `'` + x + `'`
+	}
+	return x
 }

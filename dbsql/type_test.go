@@ -70,6 +70,9 @@ func (t *testSQL) Open() (any, error) {
 	return nil, nil
 }
 
+func (t *testSQL) Close() {
+}
+
 func (t *testSQL) IsTransaction() bool {
 	return true
 }

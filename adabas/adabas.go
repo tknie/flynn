@@ -68,6 +68,9 @@ func (ada *Adabas) Open() (any, error) {
 	return nil, def.NewError(65535)
 }
 
+func (ada *Adabas) Close() {
+}
+
 func (ada *Adabas) Insert(name string, insert *def.Entries) error {
 	return def.NewError(65535)
 }

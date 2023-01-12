@@ -70,11 +70,21 @@ func (pg *PostGres) Open() (dbOpen any, err error) {
 			return
 		}
 		pg.openDB = db
-		defer db.Close()
 	} else {
 		db = pg.openDB.(*sql.DB)
 	}
+	common.Log.Debugf("Open database %s", url)
 	return db, nil
+}
+
+func (pg *PostGres) Close() {
+	if pg.openDB != nil {
+		pg.openDB.(*sql.DB).Close()
+		pg.openDB = nil
+		common.Log.Debugf("Close database")
+	} else {
+		common.Log.Debugf("Close not opened database")
+	}
 }
 
 func (pg *PostGres) check() error {

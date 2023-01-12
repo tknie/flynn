@@ -13,6 +13,7 @@ package db
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/tknie/db/common"
@@ -29,9 +30,26 @@ func TestUpdateInit(t *testing.T) {
 		return
 	}
 	defer Unregister(x)
-	list := make([][]any, 0)
-	err = x.Update(testStructTable, &common.Entries{Fields: []string{"ID", "Name"},
-		Values: list})
+	nameValue := time.Now().Format("20060102150405")
+	list := [][]any{{nameValue, "XXX"}}
+	input := &common.Entries{Fields: []string{"ID", "Name"},
+		Update: []string{"ID"},
+		Values: list}
+	err = x.Insert(testStructTable, input)
+	if !assert.NoError(t, err) {
+		return
+	}
+	list = [][]any{{nameValue, "YYY"}}
+	input.Values = list
+	err = x.Update(testStructTable, input)
+	if !assert.NoError(t, err) {
+		return
+	}
+
+	list = [][]any{{nameValue}}
+	input.Fields = []string{"ID"}
+	input.Values = list
+	err = x.Delete(testStructTable, input)
 	if !assert.NoError(t, err) {
 		return
 	}
