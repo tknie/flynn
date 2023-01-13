@@ -43,10 +43,11 @@ func Insert(dbsql DBsql, name string, insert *common.Entries) error {
 			insertCmd += ","
 			values += ","
 		}
-		insertCmd += `"` + strings.ToLower(field) + `"`
 		if indexNeed {
+			insertCmd += `"` + strings.ToLower(field) + `"`
 			values += "$" + strconv.Itoa(i+1)
 		} else {
+			insertCmd += "`" + strings.ToLower(field) + "`"
 			values += "?"
 		}
 	}
@@ -55,10 +56,10 @@ func Insert(dbsql DBsql, name string, insert *common.Entries) error {
 	common.Log.Debugf("Insert pre-CMD: %s", insertCmd)
 	for _, v := range insert.Values {
 		av := v
-		common.Log.Debugf("Insert values: %d", len(av))
+		common.Log.Debugf("Insert values: %d -> %#v", len(av), av)
 		_, err = db.Exec(insertCmd, av...)
 		if err != nil {
-			common.Log.Debugf("Error insert CMD: %v", err)
+			common.Log.Debugf("Error insert CMD: %v of %s and cmd %s", err, name, insertCmd)
 			return err
 		}
 	}
@@ -77,7 +78,7 @@ func generateUpdate(indexNeeded bool, name string, updateInfo *common.Entries) (
 		if indexNeed {
 			insertCmd += `"` + strings.ToLower(field) + `"` + "=$" + strconv.Itoa(i+1)
 		} else {
-			insertCmd += `"` + strings.ToLower(field) + `"` + "=?"
+			insertCmd += "`" + strings.ToLower(field) + "`" + "=?"
 		}
 		if slices.Contains(updateInfo.Update, field) {
 			whereFields = append(whereFields, i)

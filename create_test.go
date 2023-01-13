@@ -67,7 +67,7 @@ func TestCreateStringArray(t *testing.T) {
 		err = id.CreateTable("TESTTABLE", columns)
 		if !assert.NoError(t, err, "create fail using "+target.layer) {
 			unregisterDatabase(t, id)
-			continue
+			return
 		}
 		list := make([][]any, 0)
 		list = append(list, []any{"Eins", "Ernie"})
@@ -77,7 +77,9 @@ func TestCreateStringArray(t *testing.T) {
 		list = append(list, []any{"Letztes", "Anton"})
 		err = id.Insert("TESTTABLE", &def.Entries{Fields: []string{"name", "firstname"},
 			Values: list})
-		assert.NoError(t, err, "insert fail using "+target.layer)
+		if !assert.NoError(t, err, "insert fail using "+target.layer) {
+			return
+		}
 		deleteTable(t, id, "TESTTABLE", target.layer)
 		unregisterDatabase(t, id)
 	}
