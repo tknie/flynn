@@ -88,6 +88,29 @@ func generateUpdate(indexNeeded bool, name string, updateInfo *common.Entries) (
 	return insertCmd, whereFields
 }
 
+func generateDelete(indexNeeded bool, name string, valueIndex int, deleteInfo *common.Entries) (string, []any) {
+	deleteCmd := "DELETE FROM " + name + " WHERE "
+
+	values := make([]any, 0)
+	for i, field := range deleteInfo.Fields {
+		if i > 0 {
+			deleteCmd += " AND "
+		}
+		//deleteCmd += "`" + strings.ToLower(field) + "` IN ("
+		deleteCmd += strings.ToLower(field) + " IN ("
+		for j := 0; j < len(deleteInfo.Values[0]); j++ {
+			if indexNeeded {
+				deleteCmd += "$" + strconv.Itoa(i+1)
+			} else {
+				deleteCmd += "?"
+			}
+			values = append(values, deleteInfo.Values[0][i])
+		}
+		deleteCmd += ")"
+	}
+	return deleteCmd, values
+}
+
 func Update(dbsql DBsql, name string, updateInfo *common.Entries) (err error) {
 	dbAny, err := dbsql.Open()
 	if err != nil {
@@ -102,6 +125,7 @@ func Update(dbsql DBsql, name string, updateInfo *common.Entries) (err error) {
 		whereClause := createWhere(i, updateInfo, whereFields)
 		ic := insertCmd + whereClause
 		av := v
+		common.Log.Debugf("Update values: %d -> %#v", len(av), av)
 		_, err = db.Exec(ic, av...)
 		if err != nil {
 			common.Log.Debugf("Update error: %s -> %v", ic, err)
@@ -140,4 +164,26 @@ func convertString(convertToString any) string {
 		return `'` + x + `'`
 	}
 	return x
+}
+
+func Delete(dbsql DBsql, name string, updateInfo *common.Entries) (err error) {
+	dbAny, err := dbsql.Open()
+	if err != nil {
+		common.Log.Debugf("Open error: %v", err)
+		return err
+	}
+	defer dbsql.Close()
+
+	db := dbAny.(*sql.DB)
+	for i := 0; i < len(updateInfo.Values); i++ {
+		deleteCmd, av := generateDelete(dbsql.IndexNeeded(), name, 0, updateInfo)
+		common.Log.Debugf("Delete cmd: %s -> %#v", deleteCmd, av)
+		_, err = db.Exec(deleteCmd, av...)
+		if err != nil {
+			common.Log.Debugf("Delete error: %v", err)
+			return err
+		}
+	}
+	common.Log.Debugf("Delete done")
+	return nil
 }

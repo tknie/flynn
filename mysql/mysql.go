@@ -112,11 +112,11 @@ func (mysql *Mysql) Insert(name string, insert *def.Entries) error {
 }
 
 func (mysql *Mysql) Update(name string, insert *def.Entries) error {
-	return def.NewError(65535)
+	return dbsql.Update(mysql, name, insert)
 }
 
 func (mysql *Mysql) Delete(name string, remove *def.Entries) error {
-	return def.NewError(65535)
+	return dbsql.Delete(mysql, name, remove)
 }
 
 func (mysql *Mysql) GetTableColumn(tableName string) ([]string, error) {

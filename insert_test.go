@@ -74,12 +74,7 @@ func TestInsertInitTestTable(t *testing.T) {
 }
 
 func checkTableAvailablefunc(t *testing.T, target *target) error {
-	pg, err := postgresTarget(t)
-	if !assert.NoError(t, err) {
-		return err
-	}
-
-	x, err := Register("postgres", pg)
+	x, err := Register(target.layer, target.url)
 	if !assert.NoError(t, err) {
 		return err
 	}
@@ -153,12 +148,7 @@ func createColumnTestTable(t *testing.T, target *target) error {
 }
 
 func checkStructTableAvailablefunc(t *testing.T, target *target) error {
-	pg, err := postgresTarget(t)
-	if !assert.NoError(t, err) {
-		return err
-	}
-
-	x, err := Register("postgres", pg)
+	x, err := Register(target.layer, target.url)
 	if !assert.NoError(t, err) {
 		return err
 	}

@@ -114,7 +114,7 @@ func (pg *PostGres) check() error {
 }
 
 func (pg *PostGres) Delete(name string, remove *def.Entries) error {
-	return def.NewError(65535)
+	return dbsql.Delete(pg, name, remove)
 }
 
 func (pg *PostGres) GetTableColumn(tableName string) ([]string, error) {
