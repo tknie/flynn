@@ -89,7 +89,9 @@ func TestSearchPgRows(t *testing.T) {
 
 	q := &common.Query{TableName: "Albums",
 		Search: "",
-		Fields: []string{"Title", "created"}}
+		Fields: []string{"Title", "created"},
+		Order:  []string{"Title:ASC"},
+	}
 	counter := 0
 	_, err = x.Query(q, func(search *common.Query, result *common.Result) error {
 		assert.NotNil(t, search)
