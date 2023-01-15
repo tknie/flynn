@@ -18,7 +18,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	def "github.com/tknie/db/common"
+	def "github.com/tknie/flynn/common"
 )
 
 func postgresTarget(t *testing.T) (string, error) {

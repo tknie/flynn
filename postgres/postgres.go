@@ -16,9 +16,9 @@ import (
 	"strings"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
-	"github.com/tknie/db/common"
-	def "github.com/tknie/db/common"
-	"github.com/tknie/db/dbsql"
+	"github.com/tknie/flynn/common"
+	def "github.com/tknie/flynn/common"
+	"github.com/tknie/flynn/dbsql"
 )
 
 type PostGres struct {

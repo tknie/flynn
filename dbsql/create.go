@@ -18,7 +18,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/tknie/db/common"
+	"github.com/tknie/flynn/common"
 )
 
 type DBsql interface {

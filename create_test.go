@@ -16,7 +16,7 @@ import (
 	"strconv"
 	"testing"
 
-	def "github.com/tknie/db/common"
+	def "github.com/tknie/flynn/common"
 
 	"github.com/stretchr/testify/assert"
 )

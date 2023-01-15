@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/tknie/db/common"
+	"github.com/tknie/flynn/common"
 )
 
 func TestSQLUpdate(t *testing.T) {

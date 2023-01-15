@@ -2,7 +2,7 @@
 
 ## Introduction
 
-The `github.com/tknie/db` package contains an inbetween layer to access multiple types of database with the same API. Move to other database types would not lead to change the inbetween layer.
+The `github.com/tknie/flynn` package contains an inbetween layer to access multiple types of database with the same API. Move to other database types would not lead to change the inbetween layer.
 
 There should be no difference if the database is a SQL or non-SQL database.
 

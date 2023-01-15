@@ -20,7 +20,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
-	"github.com/tknie/db/common"
+	"github.com/tknie/flynn/common"
 )
 
 var log = logrus.StandardLogger()

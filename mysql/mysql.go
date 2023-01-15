@@ -15,9 +15,9 @@ import (
 	"database/sql"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/tknie/db/common"
-	def "github.com/tknie/db/common"
-	"github.com/tknie/db/dbsql"
+	"github.com/tknie/flynn/common"
+	def "github.com/tknie/flynn/common"
+	"github.com/tknie/flynn/dbsql"
 )
 
 type Mysql struct {

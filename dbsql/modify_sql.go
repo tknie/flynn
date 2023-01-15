@@ -20,7 +20,7 @@ import (
 
 	"golang.org/x/exp/slices"
 
-	"github.com/tknie/db/common"
+	"github.com/tknie/flynn/common"
 )
 
 func Insert(dbsql DBsql, name string, insert *common.Entries) error {

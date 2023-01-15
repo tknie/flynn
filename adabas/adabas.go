@@ -16,8 +16,8 @@ import (
 
 	"github.com/tknie/adabas-go-api/adabas"
 	"github.com/tknie/adabas-go-api/adatypes"
-	"github.com/tknie/db/common"
-	def "github.com/tknie/db/common"
+	"github.com/tknie/flynn/common"
+	def "github.com/tknie/flynn/common"
 )
 
 type Adabas struct {

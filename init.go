@@ -14,10 +14,10 @@ package db
 import (
 	"sync/atomic"
 
-	"github.com/tknie/db/adabas"
-	def "github.com/tknie/db/common"
-	"github.com/tknie/db/mysql"
-	"github.com/tknie/db/postgres"
+	"github.com/tknie/flynn/adabas"
+	def "github.com/tknie/flynn/common"
+	"github.com/tknie/flynn/mysql"
+	"github.com/tknie/flynn/postgres"
 )
 
 var globalRegID = def.RegDbID(0)
