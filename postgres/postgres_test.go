@@ -14,6 +14,7 @@ package postgres
 import (
 	"fmt"
 	"os"
+	"sort"
 	"strconv"
 	"testing"
 
@@ -52,10 +53,13 @@ func TestPostgresTableColumns(t *testing.T) {
 	if !assert.NotNil(t, pg) {
 		return
 	}
+	pg.DeleteTable("TESTTABLE")
 	m, err := pg.GetTableColumn("Albums")
+	sort.Strings(m)
 	assert.NoError(t, err)
-	assert.Equal(t, []string{"id", "published", "created",
-		"updated_at", "title", "description", "option", "thumbnail",
-		"albumtype", "albumkey", "directory"}, m)
+	assert.Equal(t, []string{"albumkey", "albumtype",
+		"created", "description", "directory", "id",
+		"option", "published", "thumbnail", "title",
+		"updated_at"}, m)
 
 }

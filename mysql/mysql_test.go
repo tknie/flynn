@@ -14,6 +14,7 @@ package mysql
 import (
 	"fmt"
 	"os"
+	"sort"
 	"strconv"
 	"testing"
 
@@ -46,6 +47,7 @@ func TestMysqlInit(t *testing.T) {
 		return
 	}
 	m, err := pg.Maps()
+	sort.Strings(m)
 	assert.NoError(t, err)
 	assert.Equal(t, []string{"AlbumPictures", "Albums", "PictureLocations", "PictureTag",
 		"PictureTags", "Pictures", "Tags",
