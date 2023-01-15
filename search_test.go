@@ -372,3 +372,48 @@ func TestSearchMariaDBRows(t *testing.T) {
 	})
 	assert.NoError(t, err)
 }
+
+func TestSearchPgRowsOrdered(t *testing.T) {
+	pg, err := postgresTarget(t)
+	if !assert.NoError(t, err) {
+		return
+	}
+
+	x, err := Register("postgres", pg)
+	if !assert.NoError(t, err) {
+		return
+	}
+	defer Unregister(x)
+
+	q := &common.Query{TableName: "Albums",
+		Search: "",
+		Fields: []string{"Title", "published"},
+		Order:  []string{"published:DESC"},
+	}
+	counter := 0
+	_, err = x.Query(q, func(search *common.Query, result *common.Result) error {
+		assert.NotNil(t, search)
+		assert.NotNil(t, result)
+		assert.Len(t, result.Fields, 2)
+		ns := *(result.Rows[0].(*string))
+		ts := result.Rows[1].(*time.Time)
+		fmt.Println("RESULT:", ns, ts)
+		counter++
+		switch counter {
+		case 1:
+			assert.Equal(t, "3 Geburtstage und ein Trauerfall", ns)
+			assert.Equal(t, "2022-10-30 21:25:56 +0000 UTC", ts.String())
+		case 10:
+			assert.Equal(t, "Sommer 2021", ns)
+			assert.Equal(t, "2021-10-23 23:16:17 +0000 UTC", ts.String())
+		case 48:
+			assert.Equal(t, "Der Osterferien", ns)
+			assert.Equal(t, "2016-04-07 10:15:48 +0000 UTC", ts.String())
+		default:
+			assert.NotEqual(t, "blabla", ns)
+		}
+
+		return nil
+	})
+	assert.NoError(t, err)
+}

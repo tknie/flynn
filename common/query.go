@@ -61,7 +61,7 @@ func (q *Query) Select() string {
 				return ""
 			}
 			switch strings.ToLower(entry[1]) {
-			case "asc", "dsc":
+			case "asc", "desc":
 				selectCmd.WriteString(entry[0] + " " + entry[1])
 			default:
 				selectCmd.WriteString(entry[0] + " asc")
