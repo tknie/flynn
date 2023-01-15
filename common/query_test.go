@@ -29,8 +29,8 @@ func TestQuery(t *testing.T) {
 	selectCmd = q.Select()
 	assert.Equal(t, "select field1,field2 from ABC where id='10' order by fieldOrder ASC", selectCmd)
 
-	q.Order = []string{"aaa:asc", "bbb:asc", "dddd:dsc"}
+	q.Order = []string{"aaa:asc", "bbb:asc", "dddd:desc"}
 	selectCmd = q.Select()
-	assert.Equal(t, "select field1,field2 from ABC where id='10' order by aaa asc,bbb asc,dddd dsc", selectCmd)
+	assert.Equal(t, "select field1,field2 from ABC where id='10' order by aaa asc,bbb asc,dddd desc", selectCmd)
 
 }
