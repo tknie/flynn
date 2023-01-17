@@ -13,6 +13,7 @@ package postgres
 
 import (
 	"database/sql"
+	"fmt"
 	"strings"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -26,15 +27,36 @@ type PostGres struct {
 	openDB       any
 	dbURL        string
 	dbTableNames []string
+	user         string
+	password     string
 }
 
 func New(id def.RegDbID, url string) (def.Database, error) {
-	pg := &PostGres{def.CommonDatabase{RegDbID: id}, nil, url, nil}
-	err := pg.check()
-	if err != nil {
-		return nil, err
-	}
+	pg := &PostGres{def.CommonDatabase{RegDbID: id}, nil,
+		url, nil, "", ""}
+	// err := pg.check()
+	// if err != nil {
+	// 	return nil, err
+	// }
 	return pg, nil
+}
+
+func (pg *PostGres) SetCredentials(user, password string) error {
+	pg.user = user
+	pg.password = password
+	fmt.Println("Store credentials")
+	return nil
+}
+
+func (pg *PostGres) generateURL() string {
+	url := pg.dbURL
+	if pg.user != "" {
+		url = strings.Replace(url, "<user>", pg.user, -1)
+	}
+	if pg.password != "" {
+		url = strings.Replace(url, "<password>", pg.password, -1)
+	}
+	return url
 }
 
 func (pg *PostGres) Reference() (string, string) {
@@ -62,10 +84,9 @@ func (pg *PostGres) Maps() ([]string, error) {
 }
 
 func (pg *PostGres) Open() (dbOpen any, err error) {
-	layer, url := pg.Reference()
 	var db *sql.DB
 	if !pg.IsTransaction() || pg.openDB == nil {
-		db, err = sql.Open(layer, url)
+		db, err = sql.Open("pgx", pg.generateURL())
 		if err != nil {
 			return
 		}
@@ -73,7 +94,7 @@ func (pg *PostGres) Open() (dbOpen any, err error) {
 	} else {
 		db = pg.openDB.(*sql.DB)
 	}
-	common.Log.Debugf("Open database %s", url)
+	common.Log.Debugf("Open database %s", pg.dbURL)
 	return db, nil
 }
 
@@ -87,13 +108,15 @@ func (pg *PostGres) Close() {
 	}
 }
 
-func (pg *PostGres) check() error {
+func (pg *PostGres) Ping() error {
 
-	db, err := sql.Open("pgx", pg.dbURL)
+	dbOpen, err := pg.Open()
 	if err != nil {
-		return def.NewError(3, err)
+		return err
 	}
-	defer db.Close()
+	defer pg.Close()
+
+	db := dbOpen.(*sql.DB)
 
 	pg.dbTableNames = make([]string, 0)
 
@@ -118,12 +141,13 @@ func (pg *PostGres) Delete(name string, remove *def.Entries) error {
 }
 
 func (pg *PostGres) GetTableColumn(tableName string) ([]string, error) {
-	db, err := sql.Open("pgx", pg.dbURL)
+	dbOpen, err := pg.Open()
 	if err != nil {
-		return nil, def.NewError(3, err)
+		return nil, err
 	}
-	defer db.Close()
+	defer pg.Close()
 
+	db := dbOpen.(*sql.DB)
 	// rows, err := db.Query(`SELECT table_schema, table_name, column_name, data_type
 	// FROM INFORMATION_SCHEMA.COLUMNS
 	rows, err := db.Query(`SELECT column_name FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = '` + strings.ToLower(tableName) + `'`)
@@ -146,11 +170,13 @@ func (pg *PostGres) GetTableColumn(tableName string) ([]string, error) {
 
 func (pg *PostGres) Query(search *def.Query, f def.ResultFunction) (*common.Result, error) {
 	common.Log.Debugf("Query postgres database")
-	db, err := sql.Open("pgx", pg.dbURL)
+	dbOpen, err := pg.Open()
 	if err != nil {
 		return nil, err
 	}
-	defer db.Close()
+	defer pg.Close()
+
+	db := dbOpen.(*sql.DB)
 	selectCmd := search.Select()
 
 	common.Log.Debugf("Query: %s", selectCmd)

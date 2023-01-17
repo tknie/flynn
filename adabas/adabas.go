@@ -13,6 +13,7 @@ package adabas
 
 import (
 	"bytes"
+	"strconv"
 
 	"github.com/tknie/adabas-go-api/adabas"
 	"github.com/tknie/adabas-go-api/adatypes"
@@ -23,7 +24,10 @@ import (
 type Adabas struct {
 	def.CommonDatabase
 	dbURL        string
+	conn         *adabas.Connection
 	dbTableNames []string
+	user         string
+	password     string
 }
 
 func init() {
@@ -31,12 +35,15 @@ func init() {
 }
 
 func New(id def.RegDbID, url string) (def.Database, error) {
-	ada := &Adabas{def.CommonDatabase{RegDbID: id}, url, nil}
-	err := ada.check()
-	if err != nil {
-		return nil, err
-	}
+	ada := &Adabas{def.CommonDatabase{RegDbID: id}, url,
+		nil, nil, "", ""}
 	return ada, nil
+}
+
+func (ada *Adabas) SetCredentials(user, password string) error {
+	ada.user = user
+	ada.password = password
+	return nil
 }
 
 func (ada *Adabas) ID() def.RegDbID {
@@ -50,11 +57,12 @@ func (ada *Adabas) Maps() ([]string, error) {
 	return ada.dbTableNames, nil
 }
 
-func (ada *Adabas) check() error {
-	con, err := adabas.NewConnection(ada.URL())
+func (ada *Adabas) Ping() error {
+	c, err := ada.Open()
 	if err != nil {
 		return err
 	}
+	con := c.(*adabas.Connection)
 	defer con.Close()
 	listMaps, err := con.GetMaps()
 	if err != nil {
@@ -65,10 +73,23 @@ func (ada *Adabas) check() error {
 }
 
 func (ada *Adabas) Open() (any, error) {
-	return nil, def.NewError(65535)
+	db, err := adabas.NewConnection(ada.URL())
+	if err != nil {
+		return nil, err
+	}
+	err = db.Open()
+	if err != nil {
+		return nil, err
+	}
+	ada.conn = db
+	return db, err
 }
 
 func (ada *Adabas) Close() {
+	if ada.conn != nil {
+		ada.conn.Close()
+		ada.conn = nil
+	}
 }
 
 func (ada *Adabas) Insert(name string, insert *def.Entries) error {
@@ -80,28 +101,75 @@ func (ada *Adabas) Update(name string, insert *def.Entries) error {
 }
 
 func (ada *Adabas) Delete(name string, remove *def.Entries) error {
-	return def.NewError(65535)
+	con, err := ada.Open()
+	if err != nil {
+		return err
+	}
+
+	conn := con.(*adabas.Connection)
+	req, err := conn.CreateMapDeleteRequest(name)
+	if err != nil {
+		return err
+	}
+	isns := make([]adatypes.Isn, 0)
+
+	if len(remove.Fields) != 1 || remove.Fields[0] != "ISN" {
+		return def.NewError(23444)
+	}
+
+	for i := 0; i < len(remove.Values); i++ {
+
+		switch v := remove.Values[i][0].(type) {
+		case int:
+			isns = append(isns, adatypes.Isn(v))
+		case int32:
+			isns = append(isns, adatypes.Isn(v))
+		case int64:
+			isns = append(isns, adatypes.Isn(v))
+		case uint:
+			isns = append(isns, adatypes.Isn(v))
+		case uint32:
+			isns = append(isns, adatypes.Isn(v))
+		case uint64:
+			isns = append(isns, adatypes.Isn(v))
+		case string:
+			iv, err := strconv.ParseUint(v, 0, 10)
+			if err != nil {
+				return def.NewError(23445)
+			}
+			isns = append(isns, adatypes.Isn(iv))
+		}
+	}
+	return req.DeleteList(isns)
+
 }
 
 func (ada *Adabas) GetTableColumn(tableName string) ([]string, error) {
-	return nil, def.NewError(65535)
-}
-
-func (ada *Adabas) Query(search *def.Query, f def.ResultFunction) (*common.Result, error) {
-	con, err := adabas.NewConnection(ada.URL())
+	con, err := ada.Open()
 	if err != nil {
 		return nil, err
 	}
-	defer con.Close()
+
+	conn := con.(*adabas.Connection)
+	return conn.GetMaps()
+}
+
+func (ada *Adabas) Query(search *def.Query, f def.ResultFunction) (*common.Result, error) {
+	con, err := ada.Open()
+	if err != nil {
+		return nil, err
+	}
+
+	conn := con.(*adabas.Connection)
 	var request *adabas.ReadRequest
 	if search.DataStruct != nil {
-		request, err = con.CreateMapReadRequest(search.DataStruct)
+		request, err = conn.CreateMapReadRequest(search.DataStruct)
 		if err != nil {
 			return nil, err
 		}
 
 	} else {
-		request, err = con.CreateMapReadRequest(search.TableName)
+		request, err = conn.CreateMapReadRequest(search.TableName)
 		if err != nil {
 			return nil, err
 		}

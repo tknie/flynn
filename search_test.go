@@ -374,7 +374,7 @@ func TestSearchMariaDBRows(t *testing.T) {
 }
 
 func TestSearchPgRowsOrdered(t *testing.T) {
-	pg, err := postgresTarget(t)
+	pg, err := postgresUserTarget(t)
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -384,6 +384,9 @@ func TestSearchPgRowsOrdered(t *testing.T) {
 		return
 	}
 	defer Unregister(x)
+
+	pwd := os.Getenv("POSTGRES_PASS")
+	x.SetCredentials("admin", pwd)
 
 	q := &common.Query{TableName: "Albums",
 		Search: "",
@@ -409,6 +412,54 @@ func TestSearchPgRowsOrdered(t *testing.T) {
 		case 48:
 			assert.Equal(t, "Der Osterferien", ns)
 			assert.Equal(t, "2016-04-07 10:15:48 +0000 UTC", ts.String())
+		default:
+			assert.NotEqual(t, "blabla", ns)
+		}
+
+		return nil
+	})
+	assert.NoError(t, err)
+}
+
+func TestSearchMySQLRowsOrdered(t *testing.T) {
+	mysql, err := mysqlUserTarget(t)
+	if !assert.NoError(t, err) {
+		return
+	}
+
+	x, err := Register("mysql", mysql)
+	if !assert.NoError(t, err) {
+		return
+	}
+	defer Unregister(x)
+
+	mysqlPassword := os.Getenv("MYSQL_PWD")
+	x.SetCredentials("admin", mysqlPassword)
+
+	q := &common.Query{TableName: "Albums",
+		Search: "",
+		Fields: []string{"Title", "created"},
+		Order:  []string{"created:DESC"},
+	}
+	counter := 0
+	_, err = x.Query(q, func(search *common.Query, result *common.Result) error {
+		assert.NotNil(t, search)
+		assert.NotNil(t, result)
+		assert.Len(t, result.Fields, 2)
+		ns := (result.Rows[0].(string))
+		ts := result.Rows[1].(*time.Time)
+		fmt.Println("RESULT:", ns, ts)
+		counter++
+		switch counter {
+		case 1:
+			assert.Equal(t, "Sommerferien 2022", ns)
+			assert.Equal(t, "2022-10-27 15:15:22 +0000 UTC", ts.String())
+		case 10:
+			assert.Equal(t, "Neues aus Seeheim...", ns)
+			assert.Equal(t, "2022-10-27 15:15:20 +0000 UTC", ts.String())
+		case 48:
+			assert.Equal(t, "Spontane Ausflüge", ns)
+			assert.Equal(t, "2022-10-27 15:15:10 +0000 UTC", ts.String())
 		default:
 			assert.NotEqual(t, "blabla", ns)
 		}

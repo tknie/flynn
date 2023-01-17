@@ -9,13 +9,14 @@ import (
 )
 
 type Query struct {
-	TableName  string
-	Search     string
-	Fields     []string
-	Order      []string
-	Limit      uint32
-	DataStruct any
-	TypeInfo   any
+	TableName    string
+	Search       string
+	Fields       []string
+	Order        []string
+	Limit        uint32
+	DataStruct   any
+	TypeInfo     any
+	FctParameter any
 }
 
 func (q *Query) Select() string {

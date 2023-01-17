@@ -13,6 +13,7 @@ package mysql
 
 import (
 	"database/sql"
+	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/tknie/flynn/common"
@@ -20,27 +21,44 @@ import (
 	"github.com/tknie/flynn/dbsql"
 )
 
+const layer = "mysql"
+
 type Mysql struct {
 	def.CommonDatabase
 	openDB       any
 	dbURL        string
 	dbTableNames []string
+	user         string
+	password     string
 }
 
 func New(id def.RegDbID, url string) (def.Database, error) {
-	mysql := &Mysql{def.CommonDatabase{RegDbID: id}, nil, url, nil}
-	err := mysql.check()
-	if err != nil {
-		return nil, err
-	}
+	mysql := &Mysql{def.CommonDatabase{RegDbID: id},
+		nil, url, nil, "", ""}
 	return mysql, nil
 }
 
+func (mysql *Mysql) SetCredentials(user, password string) error {
+	mysql.user = user
+	mysql.password = password
+	return nil
+}
+
+func (mysql *Mysql) generateURL() string {
+	url := mysql.dbURL
+	if mysql.user != "" {
+		url = strings.Replace(url, "<user>", mysql.user, -1)
+	}
+	if mysql.password != "" {
+		url = strings.Replace(url, "<password>", mysql.password, -1)
+	}
+	return url
+}
+
 func (mysql *Mysql) Open() (dbOpen any, err error) {
-	layer, url := mysql.Reference()
 	var db *sql.DB
 	if !mysql.IsTransaction() || mysql.openDB == nil {
-		db, err = sql.Open(layer, url)
+		db, err = sql.Open(layer, mysql.generateURL()+"?parseTime=true")
 		if err != nil {
 			return
 		}
@@ -82,12 +100,14 @@ func (mysql *Mysql) Maps() ([]string, error) {
 	return mysql.dbTableNames, nil
 }
 
-func (mysql *Mysql) check() error {
-	db, err := sql.Open("mysql", mysql.dbURL)
+func (mysql *Mysql) Ping() error {
+	dbOpen, err := mysql.Open()
 	if err != nil {
-		return def.NewError(3, err)
+		return err
 	}
-	defer db.Close()
+	defer mysql.Close()
+
+	db := dbOpen.(*sql.DB)
 
 	mysql.dbTableNames = make([]string, 0)
 
@@ -107,14 +127,6 @@ func (mysql *Mysql) check() error {
 	return nil
 }
 
-func (mysql *Mysql) Insert(name string, insert *def.Entries) error {
-	return dbsql.Insert(mysql, name, insert)
-}
-
-func (mysql *Mysql) Update(name string, insert *def.Entries) error {
-	return dbsql.Update(mysql, name, insert)
-}
-
 func (mysql *Mysql) Delete(name string, remove *def.Entries) error {
 	return dbsql.Delete(mysql, name, remove)
 }
@@ -124,12 +136,13 @@ func (mysql *Mysql) GetTableColumn(tableName string) ([]string, error) {
 }
 
 func (mysql *Mysql) Query(search *def.Query, f def.ResultFunction) (*common.Result, error) {
-	common.Log.Debugf("Query mysql database")
-	db, err := sql.Open("mysql", mysql.dbURL+"?parseTime=true")
+	dbOpen, err := mysql.Open()
 	if err != nil {
 		return nil, err
 	}
-	defer db.Close()
+	defer mysql.Close()
+
+	db := dbOpen.(*sql.DB)
 	selectCmd := search.Select()
 
 	common.Log.Debugf("Query: %s", selectCmd)
@@ -149,6 +162,14 @@ func (mysql *Mysql) CreateTable(name string, columns any) error {
 
 func (mysql *Mysql) DeleteTable(name string) error {
 	return dbsql.DeleteTable(mysql, name)
+}
+
+func (mysql *Mysql) Insert(name string, insert *def.Entries) error {
+	return dbsql.Insert(mysql, name, insert)
+}
+
+func (mysql *Mysql) Update(name string, insert *def.Entries) error {
+	return dbsql.Update(mysql, name, insert)
 }
 
 func (mysql *Mysql) BatchSQL(batch string) error {

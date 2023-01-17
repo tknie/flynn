@@ -56,9 +56,9 @@ func TestCreateStringArray(t *testing.T) {
 
 	for _, target := range getTestTargets(t) {
 		fmt.Println("Work on " + target.layer)
-		if target.layer == "adabas" {
-			continue
-		}
+		// if target.layer == "adabas" {
+		// 	continue
+		// }
 		id, err := Register(target.layer, target.url)
 		if !assert.NoError(t, err, "register fail using "+target.layer) {
 			return

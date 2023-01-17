@@ -32,6 +32,8 @@ type Entries struct {
 type Database interface {
 	ID() RegDbID
 	URL() string
+	Ping() error
+	SetCredentials(string, string) error
 	Maps() ([]string, error)
 	GetTableColumn(tableName string) ([]string, error)
 	CreateTable(string, any) error
@@ -64,11 +66,21 @@ func (cd *CommonDatabase) IsTransaction() bool {
 	return cd.Transaction
 }
 
+func (id RegDbID) SetCredentials(user, password string) error {
+	driver, err := searchDataDriver(id)
+	if err != nil {
+		return err
+	}
+	return driver.SetCredentials(user, password)
+}
+
 func (id RegDbID) Query(query *Query, f ResultFunction) (*Result, error) {
+
 	driver, err := searchDataDriver(id)
 	if err != nil {
 		return nil, err
 	}
+	Log.Debugf("Driver %T", driver)
 	return driver.Query(query, f)
 }
 

@@ -38,6 +38,22 @@ func postgresTarget(t *testing.T) (string, error) {
 	return pg, nil
 }
 
+func postgresUserTarget(t *testing.T) (string, error) {
+	postgresHost := os.Getenv("POSTGRES_HOST")
+	postgresPort := os.Getenv("POSTGRES_PORT")
+	if !assert.NotEmpty(t, postgresHost) {
+		return "", fmt.Errorf("Postgres Host not set")
+	}
+	assert.NotEmpty(t, postgresPort)
+	port, err := strconv.Atoi(postgresPort)
+	if !assert.NoError(t, err) {
+		return "", fmt.Errorf("Postgres Port not set")
+	}
+	pg := fmt.Sprintf("postgres://<user>:<password>@%s:%d/%s", postgresHost, port, "Bitgarten")
+
+	return pg, nil
+}
+
 func mysqlTarget(t *testing.T) (string, error) {
 	mysqlHost := os.Getenv("MYSQL_HOST")
 	mysqlPort := os.Getenv("MYSQL_PORT")
@@ -51,6 +67,22 @@ func mysqlTarget(t *testing.T) (string, error) {
 		return "", fmt.Errorf("MYSQL Port not set")
 	}
 	pg := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", "admin", mysqlPassword, mysqlHost, port, "Bitgarten")
+
+	return pg, nil
+}
+
+func mysqlUserTarget(t *testing.T) (string, error) {
+	mysqlHost := os.Getenv("MYSQL_HOST")
+	mysqlPort := os.Getenv("MYSQL_PORT")
+	if !assert.NotEmpty(t, mysqlHost) {
+		return "", fmt.Errorf("MySQL Host not set")
+	}
+	assert.NotEmpty(t, mysqlPort)
+	port, err := strconv.Atoi(mysqlPort)
+	if !assert.NoError(t, err) {
+		return "", fmt.Errorf("MYSQL Port not set")
+	}
+	pg := fmt.Sprintf("<user>:<password>@tcp(%s:%d)/%s", mysqlHost, port, "Bitgarten")
 
 	return pg, nil
 }
