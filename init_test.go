@@ -145,7 +145,9 @@ func TestInitWrongDatabases(t *testing.T) {
 	}
 	pg := fmt.Sprintf("postgres://%s:%s@%s:%d/%s", "admin", "Test123", "abs", port, "Bitgarten")
 	x, err := Register("postgres", pg)
+	assert.NoError(t, err)
+	assert.NotEqual(t, def.RegDbID(0), x)
+	err = x.Ping()
 	assert.Error(t, err)
-	assert.Equal(t, def.RegDbID(0), x)
 	assert.Len(t, def.Databases, 0)
 }

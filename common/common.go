@@ -124,6 +124,14 @@ func (id RegDbID) Close() {
 	driver.Close()
 }
 
+func (id RegDbID) Ping() error {
+	driver, err := searchDataDriver(id)
+	if err != nil {
+		return err
+	}
+	return driver.Ping()
+}
+
 func (id RegDbID) Insert(name string, insert *Entries) error {
 	driver, err := searchDataDriver(id)
 	if err != nil {

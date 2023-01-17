@@ -63,11 +63,13 @@ func TestCreateStringArray(t *testing.T) {
 		if !assert.NoError(t, err, "register fail using "+target.layer) {
 			return
 		}
-		id.DeleteTable("TESTTABLE")
-		err = id.CreateTable("TESTTABLE", columns)
-		if !assert.NoError(t, err, "create fail using "+target.layer) {
-			unregisterDatabase(t, id)
-			return
+		if target.layer != "adabas" {
+			id.DeleteTable("TESTTABLE")
+			err = id.CreateTable("TESTTABLE", columns)
+			if !assert.NoError(t, err, "create fail using "+target.layer) {
+				unregisterDatabase(t, id)
+				return
+			}
 		}
 		list := make([][]any, 0)
 		list = append(list, []any{"Eins", "Ernie"})
@@ -80,7 +82,9 @@ func TestCreateStringArray(t *testing.T) {
 		if !assert.NoError(t, err, "insert fail using "+target.layer) {
 			return
 		}
-		deleteTable(t, id, "TESTTABLE", target.layer)
+		if target.layer != "adabas" {
+			deleteTable(t, id, "TESTTABLE", target.layer)
+		}
 		unregisterDatabase(t, id)
 	}
 }

@@ -54,6 +54,12 @@ func (ada *Adabas) URL() string {
 	return ada.dbURL
 }
 func (ada *Adabas) Maps() ([]string, error) {
+	if ada.dbTableNames == nil {
+		err := ada.Ping()
+		if err != nil {
+			return nil, err
+		}
+	}
 	return ada.dbTableNames, nil
 }
 

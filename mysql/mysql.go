@@ -96,7 +96,12 @@ func (mysql *Mysql) URL() string {
 	return mysql.dbURL
 }
 func (mysql *Mysql) Maps() ([]string, error) {
-
+	if mysql.dbTableNames == nil {
+		err := mysql.Ping()
+		if err != nil {
+			return nil, err
+		}
+	}
 	return mysql.dbTableNames, nil
 }
 
