@@ -20,10 +20,6 @@ import (
 	"github.com/tknie/flynn/common"
 )
 
-func init() {
-	initLog()
-}
-
 func TestBinarySearchPgRows(t *testing.T) {
 	pg, err := postgresTarget(t)
 	if !assert.NoError(t, err) {

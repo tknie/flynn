@@ -26,15 +26,12 @@ import (
 var log = logrus.StandardLogger()
 var once = new(sync.Once)
 
-func init() {
-	initLog()
-}
-
 func initLog() {
 	once.Do(startLog)
 }
 
 func startLog() {
+	fmt.Println("Init logging")
 	fileName := "db.trace.log"
 	common.SetDebugLevel(true)
 	log.SetFormatter(&logrus.TextFormatter{
@@ -54,6 +51,7 @@ func startLog() {
 	log.SetOutput(f)
 	log.Infof("Init logrus")
 	common.Log = log
+	fmt.Println("Logging running")
 }
 
 func TestSearchQuery(t *testing.T) {

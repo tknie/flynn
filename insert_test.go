@@ -55,10 +55,6 @@ type TestData struct {
 	Language    uint64 `dbsql:"::8"`
 }
 
-func init() {
-	initLog()
-}
-
 func TestInsertInitTestTable(t *testing.T) {
 	for _, target := range getTestTargets(t) {
 		if target.layer == "adabas" {

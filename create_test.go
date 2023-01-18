@@ -16,6 +16,7 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/tknie/flynn/common"
 	def "github.com/tknie/flynn/common"
 
 	"github.com/stretchr/testify/assert"
@@ -24,10 +25,6 @@ import (
 type target struct {
 	layer string
 	url   string
-}
-
-func init() {
-	initLog()
 }
 
 func getTestTargets(t *testing.T) (targets []*target) {
@@ -50,12 +47,16 @@ func getTestTargets(t *testing.T) (targets []*target) {
 }
 
 func TestCreateStringArray(t *testing.T) {
+	initLog()
+
 	columns := make([]*def.Column, 0)
+	columns = append(columns, &def.Column{Name: "Id", DataType: def.Alpha, Length: 4})
 	columns = append(columns, &def.Column{Name: "Name", DataType: def.Alpha, Length: 10})
 	columns = append(columns, &def.Column{Name: "FirstName", DataType: def.Alpha, Length: 20})
 
 	for _, target := range getTestTargets(t) {
 		fmt.Println("Work on " + target.layer)
+		common.Log.Debugf("Work on " + target.layer)
 		// if target.layer == "adabas" {
 		// 	continue
 		// }
@@ -71,13 +72,16 @@ func TestCreateStringArray(t *testing.T) {
 				return
 			}
 		}
+		count := 1
 		list := make([][]any, 0)
-		list = append(list, []any{"Eins", "Ernie"})
+		list = append(list, []any{strconv.Itoa(count), "Eins", "Ernie"})
 		for i := 1; i < 100; i++ {
-			list = append(list, []any{strconv.Itoa(i), "Graf Zahl " + strconv.Itoa(i)})
+			count++
+			list = append(list, []any{strconv.Itoa(count), strconv.Itoa(i), "Graf Zahl " + strconv.Itoa(i)})
 		}
-		list = append(list, []any{"Letztes", "Anton"})
-		err = id.Insert("TESTTABLE", &def.Entries{Fields: []string{"name", "firstname"},
+		count++
+		list = append(list, []any{strconv.Itoa(count), "Letztes", "Anton"})
+		err = id.Insert("TESTTABLE", &def.Entries{Fields: []string{"Id", "Name", "FirstName"},
 			Values: list})
 		if !assert.NoError(t, err, "insert fail using "+target.layer) {
 			return

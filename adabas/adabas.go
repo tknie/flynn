@@ -30,11 +30,17 @@ type Adabas struct {
 	password     string
 }
 
-func init() {
-	adatypes.Central.Log = def.Log
+func syncLog() {
+	common.Log.Debugf("Try init debugging on adatypes")
+	adatypes.Central.Log = common.Log
+	adatypes.Central.SetDebugLevel(common.IsDebugLevel())
+	adatypes.Central.Log.Debugf("Init debugging adatypes")
 }
 
 func New(id def.RegDbID, url string) (def.Database, error) {
+	if adatypes.Central.Log != common.Log {
+		syncLog()
+	}
 	ada := &Adabas{def.CommonDatabase{RegDbID: id}, url,
 		nil, nil, "", ""}
 	return ada, nil
@@ -99,7 +105,42 @@ func (ada *Adabas) Close() {
 }
 
 func (ada *Adabas) Insert(name string, insert *def.Entries) error {
-	return def.NewError(65535)
+	con, err := ada.Open()
+	if err != nil {
+		return err
+	}
+
+	conn := con.(*adabas.Connection)
+	req, err := conn.CreateMapStoreRequest(name)
+	if err != nil {
+		return err
+	}
+	common.Log.Debugf("Fields %#v\n", insert.Fields)
+	err = req.StoreFields(insert.Fields)
+	if err != nil {
+		return err
+	}
+	for _, v := range insert.Values {
+		record, rerr := req.CreateRecord()
+		if rerr != nil {
+			return rerr
+		}
+		for i, rv := range v {
+			err = record.SetValue(insert.Fields[i], rv)
+			if err != nil {
+				return err
+			}
+		}
+		common.Log.Debugf("Values %#v\n", v)
+		err = req.Store(record)
+		if err != nil {
+			common.Log.Debugf("Error %v\n", err)
+			return err
+		}
+	}
+	err = req.EndTransaction()
+
+	return err
 }
 
 func (ada *Adabas) Update(name string, insert *def.Entries) error {
