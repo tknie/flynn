@@ -14,6 +14,7 @@ package adabas
 import (
 	"fmt"
 	"os"
+	"sort"
 	"strconv"
 	"testing"
 
@@ -35,7 +36,9 @@ func TestAdabasInit(t *testing.T) {
 		return
 	}
 	m, err := ada.Maps()
+	sort.Strings(m)
 	assert.NoError(t, err)
-	assert.Equal(t, []string{"ADABAS_MAP", "Album", "Albums",
-		"Picture", "PictureBinary", "PictureData", "PictureMetadata"}, m)
+	assert.Equal(t, []string{"ADABAS_MAP", "Album", "Albums", "Picture",
+		"PictureBinary", "PictureData", "PictureMetadata",
+		"TESTTABLE"}, m)
 }

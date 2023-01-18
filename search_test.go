@@ -383,7 +383,10 @@ func TestSearchPgRowsOrdered(t *testing.T) {
 	}
 	defer Unregister(x)
 
-	pwd := os.Getenv("POSTGRES_PASS")
+	pwd := os.Getenv("POSTGRES_PWD")
+	if !assert.NotEmpty(t, pwd) {
+		return
+	}
 	x.SetCredentials("admin", pwd)
 
 	q := &common.Query{TableName: "Albums",
