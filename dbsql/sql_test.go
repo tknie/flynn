@@ -62,3 +62,24 @@ func TestSQLUpdate(t *testing.T) {
 	wh = createWhere(1, ui, rows)
 	assert.Equal(t, "YY=otto AND \"aa\"='XXX2' AND \"cc\"=51 AND \"tt\"=5222", wh)
 }
+
+func TestSQLDelete(t *testing.T) {
+	ui := &common.Entries{
+		Fields: []string{"ABC", "BCD", "YYY"},
+		Update: []string{"ABC"},
+		Values: [][]any{{"abc", 123, 233}},
+	}
+	sqlCmd, rows := generateDelete(true, "TABLENAME", 0, ui)
+	assert.Equal(t, "DELETE FROM TABLENAME WHERE abc IN ($1) AND bcd IN ($2) AND yyy IN ($3)", sqlCmd)
+	assert.Equal(t, []interface{}{"abc", 123, 233}, rows)
+
+	sqlCmd, rows = generateDelete(false, "TABLENAME", 0, ui)
+	assert.Equal(t, "DELETE FROM TABLENAME WHERE abc IN (?) AND bcd IN (?) AND yyy IN (?)", sqlCmd)
+	assert.Equal(t, []interface{}{"abc", 123, 233}, rows)
+
+	ui.Fields = []string{"ABC", "BCD", "%YYY"}
+	ui.Values = [][]any{{"abc", 123, "XXX%"}}
+	sqlCmd, rows = generateDelete(false, "TABLENAME", 0, ui)
+	assert.Equal(t, "DELETE FROM TABLENAME WHERE abc IN (?) AND bcd IN (?) AND (YYY LIKE 'XXX%')", sqlCmd)
+	assert.Equal(t, []interface{}{"abc", 123}, rows)
+}

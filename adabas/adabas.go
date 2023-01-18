@@ -14,6 +14,7 @@ package adabas
 import (
 	"bytes"
 	"strconv"
+	"strings"
 
 	"github.com/tknie/adabas-go-api/adabas"
 	"github.com/tknie/adabas-go-api/adatypes"
@@ -161,7 +162,22 @@ func (ada *Adabas) Delete(name string, remove *def.Entries) error {
 	isns := make([]adatypes.Isn, 0)
 
 	if len(remove.Fields) != 1 || remove.Fields[0] != "ISN" {
-		return def.NewError(23444)
+		queryReq, err := conn.CreateMapReadRequest(name)
+		if err != nil {
+			return err
+		}
+		err = queryReq.QueryFields("")
+		if err != nil {
+			return err
+		}
+		search := createSearch(remove)
+		result, err := queryReq.ReadLogicalWith(search)
+		if err != nil {
+			return err
+		}
+		for _, v := range result.Values {
+			isns = append(isns, v.Isn)
+		}
 	}
 
 	for i := 0; i < len(remove.Values); i++ {
@@ -189,6 +205,25 @@ func (ada *Adabas) Delete(name string, remove *def.Entries) error {
 	}
 	return req.DeleteList(isns)
 
+}
+
+func createSearch(remove *def.Entries) string {
+	var buffer bytes.Buffer
+	for i, f := range remove.Fields {
+		if f[0] == '%' {
+			val := remove.Values[0][i].(string)
+			if strings.HasSuffix(val, "%") {
+				val = val[:len(val)-1]
+				val = "['" + val + "'0x0:'" + val + "'0x255]"
+			} else {
+				val = "[" + val + "]"
+			}
+			buffer.WriteString(f[1:] + "=" + val)
+		} else {
+			buffer.WriteString(f + "=" + remove.Values[0][i].(string))
+		}
+	}
+	return buffer.String()
 }
 
 func (ada *Adabas) GetTableColumn(tableName string) ([]string, error) {

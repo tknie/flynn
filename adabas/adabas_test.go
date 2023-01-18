@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/tknie/flynn/common"
 )
 
 func TestAdabasInit(t *testing.T) {
@@ -41,4 +42,17 @@ func TestAdabasInit(t *testing.T) {
 	assert.Equal(t, []string{"ADABAS_MAP", "Album", "Albums", "Picture",
 		"PictureBinary", "PictureData", "PictureMetadata",
 		"TESTTABLE"}, m)
+}
+
+func TestAdaSearch(t *testing.T) {
+	e := &common.Entries{Fields: []string{"aaa"},
+		Values: [][]any{{"XXX"}}}
+	search := createSearch(e)
+	assert.Equal(t, "aaa=XXX", search)
+
+	e.Fields = []string{"%aaa"}
+	e.Values = [][]any{{"XXX%"}}
+	search = createSearch(e)
+	assert.Equal(t, "aaa=['XXX'0x0:'XXX'0x255]", search)
+
 }

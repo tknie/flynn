@@ -50,7 +50,7 @@ func TestCreateStringArray(t *testing.T) {
 	initLog()
 
 	columns := make([]*def.Column, 0)
-	columns = append(columns, &def.Column{Name: "Id", DataType: def.Alpha, Length: 4})
+	columns = append(columns, &def.Column{Name: "Id", DataType: def.Alpha, Length: 8})
 	columns = append(columns, &def.Column{Name: "Name", DataType: def.Alpha, Length: 10})
 	columns = append(columns, &def.Column{Name: "FirstName", DataType: def.Alpha, Length: 20})
 
@@ -74,15 +74,20 @@ func TestCreateStringArray(t *testing.T) {
 		}
 		count := 1
 		list := make([][]any, 0)
-		list = append(list, []any{strconv.Itoa(count), "Eins", "Ernie"})
+		list = append(list, []any{"TEST" + strconv.Itoa(count), "Eins", "Ernie"})
 		for i := 1; i < 100; i++ {
 			count++
-			list = append(list, []any{strconv.Itoa(count), strconv.Itoa(i), "Graf Zahl " + strconv.Itoa(i)})
+			list = append(list, []any{"TEST" + strconv.Itoa(count), strconv.Itoa(i), "Graf Zahl " + strconv.Itoa(i)})
 		}
 		count++
-		list = append(list, []any{strconv.Itoa(count), "Letztes", "Anton"})
+		list = append(list, []any{"TEST" + strconv.Itoa(count), "Letztes", "Anton"})
 		err = id.Insert("TESTTABLE", &def.Entries{Fields: []string{"Id", "Name", "FirstName"},
 			Values: list})
+		if !assert.NoError(t, err, "insert fail using "+target.layer) {
+			return
+		}
+		err = id.Delete("TESTTABLE", &def.Entries{Fields: []string{"Id"},
+			Values: [][]any{{"TEST%"}}})
 		if !assert.NoError(t, err, "insert fail using "+target.layer) {
 			return
 		}
