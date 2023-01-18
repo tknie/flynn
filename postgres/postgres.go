@@ -79,7 +79,12 @@ func (pg *PostGres) URL() string {
 	return pg.dbURL
 }
 func (pg *PostGres) Maps() ([]string, error) {
-
+	if pg.dbTableNames == nil {
+		err := pg.Ping()
+		if err != nil {
+			return nil, err
+		}
+	}
 	return pg.dbTableNames, nil
 }
 

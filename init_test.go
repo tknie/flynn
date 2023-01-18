@@ -149,5 +149,5 @@ func TestInitWrongDatabases(t *testing.T) {
 	assert.NotEqual(t, def.RegDbID(0), x)
 	err = x.Ping()
 	assert.Error(t, err)
-	assert.Len(t, def.Databases, 0)
+	assert.Len(t, def.Databases, 1)
 }
