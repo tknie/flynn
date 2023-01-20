@@ -1,5 +1,5 @@
 /*
-* Copyright 2022 Thorsten A. Knieling
+* Copyright 2022-2023 Thorsten A. Knieling
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import (
 	"github.com/tknie/log"
 )
 
+// PostGres instane for PostgresSQL
 type PostGres struct {
 	def.CommonDatabase
 	openDB       any
@@ -82,6 +83,7 @@ func (pg *PostGres) ID() def.RegDbID {
 	return pg.RegDbID
 }
 
+// URL current URL used
 func (pg *PostGres) URL() string {
 	return pg.dbURL
 }
@@ -158,6 +160,7 @@ func (pg *PostGres) Delete(name string, remove *def.Entries) error {
 	return dbsql.Delete(pg, name, remove)
 }
 
+// GetTableColumn get table columne names
 func (pg *PostGres) GetTableColumn(tableName string) ([]string, error) {
 	dbOpen, err := pg.Open()
 	if err != nil {
