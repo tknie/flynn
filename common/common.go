@@ -68,6 +68,7 @@ func (cd *CommonDatabase) IsTransaction() bool {
 	return cd.Transaction
 }
 
+// SetCredentials set credentials to connect to database
 func (id RegDbID) SetCredentials(user, password string) error {
 	driver, err := searchDataDriver(id)
 	if err != nil {
@@ -76,6 +77,7 @@ func (id RegDbID) SetCredentials(user, password string) error {
 	return driver.SetCredentials(user, password)
 }
 
+// Query query database records with search or SELECT
 func (id RegDbID) Query(query *Query, f ResultFunction) (*Result, error) {
 
 	driver, err := searchDataDriver(id)
@@ -86,6 +88,7 @@ func (id RegDbID) Query(query *Query, f ResultFunction) (*Result, error) {
 	return driver.Query(query, f)
 }
 
+// CreateTable create a new table
 func (id RegDbID) CreateTable(tableName string, columns any) error {
 	driver, err := searchDataDriver(id)
 	if err != nil {
@@ -94,6 +97,7 @@ func (id RegDbID) CreateTable(tableName string, columns any) error {
 	return driver.CreateTable(tableName, columns)
 }
 
+// DeleteTable delete a table
 func (id RegDbID) DeleteTable(tableName string) error {
 	driver, err := searchDataDriver(id)
 	if err != nil {
@@ -102,6 +106,7 @@ func (id RegDbID) DeleteTable(tableName string) error {
 	return driver.DeleteTable(tableName)
 }
 
+// BatchSQL batch SQL query in table
 func (id RegDbID) BatchSQL(batch string) error {
 	driver, err := searchDataDriver(id)
 	if err != nil {
@@ -110,6 +115,7 @@ func (id RegDbID) BatchSQL(batch string) error {
 	return driver.BatchSQL(batch)
 }
 
+// Open open the database connection
 func (id RegDbID) Open() (any, error) {
 	driver, err := searchDataDriver(id)
 	if err != nil {
@@ -118,6 +124,7 @@ func (id RegDbID) Open() (any, error) {
 	return driver.Open()
 }
 
+// Close close the database connection
 func (id RegDbID) Close() {
 	driver, err := searchDataDriver(id)
 	if err != nil {
@@ -126,6 +133,7 @@ func (id RegDbID) Close() {
 	driver.Close()
 }
 
+// Ping create short test database connection
 func (id RegDbID) Ping() error {
 	driver, err := searchDataDriver(id)
 	if err != nil {
@@ -134,6 +142,7 @@ func (id RegDbID) Ping() error {
 	return driver.Ping()
 }
 
+// Insert insert record into table
 func (id RegDbID) Insert(name string, insert *Entries) error {
 	driver, err := searchDataDriver(id)
 	if err != nil {
@@ -142,6 +151,7 @@ func (id RegDbID) Insert(name string, insert *Entries) error {
 	return driver.Insert(name, insert)
 }
 
+// Update update record in table
 func (id RegDbID) Update(name string, insert *Entries) error {
 	driver, err := searchDataDriver(id)
 	if err != nil {
@@ -150,6 +160,7 @@ func (id RegDbID) Update(name string, insert *Entries) error {
 	return driver.Update(name, insert)
 }
 
+// Delete Delete database records
 func (id RegDbID) Delete(name string, remove *Entries) error {
 	driver, err := searchDataDriver(id)
 	if err != nil {
@@ -158,6 +169,7 @@ func (id RegDbID) Delete(name string, remove *Entries) error {
 	return driver.Delete(name, remove)
 }
 
+// GetTableColumn get table columne names
 func (id RegDbID) GetTableColumn(tableName string) ([]string, error) {
 	driver, err := searchDataDriver(id)
 	if err != nil {

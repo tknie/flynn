@@ -120,11 +120,11 @@ func TestDataTypeStruct(t *testing.T) {
 	slice := &SliceStruct{}
 	s, err = SqlDataType(tSQL, slice)
 	assert.Error(t, err)
-	assert.Equal(t, "DB009: Slice types are not supported used by field Test", err.Error())
+	assert.Equal(t, "DB000009: Slice types are not supported used by field Test", err.Error())
 	assert.Equal(t, "", s)
 	arr := &ArrayStruct{}
 	s, err = SqlDataType(tSQL, arr)
 	assert.Error(t, err)
-	assert.Equal(t, "DB008: Array types are not supported used by field Test", err.Error())
+	assert.Equal(t, "DB000008: Array types are not supported used by field Test", err.Error())
 	assert.Equal(t, "", s)
 }

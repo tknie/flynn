@@ -22,6 +22,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const testCreationTable = "TESTTABLE"
+
 type target struct {
 	layer string
 	url   string
@@ -65,8 +67,8 @@ func TestCreateStringArray(t *testing.T) {
 			return
 		}
 		if target.layer != "adabas" {
-			id.DeleteTable("TESTTABLE")
-			err = id.CreateTable("TESTTABLE", columns)
+			id.DeleteTable(testCreationTable)
+			err = id.CreateTable(testCreationTable, columns)
 			if !assert.NoError(t, err, "create fail using "+target.layer) {
 				unregisterDatabase(t, id)
 				return
@@ -81,18 +83,21 @@ func TestCreateStringArray(t *testing.T) {
 		}
 		count++
 		list = append(list, []any{"TEST" + strconv.Itoa(count), "Letztes", "Anton"})
-		err = id.Insert("TESTTABLE", &def.Entries{Fields: []string{"Id", "Name", "FirstName"},
+		err = id.Insert(testCreationTable, &def.Entries{Fields: []string{"Id", "Name", "FirstName"},
 			Values: list})
 		if !assert.NoError(t, err, "insert fail using "+target.layer) {
 			return
 		}
-		err = id.Delete("TESTTABLE", &def.Entries{Fields: []string{"Id"},
+		err = id.Delete(testCreationTable, &def.Entries{Fields: []string{"Id"},
 			Values: [][]any{{"TEST%"}}})
 		if !assert.NoError(t, err, "insert fail using "+target.layer) {
 			return
 		}
-		if target.layer != "adabas" {
-			deleteTable(t, id, "TESTTABLE", target.layer)
+		if target.layer == "adabas" {
+			id.Delete(testCreationTable, &def.Entries{Fields: []string{},
+				Values: [][]any{}})
+		} else {
+			deleteTable(t, id, testCreationTable, target.layer)
 		}
 		unregisterDatabase(t, id)
 	}
@@ -128,8 +133,8 @@ func TestCreateStruct(t *testing.T) {
 		if !assert.NoError(t, err, "register fail using "+target.layer) {
 			return
 		}
-		id.DeleteTable("TESTTABLE")
-		err = id.CreateTable("TESTTABLE", columns)
+		id.DeleteTable(testCreationTable)
+		err = id.CreateTable(testCreationTable, columns)
 		if !assert.NoError(t, err, "create fail using "+target.layer) {
 			unregisterDatabase(t, id)
 			continue
@@ -140,14 +145,14 @@ func TestCreateStruct(t *testing.T) {
 			list = append(list, []any{strconv.Itoa(i), "Graf Zahl " + strconv.Itoa(i)})
 		}
 		list = append(list, []any{"Letztes", "Anton"})
-		err = id.Insert("TESTTABLE", &def.Entries{Fields: []string{"name", "firstname"},
+		err = id.Insert(testCreationTable, &def.Entries{Fields: []string{"name", "firstname"},
 			Values: list})
 		if !assert.NoError(t, err, "insert fail using "+target.layer) {
 			return
 		}
 		err = id.BatchSQL("SELECT NAME FROM TESTTABLE")
 		assert.NoError(t, err, "select fail using "+target.layer)
-		deleteTable(t, id, "TESTTABLE", target.layer)
+		deleteTable(t, id, testCreationTable, target.layer)
 		unregisterDatabase(t, id)
 	}
 }

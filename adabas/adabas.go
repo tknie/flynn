@@ -40,6 +40,7 @@ func syncLog() {
 	adatypes.Central.Log.Debugf("Init debugging adatypes")
 }
 
+// New create new postgres reference instance
 func New(id def.RegDbID, url string) (def.Database, error) {
 	if adatypes.Central.Log != log.Log {
 		syncLog()
@@ -49,19 +50,24 @@ func New(id def.RegDbID, url string) (def.Database, error) {
 	return ada, nil
 }
 
+// SetCredentials set credentials to connect to database
 func (ada *Adabas) SetCredentials(user, password string) error {
 	ada.user = user
 	ada.password = password
 	return nil
 }
 
+// ID current id used
 func (ada *Adabas) ID() def.RegDbID {
 	return ada.RegDbID
 }
 
+// URL current URL used
 func (ada *Adabas) URL() string {
 	return ada.dbURL
 }
+
+// Maps database maps, tables or views
 func (ada *Adabas) Maps() ([]string, error) {
 	if ada.dbTableNames == nil {
 		err := ada.Ping()
@@ -72,6 +78,7 @@ func (ada *Adabas) Maps() ([]string, error) {
 	return ada.dbTableNames, nil
 }
 
+// Ping create short test database connection
 func (ada *Adabas) Ping() error {
 	c, err := ada.Open()
 	if err != nil {
@@ -87,6 +94,7 @@ func (ada *Adabas) Ping() error {
 	return nil
 }
 
+// Open open the database connection
 func (ada *Adabas) Open() (any, error) {
 	db, err := adabas.NewConnection(ada.URL())
 	if err != nil {
@@ -100,6 +108,7 @@ func (ada *Adabas) Open() (any, error) {
 	return db, err
 }
 
+// Close close the database connection
 func (ada *Adabas) Close() {
 	if ada.conn != nil {
 		ada.conn.Close()
@@ -107,6 +116,7 @@ func (ada *Adabas) Close() {
 	}
 }
 
+// Insert insert record into table
 func (ada *Adabas) Insert(name string, insert *def.Entries) error {
 	con, err := ada.Open()
 	if err != nil {
@@ -146,10 +156,12 @@ func (ada *Adabas) Insert(name string, insert *def.Entries) error {
 	return err
 }
 
+// Update update record in table
 func (ada *Adabas) Update(name string, insert *def.Entries) error {
 	return errorrepo.NewError("DB065535")
 }
 
+// Delete Delete database records
 func (ada *Adabas) Delete(name string, remove *def.Entries) error {
 	con, err := ada.Open()
 	if err != nil {
@@ -228,6 +240,7 @@ func createSearch(remove *def.Entries) string {
 	return buffer.String()
 }
 
+// GetTableColumn get table columne names
 func (ada *Adabas) GetTableColumn(tableName string) ([]string, error) {
 	con, err := ada.Open()
 	if err != nil {
@@ -238,6 +251,7 @@ func (ada *Adabas) GetTableColumn(tableName string) ([]string, error) {
 	return conn.GetMaps()
 }
 
+// Query query database records with search or SELECT
 func (ada *Adabas) Query(search *def.Query, f def.ResultFunction) (*common.Result, error) {
 	con, err := ada.Open()
 	if err != nil {
@@ -315,14 +329,17 @@ func (ada *Adabas) Query(search *def.Query, f def.ResultFunction) (*common.Resul
 	return result, nil
 }
 
+// CreateTable create a new table
 func (ada *Adabas) CreateTable(string, any) error {
 	return errorrepo.NewError("DB065535")
 }
 
+// DeleteTable delete a table
 func (ada *Adabas) DeleteTable(string) error {
 	return errorrepo.NewError("DB065535")
 }
 
+// BatchSQL batch SQL query in table
 func (ada *Adabas) BatchSQL(batch string) error {
 	return errorrepo.NewError("DB065535")
 }
