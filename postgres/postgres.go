@@ -32,6 +32,7 @@ type PostGres struct {
 	password     string
 }
 
+// New create new postgres reference instance
 func New(id def.RegDbID, url string) (def.Database, error) {
 	pg := &PostGres{def.CommonDatabase{RegDbID: id}, nil,
 		url, nil, "", ""}
@@ -42,6 +43,7 @@ func New(id def.RegDbID, url string) (def.Database, error) {
 	return pg, nil
 }
 
+// SetCredentials set credentials to connect to database
 func (pg *PostGres) SetCredentials(user, password string) error {
 	pg.user = user
 	pg.password = password
@@ -60,18 +62,22 @@ func (pg *PostGres) generateURL() string {
 	return url
 }
 
+// Reference reference to postgres URL
 func (pg *PostGres) Reference() (string, string) {
 	return "pgx", pg.dbURL
 }
 
+// IndexNeeded index needed for the SELECT statement value reference
 func (pg *PostGres) IndexNeeded() bool {
 	return true
 }
 
+// ByteArrayAvailable byte array available in SQL database
 func (pg *PostGres) ByteArrayAvailable() bool {
 	return true
 }
 
+// ID current id used
 func (pg *PostGres) ID() def.RegDbID {
 	return pg.RegDbID
 }
@@ -79,6 +85,8 @@ func (pg *PostGres) ID() def.RegDbID {
 func (pg *PostGres) URL() string {
 	return pg.dbURL
 }
+
+// Maps database maps, tables or views
 func (pg *PostGres) Maps() ([]string, error) {
 	if pg.dbTableNames == nil {
 		err := pg.Ping()
@@ -89,6 +97,7 @@ func (pg *PostGres) Maps() ([]string, error) {
 	return pg.dbTableNames, nil
 }
 
+// Open open the database connection
 func (pg *PostGres) Open() (dbOpen any, err error) {
 	var db *sql.DB
 	if !pg.IsTransaction() || pg.openDB == nil {
@@ -104,6 +113,7 @@ func (pg *PostGres) Open() (dbOpen any, err error) {
 	return db, nil
 }
 
+// Close close the database connection
 func (pg *PostGres) Close() {
 	if pg.openDB != nil {
 		pg.openDB.(*sql.DB).Close()
@@ -114,6 +124,7 @@ func (pg *PostGres) Close() {
 	}
 }
 
+// Ping create short test database connection
 func (pg *PostGres) Ping() error {
 
 	dbOpen, err := pg.Open()
@@ -142,6 +153,7 @@ func (pg *PostGres) Ping() error {
 	return nil
 }
 
+// Delete Delete database records
 func (pg *PostGres) Delete(name string, remove *def.Entries) error {
 	return dbsql.Delete(pg, name, remove)
 }
@@ -174,6 +186,7 @@ func (pg *PostGres) GetTableColumn(tableName string) ([]string, error) {
 	return tableRows, nil
 }
 
+// Query query database records with search or SELECT
 func (pg *PostGres) Query(search *def.Query, f def.ResultFunction) (*common.Result, error) {
 	log.Log.Debugf("Query postgres database")
 	dbOpen, err := pg.Open()
@@ -196,22 +209,27 @@ func (pg *PostGres) Query(search *def.Query, f def.ResultFunction) (*common.Resu
 	return search.ParseStruct(rows, f)
 }
 
+// CreateTable create a new table
 func (pg *PostGres) CreateTable(name string, columns any) error {
 	return dbsql.CreateTable(pg, name, columns)
 }
 
+// DeleteTable delete a table
 func (pg *PostGres) DeleteTable(name string) error {
 	return dbsql.DeleteTable(pg, name)
 }
 
+// Insert insert record into table
 func (pg *PostGres) Insert(name string, insert *def.Entries) error {
 	return dbsql.Insert(pg, name, insert)
 }
 
+// Update update record in table
 func (pg *PostGres) Update(name string, insert *def.Entries) error {
 	return dbsql.Update(pg, name, insert)
 }
 
+// BatchSQL batch SQL query in table
 func (pg *PostGres) BatchSQL(batch string) error {
 	return dbsql.BatchSQL(pg, batch)
 }

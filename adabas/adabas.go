@@ -18,6 +18,7 @@ import (
 
 	"github.com/tknie/adabas-go-api/adabas"
 	"github.com/tknie/adabas-go-api/adatypes"
+	"github.com/tknie/errorrepo"
 	"github.com/tknie/flynn/common"
 	def "github.com/tknie/flynn/common"
 	"github.com/tknie/log"
@@ -146,7 +147,7 @@ func (ada *Adabas) Insert(name string, insert *def.Entries) error {
 }
 
 func (ada *Adabas) Update(name string, insert *def.Entries) error {
-	return def.NewError(65535)
+	return errorrepo.NewError("DB065535")
 }
 
 func (ada *Adabas) Delete(name string, remove *def.Entries) error {
@@ -199,7 +200,7 @@ func (ada *Adabas) Delete(name string, remove *def.Entries) error {
 		case string:
 			iv, err := strconv.ParseUint(v, 0, 10)
 			if err != nil {
-				return def.NewError(23445)
+				return errorrepo.NewError("DB23445")
 			}
 			isns = append(isns, adatypes.Isn(iv))
 		}
@@ -315,13 +316,13 @@ func (ada *Adabas) Query(search *def.Query, f def.ResultFunction) (*common.Resul
 }
 
 func (ada *Adabas) CreateTable(string, any) error {
-	return def.NewError(65535)
+	return errorrepo.NewError("DB065535")
 }
 
 func (ada *Adabas) DeleteTable(string) error {
-	return def.NewError(65535)
+	return errorrepo.NewError("DB065535")
 }
 
 func (ada *Adabas) BatchSQL(batch string) error {
-	return def.NewError(65535)
+	return errorrepo.NewError("DB065535")
 }

@@ -16,6 +16,7 @@ import (
 	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/tknie/errorrepo"
 	"github.com/tknie/flynn/common"
 	def "github.com/tknie/flynn/common"
 	"github.com/tknie/flynn/dbsql"
@@ -138,7 +139,7 @@ func (mysql *Mysql) Delete(name string, remove *def.Entries) error {
 }
 
 func (mysql *Mysql) GetTableColumn(tableName string) ([]string, error) {
-	return nil, def.NewError(65535)
+	return nil, errorrepo.NewError("DB065535")
 }
 
 func (mysql *Mysql) Query(search *def.Query, f def.ResultFunction) (*common.Result, error) {

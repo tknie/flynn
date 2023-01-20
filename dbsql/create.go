@@ -18,6 +18,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/tknie/errorrepo"
 	"github.com/tknie/flynn/common"
 	"github.com/tknie/log"
 )
@@ -151,7 +152,7 @@ func SqlDataType(dbsql DBsql, columns any) (string, error) {
 		return buffer.String(), nil
 	}
 	log.Log.Debugf("Type error, no struct: %T", columns)
-	return "", common.NewError(5, "", fmt.Sprintf("%T", columns))
+	return "", errorrepo.NewError("DB000005", "", fmt.Sprintf("%T", columns))
 }
 
 func sqlDataTypeStructField(dbsql DBsql, field reflect.StructField) (string, error) {
@@ -206,7 +207,7 @@ func sqlDataTypeStructFieldDataType(dbsql DBsql, sf reflect.StructField) (string
 	case reflect.Bool:
 		return name + " " + common.Bit.SqlType(1) + additional, nil
 	case reflect.Complex64, reflect.Complex128:
-		return "", common.NewError(7)
+		return "", errorrepo.NewError("DB000007")
 	case reflect.Struct:
 		var buffer bytes.Buffer
 		ty := t
@@ -230,15 +231,15 @@ func sqlDataTypeStructFieldDataType(dbsql DBsql, sf reflect.StructField) (string
 		if t.Elem().Kind() == reflect.Uint8 {
 			return name + " " + common.Bytes.SqlType(dbsql.ByteArrayAvailable(), 8) + additional, nil
 		}
-		return "", common.NewError(8, sf.Name)
+		return "", errorrepo.NewError("DB000008", sf.Name)
 	case reflect.Slice:
-		return "", common.NewError(9, sf.Name)
+		return "", errorrepo.NewError("DB000009", sf.Name)
 	default:
 		//		return SqlDataType(t)
 		// + " CONSTRAINT " + t.Name +
 		// 	" CHECK (" + t.Name + " > 0)"
 	}
-	return "", common.NewError(6, sf.Name, t.Kind())
+	return "", errorrepo.NewError("DB000006", sf.Name, t.Kind())
 }
 
 func evaluateName(sf reflect.StructField, tsf reflect.Type) (string, string, string) {

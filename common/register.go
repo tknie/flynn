@@ -11,6 +11,10 @@
 
 package common
 
+import (
+	"github.com/tknie/errorrepo"
+)
+
 var Databases = make([]Database, 0)
 
 func searchDataDriver(id RegDbID) (Database, error) {
@@ -19,5 +23,5 @@ func searchDataDriver(id RegDbID) (Database, error) {
 			return d, nil
 		}
 	}
-	return nil, NewError(2)
+	return nil, errorrepo.NewError("DB000002")
 }
