@@ -19,6 +19,7 @@ import (
 	"github.com/tknie/flynn/common"
 	def "github.com/tknie/flynn/common"
 	"github.com/tknie/flynn/dbsql"
+	"github.com/tknie/log"
 )
 
 const layer = "mysql"
@@ -150,7 +151,7 @@ func (mysql *Mysql) Query(search *def.Query, f def.ResultFunction) (*common.Resu
 	db := dbOpen.(*sql.DB)
 	selectCmd := search.Select()
 
-	common.Log.Debugf("Query: %s", selectCmd)
+	log.Log.Debugf("Query: %s", selectCmd)
 	rows, err := db.Query(selectCmd)
 	if err != nil {
 		return nil, err

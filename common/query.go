@@ -6,11 +6,14 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/tknie/log"
 )
 
 type Query struct {
 	TableName    string
 	Search       string
+	Join         string
 	Fields       []string
 	Order        []string
 	Limit        uint32
@@ -26,13 +29,13 @@ func (q *Query) Select() string {
 	var selectCmd bytes.Buffer
 	switch {
 	case q.DataStruct != nil:
-		selectCmd.WriteString("select ")
+		selectCmd.WriteString("SELECT ")
 		ti := CreateInterface(q.DataStruct)
 		q.TypeInfo = ti
 		selectCmd.WriteString(ti.CreateQueryFields())
-		selectCmd.WriteString(" from " + q.TableName)
+		selectCmd.WriteString(" FROM " + q.TableName)
 	default:
-		selectCmd.WriteString("select ")
+		selectCmd.WriteString("SELECT ")
 		if len(q.Fields) == 0 {
 			selectCmd.WriteString("*")
 		} else {
@@ -43,16 +46,19 @@ func (q *Query) Select() string {
 				selectCmd.WriteString(s)
 			}
 		}
-		selectCmd.WriteString(" from " + q.TableName)
+		selectCmd.WriteString(" FROM " + q.TableName)
 	}
 	if q.Search != "" {
-		selectCmd.WriteString(" where " + q.Search)
+		selectCmd.WriteString(" WHERE " + q.Search)
+	}
+	if q.Join != "" {
+		selectCmd.WriteString(" LIKE " + q.Join)
 	}
 	if q.Limit > 0 {
-		selectCmd.WriteString(fmt.Sprintf(" limit = %d", q.Limit))
+		selectCmd.WriteString(fmt.Sprintf(" LIMIT = %d", q.Limit))
 	}
 	if len(q.Order) > 0 {
-		selectCmd.WriteString(" order by ")
+		selectCmd.WriteString(" ORDER BY ")
 		for x, s := range q.Order {
 			if x > 0 {
 				selectCmd.WriteString(",")
@@ -61,11 +67,12 @@ func (q *Query) Select() string {
 			if len(entry) != 2 {
 				return ""
 			}
-			switch strings.ToLower(entry[1]) {
-			case "asc", "desc":
-				selectCmd.WriteString(entry[0] + " " + entry[1])
+			x := strings.ToUpper(entry[1])
+			switch x {
+			case "ASC", "DESC":
+				selectCmd.WriteString(entry[0] + " " + x)
 			default:
-				selectCmd.WriteString(entry[0] + " asc")
+				selectCmd.WriteString(entry[0] + " ASC")
 			}
 		}
 	}
@@ -84,20 +91,20 @@ func (search *Query) ParseRows(rows *sql.Rows, f ResultFunction) (result *Result
 		_, scanRows, err = result.GenerateColumnByStruct(search, rows)
 	}
 	if err != nil {
-		Log.Debugf("Error generating column: %v", err)
+		log.Log.Debugf("Error generating column: %v", err)
 		return nil, err
 	}
 	result.Fields, err = rows.Columns()
 	if err != nil {
 		return nil, err
 	}
-	Log.Debugf("Parse columns rows: %d fields: %v", len(scanRows), result.Fields)
+	log.Log.Debugf("Parse columns rows: %d fields: %v", len(scanRows), result.Fields)
 	for rows.Next() {
-		Log.Debugf("Found record")
+		log.Log.Debugf("Found record")
 		err := rows.Scan(scanRows...)
 		if err != nil {
 			fmt.Println("Error scanning rows", scanRows)
-			Log.Debugf("Error during scan rows: %v", err)
+			log.Log.Debugf("Error during scan rows: %v", err)
 			return nil, err
 		}
 		result.Rows = make([]any, len(scanRows))
@@ -154,7 +161,7 @@ func (search *Query) ParseRows(rows *sql.Rows, f ResultFunction) (result *Result
 			return nil, err
 		}
 	}
-	Log.Debugf("Rows procession ended")
+	log.Log.Debugf("Rows procession ended")
 	return
 }
 
@@ -167,10 +174,10 @@ func (search *Query) ParseStruct(rows *sql.Rows, f ResultFunction) (result *Resu
 	result.Data = search.DataStruct
 	copy, values, err := result.GenerateColumnByStruct(search, rows)
 	if err != nil {
-		Log.Debugf("Error generating column: %v", err)
+		log.Log.Debugf("Error generating column: %v", err)
 		return nil, err
 	}
-	Log.Debugf("Parse columns rows")
+	log.Log.Debugf("Parse columns rows")
 	result.Fields, err = rows.Columns()
 	if err != nil {
 		return nil, err
@@ -179,7 +186,7 @@ func (search *Query) ParseStruct(rows *sql.Rows, f ResultFunction) (result *Resu
 		err := rows.Scan(values...)
 		if err != nil {
 			fmt.Println("Error scanning structs", values, err)
-			Log.Debugf("Error during scan of struct: %v/%v", err, copy)
+			log.Log.Debugf("Error during scan of struct: %v/%v", err, copy)
 			return nil, err
 		}
 		result.Data = copy
@@ -194,18 +201,18 @@ func (search *Query) ParseStruct(rows *sql.Rows, f ResultFunction) (result *Resu
 func generateColumnByValues(rows *sql.Rows) ([]any, error) {
 	colsType, err := rows.ColumnTypes()
 	if err != nil {
-		if IsDebugLevel() {
-			Log.Debugf("Error cols read: %v", err)
+		if log.IsDebugLevel() {
+			log.Log.Debugf("Error cols read: %v", err)
 		}
 		return nil, err
 	}
-	Log.Debugf("Create columns values")
+	log.Log.Debugf("Create columns values")
 	colsValue := make([]any, 0)
 	for nr, col := range colsType {
 		len, ok := col.Length()
 		_, nullOk := col.Nullable()
-		if IsDebugLevel() {
-			Log.Debugf("Colnr=%d name=%s len=%d ok=%v null=%v typeName=%s",
+		if log.IsDebugLevel() {
+			log.Log.Debugf("Colnr=%d name=%s len=%d ok=%v null=%v typeName=%s",
 				nr, col.Name(), len, ok, nullOk, col.DatabaseTypeName())
 		}
 		switch col.DatabaseTypeName() {
@@ -213,11 +220,11 @@ func generateColumnByValues(rows *sql.Rows) ([]any, error) {
 			if nullOk {
 				s := sql.NullString{}
 				colsValue = append(colsValue, &s)
-				Log.Debugf("Create null string value")
+				log.Log.Debugf("Create null string value")
 			} else {
 				s := ""
 				colsValue = append(colsValue, &s)
-				Log.Debugf("Create non-null string value")
+				log.Log.Debugf("Create non-null string value")
 			}
 		case "NUMBER":
 			s := int64(0)

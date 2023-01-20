@@ -19,6 +19,7 @@ import (
 	"strings"
 
 	"github.com/tknie/flynn/common"
+	"github.com/tknie/log"
 )
 
 type DBsql interface {
@@ -32,7 +33,7 @@ type DBsql interface {
 
 func CreateTable(dbsql DBsql, name string, col any) error {
 	//	columns []*def.Column
-	common.Log.Debugf("Create SQL table")
+	log.Log.Debugf("Create SQL table")
 	dbOpen, err := dbsql.Open()
 	if err != nil {
 		return err
@@ -46,19 +47,19 @@ func CreateTable(dbsql DBsql, name string, col any) error {
 	default:
 		c, err := createTableByStruct(dbsql, col)
 		if err != nil {
-			common.Log.Errorf("Error parsing structure: %v", err)
+			log.Log.Errorf("Error parsing structure: %v", err)
 			return err
 		}
 		createCmd += c
 	}
 	createCmd += ")"
-	common.Log.Debugf("Create cmd %s", createCmd)
+	log.Log.Debugf("Create cmd %s", createCmd)
 	_, err = db.Query(createCmd)
 	if err != nil {
-		common.Log.Errorf("Error returned by SQL: %v", err)
+		log.Log.Errorf("Error returned by SQL: %v", err)
 		return err
 	}
-	common.Log.Debugf("Table created")
+	log.Log.Debugf("Table created")
 	return nil
 }
 
@@ -70,7 +71,7 @@ func DeleteTable(dbsql DBsql, name string) error {
 	}
 	defer db.Close()
 
-	common.Log.Debugf("Drop table " + name)
+	log.Log.Debugf("Drop table " + name)
 
 	_, err = db.Query("DROP TABLE " + name)
 	if err != nil {
@@ -102,7 +103,7 @@ func createTableByColumns(dbsql DBsql, columns []*common.Column) string {
 }
 
 func createTableByStruct(dbsql DBsql, columns any) (string, error) {
-	common.Log.Debugf("Create table by structs")
+	log.Log.Debugf("Create table by structs")
 	return SqlDataType(dbsql, columns)
 }
 
@@ -131,7 +132,7 @@ func SqlDataType(dbsql DBsql, columns any) (string, error) {
 	if x.Kind() == reflect.Pointer {
 		x = x.Elem()
 	}
-	common.Log.Debugf("Go through data type %s", x.Name())
+	log.Log.Debugf("Go through data type %s", x.Name())
 	switch x.Kind() {
 	case reflect.Struct:
 		var buffer bytes.Buffer
@@ -146,10 +147,10 @@ func SqlDataType(dbsql DBsql, columns any) (string, error) {
 			}
 			buffer.WriteString(s)
 		}
-		common.Log.Debugf("Got for type %s: %s", x.Name(), buffer.String())
+		log.Log.Debugf("Got for type %s: %s", x.Name(), buffer.String())
 		return buffer.String(), nil
 	}
-	common.Log.Debugf("Type error, no struct: %T", columns)
+	log.Log.Debugf("Type error, no struct: %T", columns)
 	return "", common.NewError(5, "", fmt.Sprintf("%T", columns))
 }
 
@@ -158,7 +159,7 @@ func sqlDataTypeStructField(dbsql DBsql, field reflect.StructField) (string, err
 	if x.Kind() == reflect.Pointer {
 		x = x.Elem()
 	}
-	common.Log.Debugf("Check kind %s/%s %s", x.Kind(), x.Name(), field.Name)
+	log.Log.Debugf("Check kind %s/%s %s", x.Kind(), x.Name(), field.Name)
 	switch x.Kind() {
 	case reflect.Struct:
 		name, additional, _ := evaluateName(field, x)
@@ -190,7 +191,7 @@ func sqlDataTypeStructFieldDataType(dbsql DBsql, sf reflect.StructField) (string
 	if info != "" {
 		return info, nil
 	}
-	common.Log.Debugf("dbsql name %s and kind %s", name, t.Kind())
+	log.Log.Debugf("dbsql name %s and kind %s", name, t.Kind())
 	switch t.Kind() {
 	case reflect.String:
 		return name + " " + common.Alpha.SqlType(255) + additional, nil
@@ -225,7 +226,7 @@ func sqlDataTypeStructFieldDataType(dbsql DBsql, sf reflect.StructField) (string
 		buffer.WriteString(additional)
 		return buffer.String(), nil
 	case reflect.Array:
-		common.Log.Debugf("Arrays %d", t.Len())
+		log.Log.Debugf("Arrays %d", t.Len())
 		if t.Elem().Kind() == reflect.Uint8 {
 			return name + " " + common.Bytes.SqlType(dbsql.ByteArrayAvailable(), 8) + additional, nil
 		}
@@ -247,7 +248,7 @@ func evaluateName(sf reflect.StructField, tsf reflect.Type) (string, string, str
 	// }
 	name := sf.Name
 	additional := ""
-	common.Log.Debugf("Found name " + name)
+	log.Log.Debugf("Found name " + name)
 	if tagName, ok := sf.Tag.Lookup("dbsql"); ok {
 		tagField := strings.Split(tagName, ":")
 		if tagField[0] != "" {
@@ -256,7 +257,7 @@ func evaluateName(sf reflect.StructField, tsf reflect.Type) (string, string, str
 		if len(tagField) > 1 {
 			additional = " " + tagField[1]
 		}
-		common.Log.Debugf("Overwrite to name " + name)
+		log.Log.Debugf("Overwrite to name " + name)
 		if len(tagField) > 2 {
 			if tagField[2] == "SERIAL" {
 				return "", "", name + " SERIAL UNIQUE"

@@ -18,6 +18,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/tknie/flynn/common"
+	"github.com/tknie/log"
 )
 
 func TestBinarySearchPgRows(t *testing.T) {
@@ -26,7 +27,7 @@ func TestBinarySearchPgRows(t *testing.T) {
 		return
 	}
 
-	common.Log.Debugf("Binary test")
+	log.Log.Debugf("Binary test")
 
 	x, err := Register("postgres", pg)
 	if !assert.NoError(t, err) {
@@ -63,7 +64,7 @@ func TestBinarySearchMariaRows(t *testing.T) {
 		return
 	}
 
-	common.Log.Debugf("Binary test")
+	log.Log.Debugf("Binary test")
 
 	x, err := Register("mysql", mysql)
 	if !assert.NoError(t, err) {

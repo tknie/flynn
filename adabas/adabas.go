@@ -20,6 +20,7 @@ import (
 	"github.com/tknie/adabas-go-api/adatypes"
 	"github.com/tknie/flynn/common"
 	def "github.com/tknie/flynn/common"
+	"github.com/tknie/log"
 )
 
 type Adabas struct {
@@ -32,14 +33,14 @@ type Adabas struct {
 }
 
 func syncLog() {
-	common.Log.Debugf("Try init debugging on adatypes")
-	adatypes.Central.Log = common.Log
-	adatypes.Central.SetDebugLevel(common.IsDebugLevel())
+	log.Log.Debugf("Try init debugging on adatypes")
+	adatypes.Central.Log = log.Log
+	adatypes.Central.SetDebugLevel(log.IsDebugLevel())
 	adatypes.Central.Log.Debugf("Init debugging adatypes")
 }
 
 func New(id def.RegDbID, url string) (def.Database, error) {
-	if adatypes.Central.Log != common.Log {
+	if adatypes.Central.Log != log.Log {
 		syncLog()
 	}
 	ada := &Adabas{def.CommonDatabase{RegDbID: id}, url,
@@ -116,7 +117,7 @@ func (ada *Adabas) Insert(name string, insert *def.Entries) error {
 	if err != nil {
 		return err
 	}
-	common.Log.Debugf("Fields %#v\n", insert.Fields)
+	log.Log.Debugf("Fields %#v\n", insert.Fields)
 	err = req.StoreFields(insert.Fields)
 	if err != nil {
 		return err
@@ -132,10 +133,10 @@ func (ada *Adabas) Insert(name string, insert *def.Entries) error {
 				return err
 			}
 		}
-		common.Log.Debugf("Values %#v\n", v)
+		log.Log.Debugf("Values %#v\n", v)
 		err = req.Store(record)
 		if err != nil {
-			common.Log.Debugf("Error %v\n", err)
+			log.Log.Debugf("Error %v\n", err)
 			return err
 		}
 	}
@@ -299,8 +300,8 @@ func (ada *Adabas) Query(search *def.Query, f def.ResultFunction) (*common.Resul
 				default:
 					vi = v.Value()
 				}
-				if common.IsDebugLevel() {
-					def.Log.Debugf("%v %s %T", v, v.Type().Name(), v)
+				if log.IsDebugLevel() {
+					log.Log.Debugf("%v %s %T", v, v.Type().Name(), v)
 				}
 				result.Rows = append(result.Rows, vi)
 			}

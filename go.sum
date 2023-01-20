@@ -39,6 +39,8 @@ github.com/stretchr/testify v1.8.1 h1:w7B6lhMri9wdJUVmEZPGGhZzrYTPvgJArz7wNPgYKs
 github.com/stretchr/testify v1.8.1/go.mod h1:w2LPCIKwWwSfY2zedu0+kehJoqGctiVI29o6fzry7u4=
 github.com/tknie/adabas-go-api v1.7.6-0.20221111201029-9623c63fe7a9 h1:F79tZC8ZXIevQZ86Tr6FbAEHumDpOT4VJj7YDGE37lk=
 github.com/tknie/adabas-go-api v1.7.6-0.20221111201029-9623c63fe7a9/go.mod h1:sSYaO+qc+252zav3x8AxkGoujwNn/Njs3j6U3Bd1bhg=
+github.com/tknie/log v0.0.0-20230120141241-a2908dede155 h1:++S05Gx8gpp7uu/ouKpNzn9TquBKbckiWkwA1XkcsMo=
+github.com/tknie/log v0.0.0-20230120141241-a2908dede155/go.mod h1:W67unT0xxqTLc9tyxpdV1lED/JuD0veFgxT/astdxt4=
 github.com/yuin/goldmark v1.3.5/go.mod h1:mwnBkeHKe2W/ZEtQ+71ViKU8L12m81fl3OWwC1Zlc8k=
 github.com/yuin/goldmark v1.4.1/go.mod h1:mwnBkeHKe2W/ZEtQ+71ViKU8L12m81fl3OWwC1Zlc8k=
 go.uber.org/atomic v1.7.0/go.mod h1:fEN4uk6kAWBTFdckzkM89CLk9XfWZrxpCo0nPH17wJc=

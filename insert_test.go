@@ -18,6 +18,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/tknie/flynn/common"
+	"github.com/tknie/log"
 )
 
 const testTable = "TestTableData"
@@ -171,7 +172,7 @@ func checkStructTableAvailablefunc(t *testing.T, target *target) error {
 }
 
 func createStructTestTable(t *testing.T, target *target) error {
-	common.Log.Debugf("Create database table")
+	log.Log.Debugf("Create database table")
 
 	id, err := Register(target.layer, target.url)
 	if !assert.NoError(t, err, "register fail using "+target.layer) {

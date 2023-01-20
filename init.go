@@ -18,6 +18,7 @@ import (
 	def "github.com/tknie/flynn/common"
 	"github.com/tknie/flynn/mysql"
 	"github.com/tknie/flynn/postgres"
+	"github.com/tknie/log"
 )
 
 var globalRegID = def.RegDbID(0)
@@ -47,10 +48,10 @@ func Register(typeName, url string) (def.RegDbID, error) {
 func Maps() []string {
 	databaseMaps := make([]string, 0)
 	for _, database := range def.Databases {
-		def.Log.Debugf(database.URL())
+		log.Log.Debugf(database.URL())
 		subMaps, err := database.Maps()
 		if err != nil {
-			def.Log.Errorf("Error reading sub maps: %v", err)
+			log.Log.Errorf("Error reading sub maps: %v", err)
 			continue
 		}
 		databaseMaps = append(databaseMaps, subMaps...)

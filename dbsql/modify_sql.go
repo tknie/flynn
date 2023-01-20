@@ -21,6 +21,7 @@ import (
 	"golang.org/x/exp/slices"
 
 	"github.com/tknie/flynn/common"
+	"github.com/tknie/log"
 )
 
 func Insert(dbsql DBsql, name string, insert *common.Entries) error {
@@ -32,7 +33,7 @@ func Insert(dbsql DBsql, name string, insert *common.Entries) error {
 
 	db := dbOpen.(*sql.DB)
 
-	common.Log.Debugf("Insert SQL table")
+	log.Log.Debugf("Insert SQL table")
 
 	insertCmd := "INSERT INTO " + name + " ("
 	values := "("
@@ -53,13 +54,13 @@ func Insert(dbsql DBsql, name string, insert *common.Entries) error {
 	}
 	values += ")"
 	insertCmd += ") VALUES " + values
-	common.Log.Debugf("Insert pre-CMD: %s", insertCmd)
+	log.Log.Debugf("Insert pre-CMD: %s", insertCmd)
 	for _, v := range insert.Values {
 		av := v
-		common.Log.Debugf("Insert values: %d -> %#v", len(av), av)
+		log.Log.Debugf("Insert values: %d -> %#v", len(av), av)
 		_, err = db.Exec(insertCmd, av...)
 		if err != nil {
-			common.Log.Debugf("Error insert CMD: %v of %s and cmd %s", err, name, insertCmd)
+			log.Log.Debugf("Error insert CMD: %v of %s and cmd %s", err, name, insertCmd)
 			return err
 		}
 	}
@@ -118,7 +119,7 @@ func generateDelete(indexNeeded bool, name string, valueIndex int, deleteInfo *c
 func Update(dbsql DBsql, name string, updateInfo *common.Entries) (err error) {
 	dbAny, err := dbsql.Open()
 	if err != nil {
-		common.Log.Debugf("Open error: %v", err)
+		log.Log.Debugf("Open error: %v", err)
 		return err
 	}
 	defer dbsql.Close()
@@ -129,14 +130,14 @@ func Update(dbsql DBsql, name string, updateInfo *common.Entries) (err error) {
 		whereClause := createWhere(i, updateInfo, whereFields)
 		ic := insertCmd + whereClause
 		av := v
-		common.Log.Debugf("Update values: %d -> %#v", len(av), av)
+		log.Log.Debugf("Update values: %d -> %#v", len(av), av)
 		_, err = db.Exec(ic, av...)
 		if err != nil {
-			common.Log.Debugf("Update error: %s -> %v", ic, err)
+			log.Log.Debugf("Update error: %s -> %v", ic, err)
 			return err
 		}
 	}
-	common.Log.Debugf("Update done")
+	log.Log.Debugf("Update done")
 	return nil
 }
 
@@ -173,7 +174,7 @@ func convertString(convertToString any) string {
 func Delete(dbsql DBsql, name string, updateInfo *common.Entries) (err error) {
 	dbAny, err := dbsql.Open()
 	if err != nil {
-		common.Log.Debugf("Open error: %v", err)
+		log.Log.Debugf("Open error: %v", err)
 		return err
 	}
 	defer dbsql.Close()
@@ -181,13 +182,13 @@ func Delete(dbsql DBsql, name string, updateInfo *common.Entries) (err error) {
 	db := dbAny.(*sql.DB)
 	for i := 0; i < len(updateInfo.Values); i++ {
 		deleteCmd, av := generateDelete(dbsql.IndexNeeded(), name, 0, updateInfo)
-		common.Log.Debugf("Delete cmd: %s -> %#v", deleteCmd, av)
+		log.Log.Debugf("Delete cmd: %s -> %#v", deleteCmd, av)
 		_, err = db.Exec(deleteCmd, av...)
 		if err != nil {
-			common.Log.Debugf("Delete error: %v", err)
+			log.Log.Debugf("Delete error: %v", err)
 			return err
 		}
 	}
-	common.Log.Debugf("Delete done")
+	log.Log.Debugf("Delete done")
 	return nil
 }

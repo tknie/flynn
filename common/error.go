@@ -17,6 +17,8 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/tknie/log"
 )
 
 type Message struct {
@@ -70,7 +72,7 @@ func NewError(errNr uint64, args ...interface{}) error {
 		default:
 		}
 	}
-	Log.Errorf("Error %04d created: %#v", errNr, args)
+	log.Log.Errorf("Error %04d created: %#v", errNr, args)
 	return &Error{nr: errNr, args: args, err: err}
 }
 

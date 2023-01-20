@@ -13,6 +13,8 @@ package common
 
 import (
 	"database/sql"
+
+	"github.com/tknie/log"
 )
 
 type RegDbID uint64
@@ -80,7 +82,7 @@ func (id RegDbID) Query(query *Query, f ResultFunction) (*Result, error) {
 	if err != nil {
 		return nil, err
 	}
-	Log.Debugf("Driver %T", driver)
+	log.Log.Debugf("Driver %T", driver)
 	return driver.Query(query, f)
 }
 

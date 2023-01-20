@@ -4,7 +4,10 @@ go 1.19
 
 require github.com/jackc/pgx/v5 v5.2.0
 
-require github.com/rogpeppe/go-internal v1.9.0 // indirect
+require (
+	github.com/rogpeppe/go-internal v1.9.0 // indirect
+	github.com/tknie/log v0.0.0-20230120141241-a2908dede155 // indirect
+)
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect

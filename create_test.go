@@ -16,8 +16,8 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/tknie/flynn/common"
 	def "github.com/tknie/flynn/common"
+	"github.com/tknie/log"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -56,7 +56,7 @@ func TestCreateStringArray(t *testing.T) {
 
 	for _, target := range getTestTargets(t) {
 		fmt.Println("Work on " + target.layer)
-		common.Log.Debugf("Work on " + target.layer)
+		log.Log.Debugf("Work on " + target.layer)
 		// if target.layer == "adabas" {
 		// 	continue
 		// }

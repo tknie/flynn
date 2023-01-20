@@ -15,6 +15,8 @@ import (
 	"bytes"
 	"reflect"
 	"strings"
+
+	"github.com/tknie/log"
 )
 
 type typeInterface struct {
@@ -45,7 +47,7 @@ func (dynamic *typeInterface) CreateQueryFields() string {
 }
 
 func (dynamic *typeInterface) CreateQueryValues() (any, []any) {
-	Log.Debugf("Create query values")
+	log.Log.Debugf("Create query values")
 	rt := reflect.TypeOf(dynamic.DataType)
 	if rt.Kind() == reflect.Pointer {
 		rt = rt.Elem()
@@ -53,8 +55,8 @@ func (dynamic *typeInterface) CreateQueryValues() (any, []any) {
 	ptr2 := reflect.New(rt)
 	dynamic.DataType = ptr2.Interface()
 	dynamic.createQueryValues(dynamic.DataType)
-	Log.Debugf("Number values created %d out of %s", len(dynamic.RowValues), dynamic.RowNames)
-	Log.Debugf("Values %#v", dynamic.RowValues)
+	log.Log.Debugf("Number values created %d out of %s", len(dynamic.RowValues), dynamic.RowNames)
+	log.Log.Debugf("Values %#v", dynamic.RowValues)
 	return ptr2.Interface(), dynamic.RowValues
 }
 
@@ -65,35 +67,35 @@ func (dynamic *typeInterface) createQueryValues(dataType interface{}) {
 		rv = rv.Elem()
 		rt = rt.Elem()
 	}
-	if IsDebugLevel() {
+	if log.IsDebugLevel() {
 		rt := reflect.TypeOf(dataType)
-		Log.Debugf("Scan query values in struct %v %d %s", rv, rv.NumField(), rt.Name())
+		log.Log.Debugf("Scan query values in struct %v %d %s", rv, rv.NumField(), rt.Name())
 	}
 	for fi := 0; fi < rv.NumField(); fi++ {
 		cv := rv.Field(fi)
 		subRt := rt.Field(fi)
-		if IsDebugLevel() {
-			Log.Debugf("Field %d:%s %v canAddr: %v %s %s", fi, cv.Type().Name(), cv.CanInterface(), cv.CanAddr(), rt.Name(), subRt.Name)
+		if log.IsDebugLevel() {
+			log.Log.Debugf("Field %d:%s %v canAddr: %v %s %s", fi, cv.Type().Name(), cv.CanInterface(), cv.CanAddr(), rt.Name(), subRt.Name)
 		}
 		if cv.Kind() == reflect.Struct {
 			dynamic.createQueryValues(cv.Interface())
 		} else {
-			if IsDebugLevel() {
-				Log.Debugf("FieldCV: %s %T %T %v %v indirect=%v\n",
+			if log.IsDebugLevel() {
+				log.Log.Debugf("FieldCV: %s %T %T %v %v indirect=%v\n",
 					cv.Type().Name(), cv, cv.Interface(), cv.CanAddr(),
 					cv.CanInterface(), reflect.Indirect(cv))
 			}
 			var ptr reflect.Value
 			if cv.CanAddr() {
-				Log.Debugf("Use Addr")
+				log.Log.Debugf("Use Addr")
 				ptr = cv.Addr()
 			} else {
-				Log.Debugf("New Addr pointer")
+				log.Log.Debugf("New Addr pointer")
 				ptr = reflect.New(cv.Type())
 				ptr.Elem().Set(cv)
 			}
-			if IsDebugLevel() {
-				Log.Debugf("FieldPTR: %T / %T / %v\n", ptr.Type().Name(), ptr.Interface(), ptr.Interface())
+			if log.IsDebugLevel() {
+				log.Log.Debugf("FieldPTR: %T / %T / %v\n", ptr.Type().Name(), ptr.Interface(), ptr.Interface())
 			}
 			// x := ptr.Pointer()
 			// xv := reflect.ValueOf(x)
@@ -106,8 +108,8 @@ func (dynamic *typeInterface) createQueryValues(dataType interface{}) {
 			dynamic.RowValues = append(dynamic.RowValues, ptr.Interface())
 		}
 	}
-	if IsDebugLevel() {
-		Log.Debugf("Len row values: %d", len(dynamic.RowValues))
+	if log.IsDebugLevel() {
+		log.Log.Debugf("Len row values: %d", len(dynamic.RowValues))
 	}
 }
 

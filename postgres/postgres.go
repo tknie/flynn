@@ -20,6 +20,7 @@ import (
 	"github.com/tknie/flynn/common"
 	def "github.com/tknie/flynn/common"
 	"github.com/tknie/flynn/dbsql"
+	"github.com/tknie/log"
 )
 
 type PostGres struct {
@@ -99,7 +100,7 @@ func (pg *PostGres) Open() (dbOpen any, err error) {
 	} else {
 		db = pg.openDB.(*sql.DB)
 	}
-	common.Log.Debugf("Open database %s", pg.dbURL)
+	log.Log.Debugf("Open database %s", pg.dbURL)
 	return db, nil
 }
 
@@ -107,9 +108,9 @@ func (pg *PostGres) Close() {
 	if pg.openDB != nil {
 		pg.openDB.(*sql.DB).Close()
 		pg.openDB = nil
-		common.Log.Debugf("Close database")
+		log.Log.Debugf("Close database")
 	} else {
-		common.Log.Debugf("Close not opened database")
+		log.Log.Debugf("Close not opened database")
 	}
 }
 
@@ -174,7 +175,7 @@ func (pg *PostGres) GetTableColumn(tableName string) ([]string, error) {
 }
 
 func (pg *PostGres) Query(search *def.Query, f def.ResultFunction) (*common.Result, error) {
-	common.Log.Debugf("Query postgres database")
+	log.Log.Debugf("Query postgres database")
 	dbOpen, err := pg.Open()
 	if err != nil {
 		return nil, err
@@ -184,7 +185,7 @@ func (pg *PostGres) Query(search *def.Query, f def.ResultFunction) (*common.Resu
 	db := dbOpen.(*sql.DB)
 	selectCmd := search.Select()
 
-	common.Log.Debugf("Query: %s", selectCmd)
+	log.Log.Debugf("Query: %s", selectCmd)
 	rows, err := db.Query(selectCmd)
 	if err != nil {
 		return nil, err

@@ -21,9 +21,10 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/tknie/flynn/common"
+	"github.com/tknie/log"
 )
 
-var log = logrus.StandardLogger()
+var logRus = logrus.StandardLogger()
 var once = new(sync.Once)
 
 func initLog() {
@@ -33,12 +34,12 @@ func initLog() {
 func startLog() {
 	fmt.Println("Init logging")
 	fileName := "db.trace.log"
-	common.SetDebugLevel(true)
-	log.SetFormatter(&logrus.TextFormatter{
+	log.SetDebugLevel(true)
+	logRus.SetFormatter(&logrus.TextFormatter{
 		FullTimestamp:   true,
 		TimestampFormat: "2006-01-02T15:04:05",
 	})
-	log.SetLevel(logrus.DebugLevel)
+	logRus.SetLevel(logrus.DebugLevel)
 	p := os.Getenv("LOGPATH")
 	if p == "" {
 		p = os.TempDir()
@@ -48,9 +49,9 @@ func startLog() {
 		fmt.Println("Error opening log:", err)
 		return
 	}
-	log.SetOutput(f)
-	log.Infof("Init logrus")
-	common.Log = log
+	logRus.SetOutput(f)
+	logRus.Infof("Init logrus")
+	log.Log = logRus
 	fmt.Println("Logging running")
 }
 
