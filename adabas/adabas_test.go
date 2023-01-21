@@ -53,6 +53,6 @@ func TestAdaSearch(t *testing.T) {
 	e.Fields = []string{"%aaa"}
 	e.Values = [][]any{{"XXX%"}}
 	search = createSearch(e)
-	assert.Equal(t, "aaa=['XXX'0x0:'XXX'0x255]", search)
+	assert.Equal(t, "aaa=['XXX'0x00:'XXX'0xff]", search)
 
 }
