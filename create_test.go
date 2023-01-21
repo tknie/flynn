@@ -66,6 +66,13 @@ func TestCreateStringArray(t *testing.T) {
 		if !assert.NoError(t, err, "register fail using "+target.layer) {
 			return
 		}
+		if target.layer == "adabas" {
+			err = id.Delete(testCreationTable, &def.Entries{Fields: []string{"%Id"},
+				Values: [][]any{{"TEST%"}}})
+			if !assert.NoError(t, err, "DELETE") {
+				return
+			}
+		}
 		if target.layer != "adabas" {
 			id.DeleteTable(testCreationTable)
 			err = id.CreateTable(testCreationTable, columns)
@@ -94,8 +101,11 @@ func TestCreateStringArray(t *testing.T) {
 			return
 		}
 		if target.layer == "adabas" {
-			id.Delete(testCreationTable, &def.Entries{Fields: []string{},
-				Values: [][]any{}})
+			err = id.Delete(testCreationTable, &def.Entries{Fields: []string{"%Id"},
+				Values: [][]any{{"TEST%"}}})
+			if !assert.NoError(t, err, "delete fail using "+target.layer) {
+				return
+			}
 		} else {
 			deleteTable(t, id, testCreationTable, target.layer)
 		}

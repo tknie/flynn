@@ -39,6 +39,10 @@ github.com/stretchr/testify v1.8.1 h1:w7B6lhMri9wdJUVmEZPGGhZzrYTPvgJArz7wNPgYKs
 github.com/stretchr/testify v1.8.1/go.mod h1:w2LPCIKwWwSfY2zedu0+kehJoqGctiVI29o6fzry7u4=
 github.com/tknie/adabas-go-api v1.7.6-0.20221111201029-9623c63fe7a9 h1:F79tZC8ZXIevQZ86Tr6FbAEHumDpOT4VJj7YDGE37lk=
 github.com/tknie/adabas-go-api v1.7.6-0.20221111201029-9623c63fe7a9/go.mod h1:sSYaO+qc+252zav3x8AxkGoujwNn/Njs3j6U3Bd1bhg=
+github.com/tknie/adabas-go-api v1.7.7 h1:BZa0W4NjGvq+J/FI2xYZg+WfK2I7Vw7fywf3oz7x9B4=
+github.com/tknie/adabas-go-api v1.7.7/go.mod h1:sSYaO+qc+252zav3x8AxkGoujwNn/Njs3j6U3Bd1bhg=
+github.com/tknie/adabas-go-api v1.7.8-0.20230121134242-261502d1e8e6 h1:bMqOixDZczAQuqhpA8Q7kOGCZVw4Ni4Knt4XMJXQ+y4=
+github.com/tknie/adabas-go-api v1.7.8-0.20230121134242-261502d1e8e6/go.mod h1:sSYaO+qc+252zav3x8AxkGoujwNn/Njs3j6U3Bd1bhg=
 github.com/tknie/errorrepo v0.0.0-20230120200857-442abdc0ecac h1:/GRV+vSnydbGP1Fj+GCVbGzTPGilV4PRYxY1jlvYzVc=
 github.com/tknie/errorrepo v0.0.0-20230120200857-442abdc0ecac/go.mod h1:DC4v8JNsIjEalswlmpzWh8xB75iIj9vmGX8kiDHUu9g=
 github.com/tknie/errorrepo v0.0.0-20230120201914-76a492a7f343 h1:qKMImQ9/jwO6GsxxDBtPnk2eCpM/UV/DST97wStnYjA=

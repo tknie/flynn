@@ -34,12 +34,19 @@ func initLog() {
 func startLog() {
 	fmt.Println("Init logging")
 	fileName := "db.trace.log"
-	log.SetDebugLevel(true)
+	level := os.Getenv("ENABLE_DB_DEBUG")
+	logLevel := logrus.InfoLevel
+	switch level {
+	case "debug":
+		log.SetDebugLevel(true)
+		logLevel = logrus.DebugLevel
+	default:
+	}
 	logRus.SetFormatter(&logrus.TextFormatter{
 		FullTimestamp:   true,
 		TimestampFormat: "2006-01-02T15:04:05",
 	})
-	logRus.SetLevel(logrus.DebugLevel)
+	logRus.SetLevel(logLevel)
 	p := os.Getenv("LOGPATH")
 	if p == "" {
 		p = os.TempDir()

@@ -139,6 +139,7 @@ func (ada *Adabas) Insert(name string, insert *def.Entries) error {
 			return rerr
 		}
 		for i, rv := range v {
+			log.Log.Debugf("%d. %s %v\n", i, insert.Fields[i], rv)
 			err = record.SetValue(insert.Fields[i], rv)
 			if err != nil {
 				return err
@@ -148,6 +149,11 @@ func (ada *Adabas) Insert(name string, insert *def.Entries) error {
 		err = req.Store(record)
 		if err != nil {
 			log.Log.Debugf("Error %v\n", err)
+			return err
+		}
+		err = req.EndTransaction()
+		if err != nil {
+			log.Log.Debugf("ET Error %v\n", err)
 			return err
 		}
 	}
@@ -175,50 +181,72 @@ func (ada *Adabas) Delete(name string, remove *def.Entries) error {
 	}
 	isns := make([]adatypes.Isn, 0)
 
+	log.Log.Debugf("Delete started")
+
 	if len(remove.Fields) != 1 || remove.Fields[0] != "ISN" {
+		log.Log.Debugf("Delete search call")
 		queryReq, err := conn.CreateMapReadRequest(name)
 		if err != nil {
 			return err
 		}
+		log.Log.Debugf("SEARCH fields")
 		err = queryReq.QueryFields("")
 		if err != nil {
+			log.Log.Debugf("Error SEARCH fields %v", err)
 			return err
 		}
 		search := createSearch(remove)
+		log.Log.Debugf("SEARCH %s", search)
+
+		queryReq.Limit = 0
 		result, err := queryReq.ReadLogicalWith(search)
+		log.Log.Debugf("Search done")
 		if err != nil {
 			return err
 		}
 		for _, v := range result.Values {
 			isns = append(isns, v.Isn)
+			log.Log.Debugf("Add to delete list:", v.Isn)
 		}
-	}
+	} else {
 
-	for i := 0; i < len(remove.Values); i++ {
+		for i := 0; i < len(remove.Values); i++ {
 
-		switch v := remove.Values[i][0].(type) {
-		case int:
-			isns = append(isns, adatypes.Isn(v))
-		case int32:
-			isns = append(isns, adatypes.Isn(v))
-		case int64:
-			isns = append(isns, adatypes.Isn(v))
-		case uint:
-			isns = append(isns, adatypes.Isn(v))
-		case uint32:
-			isns = append(isns, adatypes.Isn(v))
-		case uint64:
-			isns = append(isns, adatypes.Isn(v))
-		case string:
-			iv, err := strconv.ParseUint(v, 0, 10)
-			if err != nil {
-				return errorrepo.NewError("DB23445")
+			switch v := remove.Values[i][0].(type) {
+			case int:
+				isns = append(isns, adatypes.Isn(v))
+			case int32:
+				isns = append(isns, adatypes.Isn(v))
+			case int64:
+				isns = append(isns, adatypes.Isn(v))
+			case uint:
+				isns = append(isns, adatypes.Isn(v))
+			case uint32:
+				isns = append(isns, adatypes.Isn(v))
+			case uint64:
+				isns = append(isns, adatypes.Isn(v))
+			case string:
+				iv, err := strconv.ParseUint(v, 0, 10)
+				if err != nil {
+					return errorrepo.NewError("DB23445")
+				}
+				isns = append(isns, adatypes.Isn(iv))
 			}
-			isns = append(isns, adatypes.Isn(iv))
 		}
 	}
-	return req.DeleteList(isns)
-
+	log.Log.Debugf("Start deleting %d ISNs/records\n", len(isns))
+	err = req.DeleteList(isns)
+	if err != nil {
+		return err
+	}
+	log.Log.Debugf("Commit deleting %d ISNs/records\n", len(isns))
+	err = req.EndTransaction()
+	if err != nil {
+		log.Log.Debugf("Error commit deleting ISNs/records: %v\n", err)
+		return err
+	}
+	log.Log.Debugf("Done deleting ISNs/records\n")
+	return nil
 }
 
 func createSearch(remove *def.Entries) string {
@@ -228,7 +256,7 @@ func createSearch(remove *def.Entries) string {
 			val := remove.Values[0][i].(string)
 			if strings.HasSuffix(val, "%") {
 				val = val[:len(val)-1]
-				val = "['" + val + "'0x0:'" + val + "'0x255]"
+				val = "['" + val + "'0x00:'" + val + "'0xff]"
 			} else {
 				val = "[" + val + "]"
 			}

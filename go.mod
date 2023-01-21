@@ -17,7 +17,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.1
-	github.com/tknie/adabas-go-api v1.7.6-0.20221111201029-9623c63fe7a9
+	github.com/tknie/adabas-go-api v1.7.8-0.20230121134242-261502d1e8e6
 	github.com/tknie/errorrepo v0.0.0-20230120201914-76a492a7f343
 	golang.org/x/crypto v0.5.0 // indirect
 	golang.org/x/exp v0.0.0-20230118134722-a68e582fa157
