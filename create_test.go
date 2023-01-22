@@ -17,7 +17,6 @@ import (
 	"testing"
 
 	def "github.com/tknie/flynn/common"
-	"github.com/tknie/log"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -57,11 +56,8 @@ func TestCreateStringArray(t *testing.T) {
 	columns = append(columns, &def.Column{Name: "FirstName", DataType: def.Alpha, Length: 20})
 
 	for _, target := range getTestTargets(t) {
-		fmt.Println("Work on " + target.layer)
-		log.Log.Debugf("Work on " + target.layer)
-		// if target.layer == "adabas" {
-		// 	continue
-		// }
+		fmt.Println("Working at string creation on target " + target.layer)
+
 		id, err := Register(target.layer, target.url)
 		if !assert.NoError(t, err, "register fail using "+target.layer) {
 			return
@@ -135,7 +131,7 @@ func TestCreateStruct(t *testing.T) {
 	}{Name: "Gellanger",
 		FirstName: "Bob"}
 	for _, target := range getTestTargets(t) {
-		fmt.Println("Work on " + target.layer)
+		fmt.Println("Working on creating with target " + target.layer)
 		if target.layer == "adabas" {
 			continue
 		}
