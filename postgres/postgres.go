@@ -156,7 +156,7 @@ func (pg *PostGres) Ping() error {
 }
 
 // Delete Delete database records
-func (pg *PostGres) Delete(name string, remove *def.Entries) error {
+func (pg *PostGres) Delete(name string, remove *def.Entries) (int64, error) {
 	return dbsql.Delete(pg, name, remove)
 }
 

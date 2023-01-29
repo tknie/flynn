@@ -148,7 +148,7 @@ func (mysql *Mysql) Ping() error {
 }
 
 // Delete Delete database records
-func (mysql *Mysql) Delete(name string, remove *def.Entries) error {
+func (mysql *Mysql) Delete(name string, remove *def.Entries) (int64, error) {
 	return dbsql.Delete(mysql, name, remove)
 }
 

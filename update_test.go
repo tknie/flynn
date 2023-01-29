@@ -60,9 +60,10 @@ func updateTest(t *testing.T, target *target) error {
 	list = [][]any{{vId1}, {vId2}}
 	input.Fields = []string{"ID"}
 	input.Values = list
-	err = x.Delete(testStructTable, input)
+	dr, err := x.Delete(testStructTable, input)
 	if !assert.NoError(t, err) {
 		return err
 	}
+	assert.Equal(t, 1, dr)
 	return nil
 }

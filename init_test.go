@@ -66,9 +66,9 @@ func mysqlTarget(t *testing.T) (string, error) {
 	if !assert.NoError(t, err) {
 		return "", fmt.Errorf("MYSQL Port not set")
 	}
-	pg := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", "admin", mysqlPassword, mysqlHost, port, "Bitgarten")
+	mysql := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", "admin", mysqlPassword, mysqlHost, port, "Bitgarten")
 
-	return pg, nil
+	return mysql, nil
 }
 
 func mysqlUserTarget(t *testing.T) (string, error) {

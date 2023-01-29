@@ -168,16 +168,16 @@ func (ada *Adabas) Update(name string, insert *def.Entries) error {
 }
 
 // Delete Delete database records
-func (ada *Adabas) Delete(name string, remove *def.Entries) error {
+func (ada *Adabas) Delete(name string, remove *def.Entries) (int64, error) {
 	con, err := ada.Open()
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	conn := con.(*adabas.Connection)
 	req, err := conn.CreateMapDeleteRequest(name)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	isns := make([]adatypes.Isn, 0)
 
@@ -187,13 +187,13 @@ func (ada *Adabas) Delete(name string, remove *def.Entries) error {
 		log.Log.Debugf("Delete search call")
 		queryReq, err := conn.CreateMapReadRequest(name)
 		if err != nil {
-			return err
+			return 0, err
 		}
 		log.Log.Debugf("SEARCH fields")
 		err = queryReq.QueryFields("")
 		if err != nil {
 			log.Log.Debugf("Error SEARCH fields %v", err)
-			return err
+			return 0, err
 		}
 		search := createSearch(remove)
 		log.Log.Debugf("SEARCH %s", search)
@@ -202,7 +202,7 @@ func (ada *Adabas) Delete(name string, remove *def.Entries) error {
 		result, err := queryReq.ReadLogicalWith(search)
 		log.Log.Debugf("Search done")
 		if err != nil {
-			return err
+			return 0, err
 		}
 		for _, v := range result.Values {
 			isns = append(isns, v.Isn)
@@ -228,7 +228,7 @@ func (ada *Adabas) Delete(name string, remove *def.Entries) error {
 			case string:
 				iv, err := strconv.ParseUint(v, 0, 10)
 				if err != nil {
-					return errorrepo.NewError("DB23445")
+					return 0, errorrepo.NewError("DB23445")
 				}
 				isns = append(isns, adatypes.Isn(iv))
 			}
@@ -237,16 +237,16 @@ func (ada *Adabas) Delete(name string, remove *def.Entries) error {
 	log.Log.Debugf("Start deleting %d ISNs/records\n", len(isns))
 	err = req.DeleteList(isns)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	log.Log.Debugf("Commit deleting %d ISNs/records\n", len(isns))
 	err = req.EndTransaction()
 	if err != nil {
 		log.Log.Debugf("Error commit deleting ISNs/records: %v\n", err)
-		return err
+		return 0, err
 	}
 	log.Log.Debugf("Done deleting ISNs/records\n")
-	return nil
+	return int64(len(isns)), nil
 }
 
 func createSearch(remove *def.Entries) string {

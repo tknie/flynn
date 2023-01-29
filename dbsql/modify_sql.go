@@ -171,11 +171,11 @@ func convertString(convertToString any) string {
 	return x
 }
 
-func Delete(dbsql DBsql, name string, updateInfo *common.Entries) (err error) {
+func Delete(dbsql DBsql, name string, updateInfo *common.Entries) (rowsAffected int64, err error) {
 	dbAny, err := dbsql.Open()
 	if err != nil {
 		log.Log.Debugf("Open error: %v", err)
-		return err
+		return 0, err
 	}
 	defer dbsql.Close()
 
@@ -183,12 +183,14 @@ func Delete(dbsql DBsql, name string, updateInfo *common.Entries) (err error) {
 	for i := 0; i < len(updateInfo.Values); i++ {
 		deleteCmd, av := generateDelete(dbsql.IndexNeeded(), name, 0, updateInfo)
 		log.Log.Debugf("Delete cmd: %s -> %#v", deleteCmd, av)
-		_, err = db.Exec(deleteCmd, av...)
+		res, err := db.Exec(deleteCmd, av...)
 		if err != nil {
 			log.Log.Debugf("Delete error: %v", err)
-			return err
+			return 0, err
 		}
+		ra, _ := res.RowsAffected()
+		rowsAffected += ra
 	}
 	log.Log.Debugf("Delete done")
-	return nil
+	return
 }

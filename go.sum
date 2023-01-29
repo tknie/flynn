@@ -43,10 +43,14 @@ github.com/tknie/adabas-go-api v1.7.7 h1:BZa0W4NjGvq+J/FI2xYZg+WfK2I7Vw7fywf3oz7
 github.com/tknie/adabas-go-api v1.7.7/go.mod h1:sSYaO+qc+252zav3x8AxkGoujwNn/Njs3j6U3Bd1bhg=
 github.com/tknie/adabas-go-api v1.7.8-0.20230121134242-261502d1e8e6 h1:bMqOixDZczAQuqhpA8Q7kOGCZVw4Ni4Knt4XMJXQ+y4=
 github.com/tknie/adabas-go-api v1.7.8-0.20230121134242-261502d1e8e6/go.mod h1:sSYaO+qc+252zav3x8AxkGoujwNn/Njs3j6U3Bd1bhg=
+github.com/tknie/adabas-go-api v1.7.8 h1:3+xCfy3enNVnaNxyBbL27x+g3UQuxqG1KwQNX5RxQig=
+github.com/tknie/adabas-go-api v1.7.8/go.mod h1:sSYaO+qc+252zav3x8AxkGoujwNn/Njs3j6U3Bd1bhg=
 github.com/tknie/errorrepo v0.0.0-20230120200857-442abdc0ecac h1:/GRV+vSnydbGP1Fj+GCVbGzTPGilV4PRYxY1jlvYzVc=
 github.com/tknie/errorrepo v0.0.0-20230120200857-442abdc0ecac/go.mod h1:DC4v8JNsIjEalswlmpzWh8xB75iIj9vmGX8kiDHUu9g=
 github.com/tknie/errorrepo v0.0.0-20230120201914-76a492a7f343 h1:qKMImQ9/jwO6GsxxDBtPnk2eCpM/UV/DST97wStnYjA=
 github.com/tknie/errorrepo v0.0.0-20230120201914-76a492a7f343/go.mod h1:DC4v8JNsIjEalswlmpzWh8xB75iIj9vmGX8kiDHUu9g=
+github.com/tknie/errorrepo v0.0.0-20230124085459-8e0842f265dd h1:RYQG/G+1DK4/lKVzfjYTh89y9SoD1V+Mksbmh6KWE58=
+github.com/tknie/errorrepo v0.0.0-20230124085459-8e0842f265dd/go.mod h1:DC4v8JNsIjEalswlmpzWh8xB75iIj9vmGX8kiDHUu9g=
 github.com/tknie/log v0.0.0-20230120141241-a2908dede155 h1:++S05Gx8gpp7uu/ouKpNzn9TquBKbckiWkwA1XkcsMo=
 github.com/tknie/log v0.0.0-20230120141241-a2908dede155/go.mod h1:W67unT0xxqTLc9tyxpdV1lED/JuD0veFgxT/astdxt4=
 github.com/yuin/goldmark v1.3.5/go.mod h1:mwnBkeHKe2W/ZEtQ+71ViKU8L12m81fl3OWwC1Zlc8k=

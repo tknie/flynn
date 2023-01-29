@@ -63,11 +63,12 @@ func TestCreateStringArray(t *testing.T) {
 			return
 		}
 		if target.layer == "adabas" {
-			err = id.Delete(testCreationTable, &def.Entries{Fields: []string{"%Id"},
+			dr, err := id.Delete(testCreationTable, &def.Entries{Fields: []string{"%Id"},
 				Values: [][]any{{"TEST%"}}})
 			if !assert.NoError(t, err, "DELETE") {
 				return
 			}
+			assert.Equal(t, 1, dr)
 		}
 		if target.layer != "adabas" {
 			id.DeleteTable(testCreationTable)
@@ -91,17 +92,19 @@ func TestCreateStringArray(t *testing.T) {
 		if !assert.NoError(t, err, "insert fail using "+target.layer) {
 			return
 		}
-		err = id.Delete(testCreationTable, &def.Entries{Fields: []string{"Id"},
+		dr, err := id.Delete(testCreationTable, &def.Entries{Fields: []string{"Id"},
 			Values: [][]any{{"TEST%"}}})
 		if !assert.NoError(t, err, "insert fail using "+target.layer) {
 			return
 		}
+		assert.Equal(t, 1, dr)
 		if target.layer == "adabas" {
-			err = id.Delete(testCreationTable, &def.Entries{Fields: []string{"%Id"},
+			dr, err = id.Delete(testCreationTable, &def.Entries{Fields: []string{"%Id"},
 				Values: [][]any{{"TEST%"}}})
 			if !assert.NoError(t, err, "delete fail using "+target.layer) {
 				return
 			}
+			assert.Equal(t, 1, dr)
 		} else {
 			deleteTable(t, id, testCreationTable, target.layer)
 		}
