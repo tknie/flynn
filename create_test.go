@@ -97,14 +97,7 @@ func TestCreateStringArray(t *testing.T) {
 			return
 		}
 		assert.Equal(t, int64(101), dr)
-		if target.layer == "adabas" {
-			dr, err = id.Delete(testCreationTable, &def.Entries{Fields: []string{"%Id"},
-				Values: [][]any{{"TEST%"}}})
-			if !assert.NoError(t, err, "delete fail using "+target.layer) {
-				return
-			}
-			assert.Equal(t, int64(101), dr)
-		} else {
+		if target.layer != "adabas" {
 			deleteTable(t, id, testCreationTable, target.layer)
 		}
 		unregisterDatabase(t, id)

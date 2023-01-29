@@ -94,12 +94,12 @@ func generateDelete(indexNeeded bool, name string, valueIndex int, deleteInfo *c
 
 	values := make([]any, 0)
 	for i, field := range deleteInfo.Fields {
-		if field[0] == '%' {
-			deleteCmd += " AND (" + field[1:] + " LIKE '" + deleteInfo.Values[0][i].(string) + "')"
-			continue
-		}
 		if i > 0 {
 			deleteCmd += " AND "
+		}
+		if field[0] == '%' {
+			deleteCmd += "(" + field[1:] + " LIKE '" + deleteInfo.Values[0][i].(string) + "')"
+			continue
 		}
 		//deleteCmd += "`" + strings.ToLower(field) + "` IN ("
 		deleteCmd += strings.ToLower(field) + " IN ("
