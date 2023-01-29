@@ -64,6 +64,6 @@ func updateTest(t *testing.T, target *target) error {
 	if !assert.NoError(t, err) {
 		return err
 	}
-	assert.Equal(t, 1, dr)
+	assert.Equal(t, int64(1), dr)
 	return nil
 }
