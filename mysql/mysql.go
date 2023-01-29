@@ -195,7 +195,7 @@ func (mysql *Mysql) Insert(name string, insert *def.Entries) error {
 }
 
 // Update update record in table
-func (mysql *Mysql) Update(name string, insert *def.Entries) error {
+func (mysql *Mysql) Update(name string, insert *def.Entries) (int64, error) {
 	return dbsql.Update(mysql, name, insert)
 }
 

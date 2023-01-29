@@ -163,8 +163,8 @@ func (ada *Adabas) Insert(name string, insert *def.Entries) error {
 }
 
 // Update update record in table
-func (ada *Adabas) Update(name string, insert *def.Entries) error {
-	return errorrepo.NewError("DB065535")
+func (ada *Adabas) Update(name string, insert *def.Entries) (int64, error) {
+	return 0, errorrepo.NewError("DB065535")
 }
 
 // Delete Delete database records

@@ -52,9 +52,13 @@ func updateTest(t *testing.T, target *target) error {
 	}
 	list = [][]any{{vId1, "changeValue", 2323}, {vId2, "mfngkfngkfngk changed", 87766}}
 	input.Values = list
-	err = x.Update(testStructTable, input)
+	ra, err := x.Update(testStructTable, input)
 	if !assert.NoError(t, err) {
 		return err
+	}
+	// 'mysql' does not provide affected rows
+	if target.layer != "mysql" {
+		assert.Equal(t, int64(2), ra)
 	}
 
 	list = [][]any{{vId1}, {vId2}}

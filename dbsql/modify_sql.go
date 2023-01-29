@@ -116,11 +116,11 @@ func generateDelete(indexNeeded bool, name string, valueIndex int, deleteInfo *c
 	return deleteCmd, values
 }
 
-func Update(dbsql DBsql, name string, updateInfo *common.Entries) (err error) {
+func Update(dbsql DBsql, name string, updateInfo *common.Entries) (rowsAffected int64, err error) {
 	dbAny, err := dbsql.Open()
 	if err != nil {
 		log.Log.Debugf("Open error: %v", err)
-		return err
+		return 0, err
 	}
 	defer dbsql.Close()
 
@@ -131,14 +131,16 @@ func Update(dbsql DBsql, name string, updateInfo *common.Entries) (err error) {
 		ic := insertCmd + whereClause
 		av := v
 		log.Log.Debugf("Update values: %d -> %#v", len(av), av)
-		_, err = db.Exec(ic, av...)
+		res, err := db.Exec(ic, av...)
 		if err != nil {
 			log.Log.Debugf("Update error: %s -> %v", ic, err)
-			return err
+			return 0, err
 		}
+		ra, _ := res.RowsAffected()
+		rowsAffected += ra
 	}
 	log.Log.Debugf("Update done")
-	return nil
+	return rowsAffected, nil
 }
 
 func createWhere(valueIndex int, updateInfo *common.Entries, whereFields []int) string {

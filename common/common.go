@@ -43,7 +43,7 @@ type Database interface {
 	Open() (any, error)
 	Close()
 	Insert(name string, insert *Entries) error
-	Update(name string, insert *Entries) error
+	Update(name string, insert *Entries) (int64, error)
 	Delete(name string, remove *Entries) (int64, error)
 	BatchSQL(batch string) error
 	Query(search *Query, f ResultFunction) (*Result, error)
@@ -152,10 +152,10 @@ func (id RegDbID) Insert(name string, insert *Entries) error {
 }
 
 // Update update record in table
-func (id RegDbID) Update(name string, insert *Entries) error {
+func (id RegDbID) Update(name string, insert *Entries) (int64, error) {
 	driver, err := searchDataDriver(id)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	return driver.Update(name, insert)
 }

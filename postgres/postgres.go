@@ -228,7 +228,7 @@ func (pg *PostGres) Insert(name string, insert *def.Entries) error {
 }
 
 // Update update record in table
-func (pg *PostGres) Update(name string, insert *def.Entries) error {
+func (pg *PostGres) Update(name string, insert *def.Entries) (int64, error) {
 	return dbsql.Update(pg, name, insert)
 }
 
