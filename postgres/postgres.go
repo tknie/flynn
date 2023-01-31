@@ -144,9 +144,9 @@ func (pg *PostGres) StartTransaction() (tx *sql.Tx, ctx context.Context, err err
 
 func (pg *PostGres) EndTransaction(commit bool) (err error) {
 	if commit {
-		err = pg.EndTransaction(true)
+		err = pg.tx.Commit()
 	} else {
-		err = pg.EndTransaction(false)
+		err = pg.tx.Rollback()
 	}
 	pg.tx = nil
 	pg.ctx = nil
