@@ -86,8 +86,8 @@ func (mysql *Mysql) StartTransaction() (tx *sql.Tx, ctx context.Context, err err
 			return nil, nil, err
 		}
 	}
-	ctx = context.Background()
-	tx, err = mysql.openDB.(*sql.DB).BeginTx(ctx, nil)
+	mysql.ctx = context.Background()
+	mysql.tx, err = mysql.openDB.(*sql.DB).BeginTx(mysql.ctx, nil)
 	if err != nil {
 		return nil, nil, err
 	}

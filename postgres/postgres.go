@@ -134,8 +134,8 @@ func (pg *PostGres) StartTransaction() (tx *sql.Tx, ctx context.Context, err err
 			return nil, nil, err
 		}
 	}
-	ctx = context.Background()
-	tx, err = pg.openDB.(*sql.DB).BeginTx(ctx, nil)
+	pg.ctx = context.Background()
+	pg.tx, err = pg.openDB.(*sql.DB).BeginTx(pg.ctx, nil)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -143,6 +143,9 @@ func (pg *PostGres) StartTransaction() (tx *sql.Tx, ctx context.Context, err err
 }
 
 func (pg *PostGres) EndTransaction(commit bool) (err error) {
+	if pg.tx == nil || pg.ctx == nil {
+		return nil
+	}
 	if commit {
 		err = pg.tx.Commit()
 	} else {
