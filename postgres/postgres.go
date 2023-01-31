@@ -137,6 +137,8 @@ func (pg *PostGres) StartTransaction() (tx *sql.Tx, ctx context.Context, err err
 	pg.ctx = context.Background()
 	pg.tx, err = pg.openDB.(*sql.DB).BeginTx(pg.ctx, nil)
 	if err != nil {
+		pg.ctx = nil
+		pg.tx = nil
 		return nil, nil, err
 	}
 	return

@@ -89,6 +89,8 @@ func (mysql *Mysql) StartTransaction() (tx *sql.Tx, ctx context.Context, err err
 	mysql.ctx = context.Background()
 	mysql.tx, err = mysql.openDB.(*sql.DB).BeginTx(mysql.ctx, nil)
 	if err != nil {
+		mysql.ctx = nil
+		mysql.tx = nil
 		return nil, nil, err
 	}
 	// save transaction context information
