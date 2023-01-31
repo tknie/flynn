@@ -76,6 +76,10 @@ func (t *testSQL) StartTransaction() (*sql.Tx, context.Context, error) {
 	return nil, nil, nil
 }
 
+func (t *testSQL) EndTransaction(bool) error {
+	return nil
+}
+
 func (t *testSQL) Close() {
 }
 
