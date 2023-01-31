@@ -12,6 +12,8 @@
 package dbsql
 
 import (
+	"context"
+	"database/sql"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -68,6 +70,10 @@ var tSQL = &testSQL{}
 
 func (t *testSQL) Open() (any, error) {
 	return nil, nil
+}
+
+func (t *testSQL) StartTransaction() (*sql.Tx, context.Context, error) {
+	return nil, nil, nil
 }
 
 func (t *testSQL) Close() {
