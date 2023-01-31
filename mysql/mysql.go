@@ -79,7 +79,8 @@ func (mysql *Mysql) Open() (dbOpen any, err error) {
 }
 
 // StartTransaction start transaction the database connection
-func (mysql *Mysql) StartTransaction() (tx *sql.Tx, ctx context.Context, err error) {
+func (mysql *Mysql) StartTransaction() (*sql.Tx, context.Context, error) {
+	var err error
 	if mysql.openDB == nil {
 		_, err = mysql.Open()
 		if err != nil {
@@ -93,10 +94,8 @@ func (mysql *Mysql) StartTransaction() (tx *sql.Tx, ctx context.Context, err err
 		mysql.tx = nil
 		return nil, nil, err
 	}
-	// save transaction context information
-	mysql.tx = tx
-	mysql.ctx = ctx
-	return
+	// return transaction context information
+	return mysql.tx, mysql.ctx, nil
 }
 
 func (mysql *Mysql) EndTransaction(commit bool) (err error) {
