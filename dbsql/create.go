@@ -13,6 +13,7 @@ package dbsql
 
 import (
 	"bytes"
+	"context"
 	"database/sql"
 	"fmt"
 	"reflect"
@@ -25,6 +26,7 @@ import (
 
 type DBsql interface {
 	Open() (any, error)
+	StartTransaction() (*sql.Tx, context.Context, error)
 	Close()
 	Reference() (string, string)
 	IndexNeeded() bool

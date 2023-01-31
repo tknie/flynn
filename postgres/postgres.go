@@ -12,6 +12,7 @@
 package postgres
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"strings"
@@ -27,6 +28,7 @@ import (
 type PostGres struct {
 	def.CommonDatabase
 	openDB       any
+	ctx          *sql.Tx
 	dbURL        string
 	dbTableNames []string
 	user         string
@@ -35,7 +37,7 @@ type PostGres struct {
 
 // New create new postgres reference instance
 func New(id def.RegDbID, url string) (def.Database, error) {
-	pg := &PostGres{def.CommonDatabase{RegDbID: id}, nil,
+	pg := &PostGres{def.CommonDatabase{RegDbID: id}, nil, nil,
 		url, nil, "", ""}
 	// err := pg.check()
 	// if err != nil {
@@ -102,7 +104,7 @@ func (pg *PostGres) Maps() ([]string, error) {
 // Open open the database connection
 func (pg *PostGres) Open() (dbOpen any, err error) {
 	var db *sql.DB
-	if !pg.IsTransaction() || pg.openDB == nil {
+	if pg.openDB == nil {
 		db, err = sql.Open("pgx", pg.generateURL())
 		if err != nil {
 			return
@@ -111,12 +113,33 @@ func (pg *PostGres) Open() (dbOpen any, err error) {
 	} else {
 		db = pg.openDB.(*sql.DB)
 	}
+	if pg.IsTransaction() {
+		ctx := context.Background()
+		pg.ctx, err = db.BeginTx(ctx, nil)
+		if err != nil {
+			return nil, err
+		}
+
+	}
 	log.Log.Debugf("Open database %s", pg.dbURL)
 	return db, nil
 }
 
+// StartTransaction start transaction the database connection
+func (pg *PostGres) StartTransaction() (tx *sql.Tx, ctx context.Context, err error) {
+	ctx = context.Background()
+	tx, err = pg.openDB.(*sql.DB).BeginTx(ctx, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+	return
+}
+
 // Close close the database connection
 func (pg *PostGres) Close() {
+	if pg.ctx != nil {
+		pg.ctx.Rollback()
+	}
 	if pg.openDB != nil {
 		pg.openDB.(*sql.DB).Close()
 		pg.openDB = nil

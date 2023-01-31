@@ -13,7 +13,6 @@ package dbsql
 
 import (
 	"bytes"
-	"database/sql"
 	"fmt"
 	"strconv"
 	"strings"
@@ -25,13 +24,13 @@ import (
 )
 
 func Insert(dbsql DBsql, name string, insert *common.Entries) error {
-	dbOpen, err := dbsql.Open()
+	tx, ctx, err := dbsql.StartTransaction()
 	if err != nil {
 		return err
 	}
-	defer dbsql.Close()
-
-	db := dbOpen.(*sql.DB)
+	if !dbsql.IsTransaction() {
+		defer dbsql.Close()
+	}
 
 	log.Log.Debugf("Insert SQL table")
 
@@ -58,11 +57,16 @@ func Insert(dbsql DBsql, name string, insert *common.Entries) error {
 	for _, v := range insert.Values {
 		av := v
 		log.Log.Debugf("Insert values: %d -> %#v", len(av), av)
-		_, err = db.Exec(insertCmd, av...)
+		_, err = tx.ExecContext(ctx, insertCmd, av...)
 		if err != nil {
+			tx.Rollback()
 			log.Log.Debugf("Error insert CMD: %v of %s and cmd %s", err, name, insertCmd)
 			return err
 		}
+	}
+	err = tx.Commit()
+	if err != nil {
+		return err
 	}
 	return nil
 }
@@ -117,29 +121,34 @@ func generateDelete(indexNeeded bool, name string, valueIndex int, deleteInfo *c
 }
 
 func Update(dbsql DBsql, name string, updateInfo *common.Entries) (rowsAffected int64, err error) {
-	dbAny, err := dbsql.Open()
+	tx, ctx, err := dbsql.StartTransaction()
 	if err != nil {
-		log.Log.Debugf("Open error: %v", err)
-		return 0, err
+		return -1, err
 	}
-	defer dbsql.Close()
-
-	db := dbAny.(*sql.DB)
+	if !dbsql.IsTransaction() {
+		defer dbsql.Close()
+	}
 	insertCmd, whereFields := generateUpdate(dbsql.IndexNeeded(), name, updateInfo)
 	for i, v := range updateInfo.Values {
 		whereClause := createWhere(i, updateInfo, whereFields)
 		ic := insertCmd + whereClause
 		av := v
 		log.Log.Debugf("Update values: %d -> %#v", len(av), av)
-		res, err := db.Exec(ic, av...)
+		res, err := tx.ExecContext(ctx, ic, av...)
 		if err != nil {
 			log.Log.Debugf("Update error: %s -> %v", ic, err)
+			tx.Rollback()
 			return 0, err
 		}
 		ra, _ := res.RowsAffected()
 		rowsAffected += ra
 	}
 	log.Log.Debugf("Update done")
+
+	err = tx.Commit()
+	if err != nil {
+		return -1, err
+	}
 	return rowsAffected, nil
 }
 
@@ -174,24 +183,29 @@ func convertString(convertToString any) string {
 }
 
 func Delete(dbsql DBsql, name string, updateInfo *common.Entries) (rowsAffected int64, err error) {
-	dbAny, err := dbsql.Open()
+	tx, ctx, err := dbsql.StartTransaction()
 	if err != nil {
-		log.Log.Debugf("Open error: %v", err)
-		return 0, err
+		return -1, err
 	}
-	defer dbsql.Close()
+	if !dbsql.IsTransaction() {
+		defer dbsql.Close()
+	}
 
-	db := dbAny.(*sql.DB)
 	for i := 0; i < len(updateInfo.Values); i++ {
 		deleteCmd, av := generateDelete(dbsql.IndexNeeded(), name, 0, updateInfo)
 		log.Log.Debugf("Delete cmd: %s -> %#v", deleteCmd, av)
-		res, err := db.Exec(deleteCmd, av...)
+		res, err := tx.ExecContext(ctx, deleteCmd, av...)
 		if err != nil {
 			log.Log.Debugf("Delete error: %v", err)
-			return 0, err
+			tx.Rollback()
+			return -1, err
 		}
 		ra, _ := res.RowsAffected()
 		rowsAffected += ra
+	}
+	err = tx.Commit()
+	if err != nil {
+		return -1, err
 	}
 	log.Log.Debugf("Delete done")
 	return

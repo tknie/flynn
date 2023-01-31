@@ -12,6 +12,7 @@
 package mysql
 
 import (
+	"context"
 	"database/sql"
 	"strings"
 
@@ -73,6 +74,16 @@ func (mysql *Mysql) Open() (dbOpen any, err error) {
 		db = mysql.openDB.(*sql.DB)
 	}
 	return db, nil
+}
+
+// StartTransaction start transaction the database connection
+func (mysql *Mysql) StartTransaction() (tx *sql.Tx, ctx context.Context, err error) {
+	ctx = context.Background()
+	tx, err = mysql.openDB.(*sql.DB).BeginTx(ctx, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+	return
 }
 
 // Close close the database connection
