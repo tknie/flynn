@@ -78,6 +78,12 @@ func (mysql *Mysql) Open() (dbOpen any, err error) {
 
 // StartTransaction start transaction the database connection
 func (mysql *Mysql) StartTransaction() (tx *sql.Tx, ctx context.Context, err error) {
+	if mysql.openDB == nil {
+		_, err = mysql.Open()
+		if err != nil {
+			return nil, nil, err
+		}
+	}
 	ctx = context.Background()
 	tx, err = mysql.openDB.(*sql.DB).BeginTx(ctx, nil)
 	if err != nil {

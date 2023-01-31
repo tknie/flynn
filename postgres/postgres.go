@@ -127,6 +127,12 @@ func (pg *PostGres) Open() (dbOpen any, err error) {
 
 // StartTransaction start transaction the database connection
 func (pg *PostGres) StartTransaction() (tx *sql.Tx, ctx context.Context, err error) {
+	if pg.openDB == nil {
+		_, err = pg.Open()
+		if err != nil {
+			return nil, nil, err
+		}
+	}
 	ctx = context.Background()
 	tx, err = pg.openDB.(*sql.DB).BeginTx(ctx, nil)
 	if err != nil {
