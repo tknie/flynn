@@ -27,6 +27,7 @@ import (
 type DBsql interface {
 	Open() (any, error)
 	StartTransaction() (*sql.Tx, context.Context, error)
+	EndTransaction(bool) error
 	Close()
 	Reference() (string, string)
 	IndexNeeded() bool

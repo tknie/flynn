@@ -59,12 +59,12 @@ func Insert(dbsql DBsql, name string, insert *common.Entries) error {
 		log.Log.Debugf("Insert values: %d -> %#v", len(av), av)
 		_, err = tx.ExecContext(ctx, insertCmd, av...)
 		if err != nil {
-			tx.Rollback()
+			dbsql.EndTransaction(false)
 			log.Log.Debugf("Error insert CMD: %v of %s and cmd %s", err, name, insertCmd)
 			return err
 		}
 	}
-	err = tx.Commit()
+	err = dbsql.EndTransaction(true)
 	if err != nil {
 		return err
 	}
@@ -137,7 +137,7 @@ func Update(dbsql DBsql, name string, updateInfo *common.Entries) (rowsAffected 
 		res, err := tx.ExecContext(ctx, ic, av...)
 		if err != nil {
 			log.Log.Debugf("Update error: %s -> %v", ic, err)
-			tx.Rollback()
+			dbsql.EndTransaction(false)
 			return 0, err
 		}
 		ra, _ := res.RowsAffected()
@@ -145,7 +145,7 @@ func Update(dbsql DBsql, name string, updateInfo *common.Entries) (rowsAffected 
 	}
 	log.Log.Debugf("Update done")
 
-	err = tx.Commit()
+	err = dbsql.EndTransaction(true)
 	if err != nil {
 		return -1, err
 	}
@@ -197,13 +197,13 @@ func Delete(dbsql DBsql, name string, updateInfo *common.Entries) (rowsAffected 
 		res, err := tx.ExecContext(ctx, deleteCmd, av...)
 		if err != nil {
 			log.Log.Debugf("Delete error: %v", err)
-			tx.Rollback()
+			dbsql.EndTransaction(false)
 			return -1, err
 		}
 		ra, _ := res.RowsAffected()
 		rowsAffected += ra
 	}
-	err = tx.Commit()
+	err = dbsql.EndTransaction(true)
 	if err != nil {
 		return -1, err
 	}

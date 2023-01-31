@@ -34,12 +34,14 @@ type Mysql struct {
 	dbTableNames []string
 	user         string
 	password     string
+	tx           *sql.Tx
+	ctx          context.Context
 }
 
 // New create new postgres reference instance
 func New(id def.RegDbID, url string) (def.Database, error) {
 	mysql := &Mysql{def.CommonDatabase{RegDbID: id},
-		nil, url, nil, "", ""}
+		nil, url, nil, "", "", nil, nil}
 	return mysql, nil
 }
 
@@ -89,14 +91,33 @@ func (mysql *Mysql) StartTransaction() (tx *sql.Tx, ctx context.Context, err err
 	if err != nil {
 		return nil, nil, err
 	}
+	// save transaction context information
+	mysql.tx = tx
+	mysql.ctx = ctx
+	return
+}
+
+func (mysql *Mysql) EndTransaction(commit bool) (err error) {
+	if commit {
+		err = mysql.tx.Commit()
+	} else {
+		err = mysql.tx.Rollback()
+	}
+	mysql.tx = nil
+	mysql.ctx = nil
 	return
 }
 
 // Close close the database connection
 func (mysql *Mysql) Close() {
+	if mysql.ctx != nil {
+		mysql.tx.Rollback()
+	}
 	if mysql.openDB != nil {
 		mysql.openDB.(*sql.DB).Close()
 		mysql.openDB = nil
+		mysql.tx = nil
+		mysql.ctx = nil
 	}
 }
 

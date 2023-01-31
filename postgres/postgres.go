@@ -28,17 +28,18 @@ import (
 type PostGres struct {
 	def.CommonDatabase
 	openDB       any
-	ctx          *sql.Tx
 	dbURL        string
 	dbTableNames []string
 	user         string
 	password     string
+	tx           *sql.Tx
+	ctx          context.Context
 }
 
 // New create new postgres reference instance
 func New(id def.RegDbID, url string) (def.Database, error) {
-	pg := &PostGres{def.CommonDatabase{RegDbID: id}, nil, nil,
-		url, nil, "", ""}
+	pg := &PostGres{def.CommonDatabase{RegDbID: id}, nil,
+		url, nil, "", "", nil, nil}
 	// err := pg.check()
 	// if err != nil {
 	// 	return nil, err
@@ -114,8 +115,8 @@ func (pg *PostGres) Open() (dbOpen any, err error) {
 		db = pg.openDB.(*sql.DB)
 	}
 	if pg.IsTransaction() {
-		ctx := context.Background()
-		pg.ctx, err = db.BeginTx(ctx, nil)
+		pg.ctx = context.Background()
+		pg.tx, err = db.BeginTx(pg.ctx, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -141,14 +142,27 @@ func (pg *PostGres) StartTransaction() (tx *sql.Tx, ctx context.Context, err err
 	return
 }
 
+func (pg *PostGres) EndTransaction(commit bool) (err error) {
+	if commit {
+		err = pg.EndTransaction(true)
+	} else {
+		err = pg.EndTransaction(false)
+	}
+	pg.tx = nil
+	pg.ctx = nil
+	return
+}
+
 // Close close the database connection
 func (pg *PostGres) Close() {
 	if pg.ctx != nil {
-		pg.ctx.Rollback()
+		pg.EndTransaction(false)
 	}
 	if pg.openDB != nil {
 		pg.openDB.(*sql.DB).Close()
 		pg.openDB = nil
+		pg.tx = nil
+		pg.ctx = nil
 		log.Log.Debugf("Close database")
 	} else {
 		log.Log.Debugf("Close not opened database")
