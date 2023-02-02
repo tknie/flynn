@@ -132,9 +132,8 @@ func Update(dbsql DBsql, name string, updateInfo *common.Entries) (rowsAffected 
 	for i, v := range updateInfo.Values {
 		whereClause := createWhere(i, updateInfo, whereFields)
 		ic := insertCmd + whereClause
-		av := v
-		log.Log.Debugf("Update values: %d -> %#v", len(av), av)
-		res, err := tx.ExecContext(ctx, ic, av...)
+		log.Log.Debugf("Update values: %d -> %#v tx=%v %v", len(v), v, tx, ctx)
+		res, err := tx.ExecContext(ctx, ic, v...)
 		if err != nil {
 			log.Log.Debugf("Update error: %s -> %v", ic, err)
 			dbsql.EndTransaction(false)
