@@ -371,3 +371,15 @@ func (ada *Adabas) DeleteTable(string) error {
 func (ada *Adabas) BatchSQL(batch string) error {
 	return errorrepo.NewError("DB065535")
 }
+
+func (ada *Adabas) BeginTransaction() error {
+	return nil
+}
+
+func (ada *Adabas) Commit() error {
+	return nil
+}
+
+func (ada *Adabas) Rollback() error {
+	return nil
+}

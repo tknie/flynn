@@ -71,3 +71,35 @@ func updateTest(t *testing.T, target *target) error {
 	assert.Equal(t, int64(1), dr)
 	return nil
 }
+
+func TestUpdateTransaction(t *testing.T) {
+	url, _ := postgresTarget(t)
+	fmt.Println("Start transaction update test for layer")
+	x, err := Register("postgres", url)
+	if !assert.NoError(t, err) {
+		return
+	}
+	defer Unregister(x)
+
+	x.BeginTransaction()
+	nameValue := time.Now().Format("20060102150405")
+	vId1 := "x-" + nameValue + "-1"
+	vId2 := "x-" + nameValue + "-2"
+	list := [][]any{{vId1, "xxxxxx", 1}, {vId2, "yyywqwqwqw", 2}}
+	input := &common.Entries{Fields: []string{"ID", "Name", "account"},
+		Update: []string{"ID"},
+		Values: list}
+	err = x.Insert(testStructTable, input)
+	if !assert.NoError(t, err) {
+		return
+	}
+
+	vId1b := "x-" + nameValue + "-1"
+	vId2b := "x-" + nameValue + "-2"
+	input.Values = [][]any{{vId1b, "jhhhhmmmmm", 1}, {vId2b, "ppppoiierer", 2}}
+	err = x.Insert(testStructTable, input)
+	if !assert.NoError(t, err) {
+		return
+	}
+	x.Rollback()
+}

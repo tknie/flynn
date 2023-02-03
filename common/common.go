@@ -47,6 +47,9 @@ type Database interface {
 	Delete(name string, remove *Entries) (int64, error)
 	BatchSQL(batch string) error
 	Query(search *Query, f ResultFunction) (*Result, error)
+	BeginTransaction() error
+	Commit() error
+	Rollback() error
 }
 
 type Column struct {
@@ -184,4 +187,31 @@ func (result *Result) GenerateColumnByStruct(search *Query, rows *sql.Rows) (any
 	result.Rows = ti.RowValues
 	result.Data = ti.DataType
 	return copy, values, nil
+}
+
+// BeginTransaction begin a transaction
+func (id RegDbID) BeginTransaction() error {
+	driver, err := searchDataDriver(id)
+	if err != nil {
+		return err
+	}
+	return driver.BeginTransaction()
+}
+
+// Commit transaction commit
+func (id RegDbID) Commit() error {
+	driver, err := searchDataDriver(id)
+	if err != nil {
+		return err
+	}
+	return driver.Commit()
+}
+
+// Rollback transaction rollback
+func (id RegDbID) Rollback() error {
+	driver, err := searchDataDriver(id)
+	if err != nil {
+		return err
+	}
+	return driver.Rollback()
 }

@@ -242,3 +242,15 @@ func (mysql *Mysql) Update(name string, insert *def.Entries) (int64, error) {
 func (mysql *Mysql) BatchSQL(batch string) error {
 	return dbsql.BatchSQL(mysql, batch)
 }
+
+func (mysql *Mysql) BeginTransaction() error {
+	return nil
+}
+
+func (mysql *Mysql) Commit() error {
+	return nil
+}
+
+func (mysql *Mysql) Rollback() error {
+	return nil
+}

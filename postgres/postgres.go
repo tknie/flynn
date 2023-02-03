@@ -285,3 +285,15 @@ func (pg *PostGres) Update(name string, insert *def.Entries) (int64, error) {
 func (pg *PostGres) BatchSQL(batch string) error {
 	return dbsql.BatchSQL(pg, batch)
 }
+
+func (pg *PostGres) BeginTransaction() error {
+	return nil
+}
+
+func (pg *PostGres) Commit() error {
+	return nil
+}
+
+func (pg *PostGres) Rollback() error {
+	return nil
+}
