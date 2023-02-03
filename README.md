@@ -1,14 +1,15 @@
-# TKnie-Flynn DB layer
+# Flynn DB layer
 
 ## Introduction
 
-The `github.com/tknie/flynn` package contains an inbetween layer to access multiple types of database with the same API. Move to other database types would not lead to change the inbetween layer.
+The `github.com/tknie/flynn` package contains an inbetween layer to access multiple types of databases with the same API. Move to other database types would not lead to change the inbetween layer.
+Copying of data between different database engine should be possible.
 
-There should be no difference if the database is a SQL or non-SQL database.
+There should be no difference if the database is a SQL or a NoSQL database.
 
-In advance the DB layer should be provide batch modification. This means a list of data recrods to be inserted or updated should be called in one call. May be as transaction or in an atomic matter.
+A list of data recrods should be able to be inserted or updated in one call. May be as transaction or in an atomic matter.
 
-In advance real main database functionality should be contained:
+In advance real main database functionality should be contained like:
 
 * Create database tables
 * Read, Search, Insert, Update and Delete of data records
@@ -18,7 +19,7 @@ In advance real main database functionality should be contained:
 * Support creating batch jobs for database-specific tasks like SQL scripts
 * Create index or other enhancements on database configuration
 
-## Example of TKnieFlynn usage
+## Example of Flynn usage
 
 ### Query records in database
 
@@ -62,8 +63,7 @@ In advance real main database functionality should be contained:
  }
 ```
 
-## Check-List
-
+## Check List
 
 Feature | Ready-State | Description
 ---------|----------|---------
@@ -88,3 +88,5 @@ Feature | Ready-State | Description
  Function-based query | | Used during search and query
  Support creating batch jobs for database-specific tasks like SQL scripts | | planned
  Create index or other enhancements on database configuration | | planned
+ Enhanced Search topics || planned
+ Common search queries (common to SQL or NonSQL databases) |  | planned
