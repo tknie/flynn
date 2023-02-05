@@ -57,16 +57,25 @@ func Insert(dbsql DBsql, name string, insert *common.Entries) error {
 	for _, v := range insert.Values {
 		av := v
 		log.Log.Debugf("Insert values: %d -> %#v", len(av), av)
-		_, err = tx.ExecContext(ctx, insertCmd, av...)
+		res, err := tx.ExecContext(ctx, insertCmd, av...)
 		if err != nil {
 			dbsql.EndTransaction(false)
 			log.Log.Debugf("Error insert CMD: %v of %s and cmd %s", err, name, insertCmd)
 			return err
 		}
+		l, err := res.RowsAffected()
+		if err != nil {
+			return err
+		}
+		if l == 0 {
+			return fmt.Errorf("insert of rows failed")
+		}
 	}
-	err = dbsql.EndTransaction(true)
-	if err != nil {
-		return err
+	if !dbsql.IsTransaction() {
+		err = dbsql.EndTransaction(true)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

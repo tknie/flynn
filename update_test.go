@@ -21,6 +21,7 @@ import (
 )
 
 func TestUpdateInit(t *testing.T) {
+	initLog()
 	for _, target := range getTestTargets(t) {
 		if target.layer == "adabas" {
 			continue
@@ -73,6 +74,7 @@ func updateTest(t *testing.T, target *target) error {
 }
 
 func TestUpdateTransaction(t *testing.T) {
+	initLog()
 	url, _ := postgresTarget(t)
 	fmt.Println("Start transaction update test for layer")
 	x, err := Register("postgres", url)
@@ -81,8 +83,11 @@ func TestUpdateTransaction(t *testing.T) {
 	}
 	defer Unregister(x)
 
-	x.BeginTransaction()
-	nameValue := time.Now().Format("20060102150405")
+	err = x.BeginTransaction()
+	if !assert.NoError(t, err) {
+		return
+	}
+	nameValue := time.Now().Format("20060102")
 	vId1 := "x-" + nameValue + "-1"
 	vId2 := "x-" + nameValue + "-2"
 	list := [][]any{{vId1, "xxxxxx", 1}, {vId2, "yyywqwqwqw", 2}}
@@ -94,12 +99,23 @@ func TestUpdateTransaction(t *testing.T) {
 		return
 	}
 
-	vId1b := "x-" + nameValue + "-1"
-	vId2b := "x-" + nameValue + "-2"
+	vId1b := "y-" + nameValue + "-3"
+	vId2b := "y-" + nameValue + "-4"
 	input.Values = [][]any{{vId1b, "jhhhhmmmmm", 1}, {vId2b, "ppppoiierer", 2}}
 	err = x.Insert(testStructTable, input)
 	if !assert.NoError(t, err) {
 		return
 	}
-	x.Rollback()
+	err = x.Rollback()
+	if !assert.NoError(t, err) {
+		return
+	}
+
+	q := &common.Query{TableName: testStructTable,
+		Search: "ID='" + vId1b + "'",
+		Fields: []string{"ID"}}
+	_, err = x.Query(q, func(search *common.Query, result *common.Result) error {
+		return fmt.Errorf("found fail")
+	})
+	assert.NoError(t, err)
 }

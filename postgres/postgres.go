@@ -102,18 +102,24 @@ func (pg *PostGres) Maps() ([]string, error) {
 	return pg.dbTableNames, nil
 }
 
-// Open open the database connection
-func (pg *PostGres) Open() (dbOpen any, err error) {
-	var db *sql.DB
+func (pg *PostGres) open() (dbOpen any, err error) {
 	if pg.openDB == nil {
-		db, err = sql.Open("pgx", pg.generateURL())
+		pg.openDB, err = sql.Open("pgx", pg.generateURL())
 		if err != nil {
 			return
 		}
-		pg.openDB = db
-	} else {
-		db = pg.openDB.(*sql.DB)
 	}
+	return pg.openDB, nil
+}
+
+// Open open the database connection
+func (pg *PostGres) Open() (dbOpen any, err error) {
+	dbOpen, err = pg.open()
+	if err != nil {
+		return nil, err
+	}
+	db := dbOpen.(*sql.DB)
+
 	if pg.IsTransaction() {
 		pg.ctx = context.Background()
 		pg.tx, err = db.BeginTx(pg.ctx, nil)
@@ -128,6 +134,9 @@ func (pg *PostGres) Open() (dbOpen any, err error) {
 
 // StartTransaction start transaction the database connection
 func (pg *PostGres) StartTransaction() (*sql.Tx, context.Context, error) {
+	if pg.tx != nil && pg.ctx != nil {
+		return pg.tx, pg.ctx, nil
+	}
 	var err error
 	if pg.openDB == nil {
 		_, err = pg.Open()
@@ -135,18 +144,18 @@ func (pg *PostGres) StartTransaction() (*sql.Tx, context.Context, error) {
 			return nil, nil, err
 		}
 	}
-	pg.ctx = context.Background()
-	pg.tx, err = pg.openDB.(*sql.DB).BeginTx(pg.ctx, nil)
+	err = pg.BeginTransaction()
 	if err != nil {
-		pg.ctx = nil
-		pg.tx = nil
 		return nil, nil, err
 	}
 	return pg.tx, pg.ctx, nil
 }
 
 func (pg *PostGres) EndTransaction(commit bool) (err error) {
-	if pg.tx == nil || pg.ctx == nil {
+	if pg.tx == nil && pg.ctx == nil {
+		return nil
+	}
+	if pg.IsTransaction() {
 		return nil
 	}
 	if commit {
@@ -286,14 +295,31 @@ func (pg *PostGres) BatchSQL(batch string) error {
 	return dbsql.BatchSQL(pg, batch)
 }
 
-func (pg *PostGres) BeginTransaction() error {
+// BeginTransaction begin transaction
+func (pg *PostGres) BeginTransaction() (err error) {
+	_, err = pg.open()
+	if err != nil {
+		return
+	}
+	pg.ctx = context.Background()
+	pg.tx, err = pg.openDB.(*sql.DB).BeginTx(pg.ctx, nil)
+	if err != nil {
+		pg.ctx = nil
+		pg.tx = nil
+		return err
+	}
+	pg.Transaction = true
 	return nil
 }
 
+// Commit commit the transaction
 func (pg *PostGres) Commit() error {
-	return nil
+	pg.Transaction = false
+	return pg.EndTransaction(true)
 }
 
+// Rollback rollback the transaction
 func (pg *PostGres) Rollback() error {
-	return nil
+	pg.Transaction = false
+	return pg.EndTransaction(false)
 }
