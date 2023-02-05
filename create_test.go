@@ -151,7 +151,7 @@ func TestCreateStruct(t *testing.T) {
 		if !assert.NoError(t, err, "insert fail using "+target.layer) {
 			return
 		}
-		err = id.BatchSQL("SELECT NAME FROM TESTTABLE")
+		err = id.Batch("SELECT NAME FROM TESTTABLE")
 		assert.NoError(t, err, "select fail using "+target.layer)
 		deleteTable(t, id, testCreationTable, target.layer)
 		unregisterDatabase(t, id)

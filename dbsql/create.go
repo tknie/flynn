@@ -111,7 +111,7 @@ func createTableByStruct(dbsql DBsql, columns any) (string, error) {
 	return SqlDataType(dbsql, columns)
 }
 
-func BatchSQL(dbsql DBsql, batch string) error {
+func Batch(dbsql DBsql, batch string) error {
 	layer, url := dbsql.Reference()
 	db, err := sql.Open(layer, url)
 	if err != nil {

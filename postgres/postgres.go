@@ -290,9 +290,9 @@ func (pg *PostGres) Update(name string, insert *def.Entries) (int64, error) {
 	return dbsql.Update(pg, name, insert)
 }
 
-// BatchSQL batch SQL query in table
-func (pg *PostGres) BatchSQL(batch string) error {
-	return dbsql.BatchSQL(pg, batch)
+// Batch batch SQL query in table
+func (pg *PostGres) Batch(batch string) error {
+	return dbsql.Batch(pg, batch)
 }
 
 // BeginTransaction begin transaction

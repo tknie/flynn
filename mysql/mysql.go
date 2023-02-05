@@ -238,9 +238,9 @@ func (mysql *Mysql) Update(name string, insert *def.Entries) (int64, error) {
 	return dbsql.Update(mysql, name, insert)
 }
 
-// BatchSQL batch SQL query in table
-func (mysql *Mysql) BatchSQL(batch string) error {
-	return dbsql.BatchSQL(mysql, batch)
+// Batch batch SQL query in table
+func (mysql *Mysql) Batch(batch string) error {
+	return dbsql.Batch(mysql, batch)
 }
 
 func (mysql *Mysql) BeginTransaction() error {

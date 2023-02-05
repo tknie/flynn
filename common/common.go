@@ -45,7 +45,7 @@ type Database interface {
 	Insert(name string, insert *Entries) error
 	Update(name string, insert *Entries) (int64, error)
 	Delete(name string, remove *Entries) (int64, error)
-	BatchSQL(batch string) error
+	Batch(batch string) error
 	Query(search *Query, f ResultFunction) (*Result, error)
 	BeginTransaction() error
 	Commit() error
@@ -109,13 +109,13 @@ func (id RegDbID) DeleteTable(tableName string) error {
 	return driver.DeleteTable(tableName)
 }
 
-// BatchSQL batch SQL query in table
-func (id RegDbID) BatchSQL(batch string) error {
+// Batch batch SQL query in table
+func (id RegDbID) Batch(batch string) error {
 	driver, err := searchDataDriver(id)
 	if err != nil {
 		return err
 	}
-	return driver.BatchSQL(batch)
+	return driver.Batch(batch)
 }
 
 // Open open the database connection

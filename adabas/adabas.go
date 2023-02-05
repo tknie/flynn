@@ -367,8 +367,8 @@ func (ada *Adabas) DeleteTable(string) error {
 	return errorrepo.NewError("DB065535")
 }
 
-// BatchSQL batch SQL query in table
-func (ada *Adabas) BatchSQL(batch string) error {
+// Batch batch SQL query in table
+func (ada *Adabas) Batch(batch string) error {
 	return errorrepo.NewError("DB065535")
 }
 

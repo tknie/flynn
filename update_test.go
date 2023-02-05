@@ -73,15 +73,18 @@ func updateTest(t *testing.T, target *target) error {
 	return nil
 }
 
-func TestUpdateTransaction(t *testing.T) {
+func TestPostgresUpdateTransaction(t *testing.T) {
 	initLog()
 	url, _ := postgresTarget(t)
-	fmt.Println("Start transaction update test for layer")
+	fmt.Println("Start postgres transaction update test for layer")
 	x, err := Register("postgres", url)
 	if !assert.NoError(t, err) {
 		return
 	}
 	defer Unregister(x)
+
+	err = x.Batch("TRUNCATE TABLE " + testStructTable)
+	assert.NoError(t, err)
 
 	err = x.BeginTransaction()
 	if !assert.NoError(t, err) {
@@ -112,7 +115,57 @@ func TestUpdateTransaction(t *testing.T) {
 	}
 
 	q := &common.Query{TableName: testStructTable,
-		Search: "ID='" + vId1b + "'",
+		Search: "",
+		Fields: []string{"ID"}}
+	_, err = x.Query(q, func(search *common.Query, result *common.Result) error {
+		return fmt.Errorf("found fail")
+	})
+	assert.NoError(t, err)
+}
+
+func TestMySQLUpdateTransaction(t *testing.T) {
+	initLog()
+	url, _ := mysqlTarget(t)
+	fmt.Println("Start mySQL transaction update test for layer")
+	x, err := Register("mysql", url)
+	if !assert.NoError(t, err) {
+		return
+	}
+	defer Unregister(x)
+
+	err = x.Batch("TRUNCATE TABLE " + testStructTable)
+	assert.NoError(t, err)
+
+	err = x.BeginTransaction()
+	if !assert.NoError(t, err) {
+		return
+	}
+	nameValue := time.Now().Format("20060102")
+	vId1 := "x-" + nameValue + "-1"
+	vId2 := "x-" + nameValue + "-2"
+	list := [][]any{{vId1, "xxxxxx", 1}, {vId2, "yyywqwqwqw", 2}}
+	input := &common.Entries{Fields: []string{"ID", "Name", "account"},
+		Update: []string{"ID"},
+		Values: list}
+	err = x.Insert(testStructTable, input)
+	if !assert.NoError(t, err) {
+		return
+	}
+
+	vId1b := "y-" + nameValue + "-3"
+	vId2b := "y-" + nameValue + "-4"
+	input.Values = [][]any{{vId1b, "jhhhhmmmmm", 1}, {vId2b, "ppppoiierer", 2}}
+	err = x.Insert(testStructTable, input)
+	if !assert.NoError(t, err) {
+		return
+	}
+	err = x.Rollback()
+	if !assert.NoError(t, err) {
+		return
+	}
+
+	q := &common.Query{TableName: testStructTable,
+		Search: "",
 		Fields: []string{"ID"}}
 	_, err = x.Query(q, func(search *common.Query, result *common.Result) error {
 		return fmt.Errorf("found fail")
