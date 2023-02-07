@@ -83,8 +83,8 @@ func TestPostgresUpdateTransaction(t *testing.T) {
 	}
 	defer Unregister(x)
 
-	// err = x.Batch("TRUNCATE TABLE " + testStructTable)
-	// assert.NoError(t, err)
+	err = x.Batch("TRUNCATE TABLE " + testStructTable)
+	assert.NoError(t, err)
 
 	err = x.BeginTransaction()
 	if !assert.NoError(t, err) {
@@ -118,6 +118,7 @@ func TestPostgresUpdateTransaction(t *testing.T) {
 		Search: "",
 		Fields: []string{"ID"}}
 	_, err = x.Query(q, func(search *common.Query, result *common.Result) error {
+		fmt.Println("Result", *(result.Rows[0].(*string)))
 		return fmt.Errorf("found fail")
 	})
 	assert.NoError(t, err)
@@ -133,8 +134,8 @@ func TestMySQLUpdateTransaction(t *testing.T) {
 	}
 	defer Unregister(x)
 
-	// err = x.Batch("TRUNCATE TABLE " + testStructTable)
-	// assert.NoError(t, err)
+	err = x.Batch("TRUNCATE TABLE " + testStructTable)
+	assert.NoError(t, err)
 
 	err = x.BeginTransaction()
 	if !assert.NoError(t, err) {
