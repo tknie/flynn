@@ -67,6 +67,7 @@ func Maps() []string {
 func Unregister(id def.RegDbID) error {
 	for i, d := range def.Databases {
 		if d.ID() == id {
+			id.Close()
 			newDatabases := make([]def.Database, 0)
 			if i > 0 {
 				newDatabases = append(newDatabases, def.Databases[0:i-1]...)

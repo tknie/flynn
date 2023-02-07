@@ -104,11 +104,13 @@ func (pg *PostGres) Maps() ([]string, error) {
 
 func (pg *PostGres) open() (dbOpen any, err error) {
 	if pg.openDB == nil {
+		log.Log.Debugf("Open postgres database to %s", pg.dbURL)
 		pg.openDB, err = sql.Open("pgx", pg.generateURL())
 		if err != nil {
 			return
 		}
 	}
+	log.Log.Debugf("Opened postgres database")
 	return pg.openDB, nil
 }
 
@@ -128,27 +130,28 @@ func (pg *PostGres) Open() (dbOpen any, err error) {
 		}
 
 	}
-	log.Log.Debugf("Open database %s", pg.dbURL)
+	log.Log.Debugf("Open database %s after transaction", pg.dbURL)
 	return db, nil
 }
 
 // StartTransaction start transaction the database connection
-func (pg *PostGres) StartTransaction() (*sql.Tx, context.Context, error) {
+func (pg *PostGres) BeginTransaction() error {
 	if pg.tx != nil && pg.ctx != nil {
-		return pg.tx, pg.ctx, nil
+		return nil
 	}
 	var err error
 	if pg.openDB == nil {
 		_, err = pg.Open()
 		if err != nil {
-			return nil, nil, err
+			return err
 		}
 	}
-	err = pg.BeginTransaction()
+	_, _, err = pg.StartTransaction()
 	if err != nil {
-		return nil, nil, err
+		return err
 	}
-	return pg.tx, pg.ctx, nil
+	pg.Transaction = true
+	return nil
 }
 
 func (pg *PostGres) EndTransaction(commit bool) (err error) {
@@ -171,6 +174,7 @@ func (pg *PostGres) EndTransaction(commit bool) (err error) {
 // Close close the database connection
 func (pg *PostGres) Close() {
 	if pg.ctx != nil {
+		log.Log.Debugf("Rollback transaction during close")
 		pg.EndTransaction(false)
 	}
 	if pg.openDB != nil {
@@ -295,21 +299,20 @@ func (pg *PostGres) Batch(batch string) error {
 	return dbsql.Batch(pg, batch)
 }
 
-// BeginTransaction begin transaction
-func (pg *PostGres) BeginTransaction() (err error) {
-	_, err = pg.open()
+// StartTransaction start transaction
+func (pg *PostGres) StartTransaction() (*sql.Tx, context.Context, error) {
+	_, err := pg.open()
 	if err != nil {
-		return
+		return nil, nil, err
 	}
 	pg.ctx = context.Background()
 	pg.tx, err = pg.openDB.(*sql.DB).BeginTx(pg.ctx, nil)
 	if err != nil {
 		pg.ctx = nil
 		pg.tx = nil
-		return err
+		return nil, nil, err
 	}
-	pg.Transaction = true
-	return nil
+	return pg.tx, pg.ctx, nil
 }
 
 // Commit commit the transaction

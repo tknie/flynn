@@ -110,6 +110,7 @@ func (ada *Adabas) Open() (any, error) {
 
 // Close close the database connection
 func (ada *Adabas) Close() {
+	log.Log.Debugf("Close Adabas")
 	if ada.conn != nil {
 		ada.conn.Close()
 		ada.conn = nil

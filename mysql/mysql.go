@@ -111,6 +111,7 @@ func (mysql *Mysql) EndTransaction(commit bool) (err error) {
 
 // Close close the database connection
 func (mysql *Mysql) Close() {
+	log.Log.Debugf("Close MySQL")
 	if mysql.ctx != nil {
 		mysql.tx.Rollback()
 	}

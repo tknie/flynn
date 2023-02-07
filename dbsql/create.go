@@ -38,12 +38,12 @@ type DBsql interface {
 func CreateTable(dbsql DBsql, name string, col any) error {
 	//	columns []*def.Column
 	log.Log.Debugf("Create SQL table")
-	dbOpen, err := dbsql.Open()
+	layer, url := dbsql.Reference()
+	db, err := sql.Open(layer, url)
 	if err != nil {
 		return err
 	}
-	db := dbOpen.(*sql.DB)
-	defer dbsql.Close()
+	defer db.Close()
 	createCmd := `CREATE TABLE ` + name + ` (`
 	switch columns := col.(type) {
 	case []*common.Column:
@@ -63,6 +63,8 @@ func CreateTable(dbsql DBsql, name string, col any) error {
 		log.Log.Errorf("Error returned by SQL: %v", err)
 		return err
 	}
+	log.Log.Debugf("Table created, waiting ....")
+	//time.Sleep(60 * time.Second)
 	log.Log.Debugf("Table created")
 	return nil
 }
@@ -75,12 +77,12 @@ func DeleteTable(dbsql DBsql, name string) error {
 	}
 	defer db.Close()
 
-	log.Log.Debugf("Drop table " + name)
-
 	_, err = db.Query("DROP TABLE " + name)
 	if err != nil {
+		log.Log.Debugf("Drop table error: %v", err)
 		return err
 	}
+	log.Log.Debugf("Drop table " + name)
 	return nil
 }
 

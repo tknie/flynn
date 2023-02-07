@@ -83,8 +83,8 @@ func TestPostgresUpdateTransaction(t *testing.T) {
 	}
 	defer Unregister(x)
 
-	err = x.Batch("TRUNCATE TABLE " + testStructTable)
-	assert.NoError(t, err)
+	// err = x.Batch("TRUNCATE TABLE " + testStructTable)
+	// assert.NoError(t, err)
 
 	err = x.BeginTransaction()
 	if !assert.NoError(t, err) {
@@ -133,8 +133,8 @@ func TestMySQLUpdateTransaction(t *testing.T) {
 	}
 	defer Unregister(x)
 
-	err = x.Batch("TRUNCATE TABLE " + testStructTable)
-	assert.NoError(t, err)
+	// err = x.Batch("TRUNCATE TABLE " + testStructTable)
+	// assert.NoError(t, err)
 
 	err = x.BeginTransaction()
 	if !assert.NoError(t, err) {

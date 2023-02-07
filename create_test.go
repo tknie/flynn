@@ -17,11 +17,13 @@ import (
 	"testing"
 
 	def "github.com/tknie/flynn/common"
+	"github.com/tknie/log"
 
 	"github.com/stretchr/testify/assert"
 )
 
 const testCreationTable = "TESTTABLE"
+const testCreationTableStruct = "TESTTABLESTRUCT"
 
 type target struct {
 	layer string
@@ -115,6 +117,16 @@ func deleteTable(t *testing.T, id def.RegDbID, name, layer string) {
 }
 
 func TestCreateStruct(t *testing.T) {
+	initLog()
+	for _, target := range getTestTargets(t) {
+		err := createStruct(t, target)
+		if !assert.NoError(t, err) {
+			return
+		}
+	}
+}
+
+func createStruct(t *testing.T, target *target) error {
 	columns := struct {
 		XY        uint64 `dbsql:"ID::SERIAL"`
 		Name      string
@@ -125,35 +137,38 @@ func TestCreateStruct(t *testing.T) {
 		Bonus     int64
 	}{Name: "Gellanger",
 		FirstName: "Bob"}
-	for _, target := range getTestTargets(t) {
-		fmt.Println("Working on creating with target " + target.layer)
-		if target.layer == "adabas" {
-			continue
-		}
-		id, err := Register(target.layer, target.url)
-		if !assert.NoError(t, err, "register fail using "+target.layer) {
-			return
-		}
-		id.DeleteTable(testCreationTable)
-		err = id.CreateTable(testCreationTable, columns)
-		if !assert.NoError(t, err, "create fail using "+target.layer) {
-			unregisterDatabase(t, id)
-			continue
-		}
-		list := make([][]any, 0)
-		list = append(list, []any{"Eins", "Ernie"})
-		for i := 1; i < 100; i++ {
-			list = append(list, []any{strconv.Itoa(i), "Graf Zahl " + strconv.Itoa(i)})
-		}
-		list = append(list, []any{"Letztes", "Anton"})
-		err = id.Insert(testCreationTable, &def.Entries{Fields: []string{"name", "firstname"},
-			Values: list})
-		if !assert.NoError(t, err, "insert fail using "+target.layer) {
-			return
-		}
-		err = id.Batch("SELECT NAME FROM TESTTABLE")
-		assert.NoError(t, err, "select fail using "+target.layer)
-		deleteTable(t, id, testCreationTable, target.layer)
-		unregisterDatabase(t, id)
+	log.Log.Debugf("Working on creating with target " + target.layer)
+	if target.layer == "adabas" {
+		return nil
 	}
+	id, err := Register(target.layer, target.url)
+	if !assert.NoError(t, err, "register fail using "+target.layer) {
+		return err
+	}
+	defer unregisterDatabase(t, id)
+
+	log.Log.Debugf("Delete table: {}", testCreationTableStruct)
+	err = id.DeleteTable(testCreationTableStruct)
+	log.Log.Debugf("Delete table: %s returns with %v", testCreationTableStruct, err)
+	err = id.CreateTable(testCreationTableStruct, columns)
+	if !assert.NoError(t, err, "create fail using "+target.layer) {
+		return err
+	}
+	list := make([][]any, 0)
+	list = append(list, []any{"Eins", "Ernie"})
+	for i := 1; i < 100; i++ {
+		list = append(list, []any{strconv.Itoa(i), "Graf Zahl " + strconv.Itoa(i)})
+	}
+	list = append(list, []any{"Letztes", "Anton"})
+	err = id.Insert(testCreationTableStruct, &def.Entries{Fields: []string{"name", "firstname"},
+		Values: list})
+	if !assert.NoError(t, err, "insert fail using "+target.layer) {
+		return err
+	}
+	log.Log.Debugf("Inserting into table: {}", testCreationTableStruct)
+	err = id.Batch("SELECT NAME FROM " + testCreationTableStruct)
+	assert.NoError(t, err, "select fail using "+target.layer)
+	log.Log.Debugf("Deleting table: {}", testCreationTableStruct)
+	deleteTable(t, id, testCreationTableStruct, target.layer)
+	return nil
 }

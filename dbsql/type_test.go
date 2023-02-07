@@ -17,6 +17,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/tknie/log"
 )
 
 type SubStruct struct {
@@ -81,6 +82,8 @@ func (t *testSQL) EndTransaction(bool) error {
 }
 
 func (t *testSQL) Close() {
+	log.Log.Debugf("Close testSQL")
+
 }
 
 func (t *testSQL) IsTransaction() bool {

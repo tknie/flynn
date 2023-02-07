@@ -24,15 +24,17 @@ import (
 )
 
 func Insert(dbsql DBsql, name string, insert *common.Entries) error {
+	log.Log.Debugf("Transaction (begin insert): %v", dbsql.IsTransaction())
 	tx, ctx, err := dbsql.StartTransaction()
 	if err != nil {
 		return err
 	}
 	if !dbsql.IsTransaction() {
+		log.Log.Debugf("Init defer close ... in inserting")
 		defer dbsql.Close()
 	}
 
-	log.Log.Debugf("Insert SQL table")
+	log.Log.Debugf("Insert SQL record")
 
 	insertCmd := "INSERT INTO " + name + " ("
 	values := "("
@@ -71,11 +73,19 @@ func Insert(dbsql DBsql, name string, insert *common.Entries) error {
 			return fmt.Errorf("insert of rows failed")
 		}
 	}
+	log.Log.Debugf("Transaction: %v", dbsql.IsTransaction())
 	if !dbsql.IsTransaction() {
+		log.Log.Debugf("No transaction, end and close")
 		err = dbsql.EndTransaction(true)
 		if err != nil {
+			log.Log.Debugf("Error transaction %v", err)
+			dbsql.Close()
 			return err
 		}
+		log.Log.Debugf("Close ...")
+		dbsql.Close()
+	} else {
+		log.Log.Debugf("Transaction, NO end and close")
 	}
 	return nil
 }

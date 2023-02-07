@@ -129,6 +129,7 @@ func (id RegDbID) Open() (any, error) {
 
 // Close close the database connection
 func (id RegDbID) Close() {
+	log.Log.Debugf("Close regDbId xxxx")
 	driver, err := searchDataDriver(id)
 	if err != nil {
 		return
