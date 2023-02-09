@@ -17,6 +17,7 @@ type Query struct {
 	Fields       []string
 	Order        []string
 	Limit        uint32
+	Descriptor   bool
 	DataStruct   any
 	TypeInfo     any
 	FctParameter any
@@ -30,12 +31,18 @@ func (q *Query) Select() string {
 	switch {
 	case q.DataStruct != nil:
 		selectCmd.WriteString("SELECT ")
+		if q.Descriptor {
+			selectCmd.WriteString("DISTINCT ")
+		}
 		ti := CreateInterface(q.DataStruct)
 		q.TypeInfo = ti
 		selectCmd.WriteString(ti.CreateQueryFields())
 		selectCmd.WriteString(" FROM " + q.TableName)
 	default:
 		selectCmd.WriteString("SELECT ")
+		if q.Descriptor {
+			selectCmd.WriteString("DISTINCT ")
+		}
 		if len(q.Fields) == 0 {
 			selectCmd.WriteString("*")
 		} else {
@@ -53,9 +60,6 @@ func (q *Query) Select() string {
 	}
 	if q.Join != "" {
 		selectCmd.WriteString(" LIKE " + q.Join)
-	}
-	if q.Limit > 0 {
-		selectCmd.WriteString(fmt.Sprintf(" LIMIT = %d", q.Limit))
 	}
 	if len(q.Order) > 0 {
 		selectCmd.WriteString(" ORDER BY ")
@@ -76,6 +80,10 @@ func (q *Query) Select() string {
 			}
 		}
 	}
+	if q.Limit > 0 {
+		selectCmd.WriteString(fmt.Sprintf(" LIMIT %d", q.Limit))
+	}
+	log.Log.Debugf("Final select: %s", selectCmd.String())
 	return selectCmd.String()
 }
 

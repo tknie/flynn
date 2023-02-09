@@ -477,3 +477,49 @@ func TestSearchMySQLRowsOrdered(t *testing.T) {
 	})
 	assert.NoError(t, err)
 }
+
+func TestSearchPgRowsDistinct(t *testing.T) {
+	initLog()
+	pg, err := postgresTarget(t)
+	if !assert.NoError(t, err) {
+		return
+	}
+
+	x, err := Register("postgres", pg)
+	if !assert.NoError(t, err) {
+		return
+	}
+	defer Unregister(x)
+
+	q := &common.Query{TableName: "Pictures",
+		Search:     "",
+		Descriptor: true,
+		Limit:      22,
+		Fields:     []string{"directory"},
+		Order:      []string{"directory:ASC"},
+	}
+	counter := 0
+	_, err = x.Query(q, func(search *common.Query, result *common.Result) error {
+		assert.NotNil(t, search)
+		assert.NotNil(t, result)
+		assert.Len(t, result.Fields, 1)
+		ns := *(result.Rows[0].(*string))
+		counter++
+		switch counter {
+		case 1:
+			assert.Equal(t, "1.ferienhaelfte2019", ns)
+		case 10:
+			assert.Equal(t, "ferien2017", ns)
+		case 22:
+			assert.Equal(t, "Juni 2021", ns)
+		case 23:
+			assert.Fail(t, "Limit exceed")
+		default:
+			assert.NotEqual(t, "blabla", ns)
+		}
+
+		return nil
+	})
+	assert.NoError(t, err)
+	assert.Equal(t, 22, counter)
+}
