@@ -18,11 +18,11 @@ func TestQuery(t *testing.T) {
 	q.Fields = []string{"field1", "field2"}
 	q.Limit = 10
 	selectCmd = q.Select()
-	assert.Equal(t, "SELECT field1,field2 FROM ABC LIMIT = 10", selectCmd)
+	assert.Equal(t, "SELECT field1,field2 FROM ABC LIMIT 10", selectCmd)
 
 	q.Order = []string{"fieldOrder:ASC"}
 	selectCmd = q.Select()
-	assert.Equal(t, "SELECT field1,field2 FROM ABC LIMIT = 10 ORDER BY fieldOrder ASC", selectCmd)
+	assert.Equal(t, "SELECT field1,field2 FROM ABC ORDER BY fieldOrder ASC LIMIT 10 ", selectCmd)
 
 	q.Search = "id='10'"
 	q.Limit = 0
