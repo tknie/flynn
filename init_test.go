@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/tknie/flynn/common"
 	def "github.com/tknie/flynn/common"
 )
 
@@ -36,6 +37,23 @@ func postgresTarget(t *testing.T) (string, error) {
 	pg := fmt.Sprintf("postgres://%s:%s@%s:%d/%s", "admin", postgresPassword, postgresHost, port, "Bitgarten")
 
 	return pg, nil
+}
+
+func postgresTargetInstance(t *testing.T) (*common.Reference, string, error) {
+	postgresHost := os.Getenv("POSTGRES_HOST")
+	postgresPort := os.Getenv("POSTGRES_PORT")
+	postgresPassword := os.Getenv("POSTGRES_PWD")
+	if !assert.NotEmpty(t, postgresHost) {
+		return nil, "", fmt.Errorf("Postgres Host not set")
+	}
+	assert.NotEmpty(t, postgresPort)
+	port, err := strconv.Atoi(postgresPort)
+	if !assert.NoError(t, err) {
+		return nil, "", fmt.Errorf("Postgres Port not set")
+	}
+	pgInstance := &common.Reference{User: "admin", Host: postgresHost, Port: port, Database: "Bitgarten"}
+
+	return pgInstance, postgresPassword, nil
 }
 
 func postgresUserTarget(t *testing.T) (string, error) {

@@ -480,12 +480,12 @@ func TestSearchMySQLRowsOrdered(t *testing.T) {
 
 func TestSearchPgRowsDistinct(t *testing.T) {
 	initLog()
-	pg, err := postgresTarget(t)
+	pgInstance, passwd, err := postgresTargetInstance(t)
 	if !assert.NoError(t, err) {
 		return
 	}
 
-	x, err := Register("postgres", pg)
+	x, err := RegisterDatabase("postgres", pgInstance, passwd)
 	if !assert.NoError(t, err) {
 		return
 	}

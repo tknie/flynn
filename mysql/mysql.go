@@ -14,6 +14,7 @@ package mysql
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -36,6 +37,14 @@ type Mysql struct {
 	password     string
 	tx           *sql.Tx
 	ctx          context.Context
+}
+
+// NewInstance create new postgres reference instance
+func NewInstance(id def.RegDbID, reference *common.Reference, password string) (def.Database, error) {
+	url := fmt.Sprintf("%s:<Password>@tcp(%s:%d)/%s", reference.User, reference.Host, reference.Port, reference.Database)
+	mysql := &Mysql{def.CommonDatabase{RegDbID: id},
+		nil, url, nil, "", "", nil, nil}
+	return mysql, nil
 }
 
 // New create new postgres reference instance

@@ -16,6 +16,7 @@ import (
 
 	"github.com/tknie/errorrepo"
 	"github.com/tknie/flynn/adabas"
+	"github.com/tknie/flynn/common"
 	def "github.com/tknie/flynn/common"
 	"github.com/tknie/flynn/mysql"
 	"github.com/tknie/flynn/postgres"
@@ -23,6 +24,30 @@ import (
 )
 
 var globalRegID = def.RegDbID(0)
+
+// Register database driver with a database URL returning a
+// reference id for the driver path to database
+func RegisterDatabase(typeName string, dbref *common.Reference, password string) (common.RegDbID, error) {
+	id := def.RegDbID(atomic.AddUint64((*uint64)(&globalRegID), 1))
+
+	var db def.Database
+	var err error
+	switch typeName {
+	case "postgres":
+		db, err = postgres.NewInstance(id, dbref, password)
+	case "mysql":
+		db, err = mysql.NewInstance(id, dbref, password)
+	case "adabas":
+		db, err = adabas.NewInstance(id, dbref, password)
+	default:
+		return 0, errorrepo.NewError("DB065535")
+	}
+	if err != nil {
+		return 0, err
+	}
+	def.Databases = append(def.Databases, db)
+	return db.ID(), nil
+}
 
 // Register database driver with a database URL returning a
 // reference id for the driver path to database

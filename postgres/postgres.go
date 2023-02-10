@@ -37,6 +37,15 @@ type PostGres struct {
 }
 
 // New create new postgres reference instance
+func NewInstance(id def.RegDbID, reference *common.Reference, password string) (def.Database, error) {
+	url := fmt.Sprintf("postgres://%s:<Password>@%s:%d/%s", reference.User, reference.Host, reference.Port, reference.Database)
+	pg := &PostGres{def.CommonDatabase{RegDbID: id}, nil,
+		url, nil, "", password, nil, nil}
+
+	return pg, nil
+}
+
+// New create new postgres reference instance
 func New(id def.RegDbID, url string) (def.Database, error) {
 	pg := &PostGres{def.CommonDatabase{RegDbID: id}, nil,
 		url, nil, "", "", nil, nil}

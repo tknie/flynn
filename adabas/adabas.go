@@ -13,6 +13,7 @@ package adabas
 
 import (
 	"bytes"
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -38,6 +39,14 @@ func syncLog() {
 	adatypes.Central.Log = log.Log
 	adatypes.Central.SetDebugLevel(log.IsDebugLevel())
 	adatypes.Central.Log.Debugf("Init debugging adatypes")
+}
+
+// NewInstance create new postgres reference instance
+func NewInstance(id def.RegDbID, reference *common.Reference, password string) (def.Database, error) {
+	url := fmt.Sprintf("acj;map;config=[adatcp://%s:%d,4]", reference.Host, reference.Port)
+	ada := &Adabas{def.CommonDatabase{RegDbID: id}, url,
+		nil, nil, reference.User, password}
+	return ada, nil
 }
 
 // New create new postgres reference instance
