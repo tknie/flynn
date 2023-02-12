@@ -72,42 +72,65 @@ func (mysql *Mysql) generateURL() string {
 	return url
 }
 
-// Open open the database connection
-func (mysql *Mysql) Open() (dbOpen any, err error) {
-	var db *sql.DB
-	if !mysql.IsTransaction() || mysql.openDB == nil {
-		db, err = sql.Open(layer, mysql.generateURL()+"?parseTime=true")
+func (mysql *Mysql) open() (dbOpen any, err error) {
+	if mysql.openDB == nil {
+		log.Log.Debugf("Open postgres database to %s", mysql.dbURL)
+		mysql.openDB, err = sql.Open("pgx", mysql.generateURL())
 		if err != nil {
 			return
 		}
-		mysql.openDB = db
-	} else {
-		db = mysql.openDB.(*sql.DB)
 	}
+	log.Log.Debugf("Opened postgres database")
+	return mysql.openDB, nil
+}
+
+// Open open the database connection
+func (mysql *Mysql) Open() (dbOpen any, err error) {
+	dbOpen, err = mysql.open()
+	if err != nil {
+		return nil, err
+	}
+	db := dbOpen.(*sql.DB)
+
+	if mysql.IsTransaction() {
+		mysql.ctx = context.Background()
+		mysql.tx, err = db.BeginTx(mysql.ctx, nil)
+		if err != nil {
+			return nil, err
+		}
+
+	}
+	log.Log.Debugf("Open database %s after transaction", mysql.dbURL)
 	return db, nil
 }
 
 // StartTransaction start transaction the database connection
-func (mysql *Mysql) StartTransaction() (*sql.Tx, context.Context, error) {
+func (mysql *Mysql) BeginTransaction() error {
+	if mysql.tx != nil && mysql.ctx != nil {
+		return nil
+	}
 	var err error
 	if mysql.openDB == nil {
 		_, err = mysql.Open()
 		if err != nil {
-			return nil, nil, err
+			return err
 		}
 	}
-	mysql.ctx = context.Background()
-	mysql.tx, err = mysql.openDB.(*sql.DB).BeginTx(mysql.ctx, nil)
+	_, _, err = mysql.StartTransaction()
 	if err != nil {
-		mysql.ctx = nil
-		mysql.tx = nil
-		return nil, nil, err
+		return err
 	}
-	// return transaction context information
-	return mysql.tx, mysql.ctx, nil
+	mysql.Transaction = true
+	return nil
 }
 
 func (mysql *Mysql) EndTransaction(commit bool) (err error) {
+	if mysql.tx == nil && mysql.ctx == nil {
+		return nil
+	}
+	if mysql.IsTransaction() {
+		return nil
+	}
 	if commit {
 		err = mysql.tx.Commit()
 	} else {
@@ -122,7 +145,7 @@ func (mysql *Mysql) EndTransaction(commit bool) (err error) {
 func (mysql *Mysql) Close() {
 	log.Log.Debugf("Close MySQL")
 	if mysql.ctx != nil {
-		mysql.tx.Rollback()
+		mysql.EndTransaction(false)
 	}
 	if mysql.openDB != nil {
 		mysql.openDB.(*sql.DB).Close()
@@ -253,14 +276,30 @@ func (mysql *Mysql) Batch(batch string) error {
 	return dbsql.Batch(mysql, batch)
 }
 
-func (mysql *Mysql) BeginTransaction() error {
-	return nil
+// StartTransaction start transaction
+func (mysql *Mysql) StartTransaction() (*sql.Tx, context.Context, error) {
+	_, err := mysql.open()
+	if err != nil {
+		return nil, nil, err
+	}
+	mysql.ctx = context.Background()
+	mysql.tx, err = mysql.openDB.(*sql.DB).BeginTx(mysql.ctx, nil)
+	if err != nil {
+		mysql.ctx = nil
+		mysql.tx = nil
+		return nil, nil, err
+	}
+	return mysql.tx, mysql.ctx, nil
 }
 
+// Commit commit the transaction
 func (mysql *Mysql) Commit() error {
-	return nil
+	mysql.Transaction = false
+	return mysql.EndTransaction(true)
 }
 
+// Rollback rollback the transaction
 func (mysql *Mysql) Rollback() error {
-	return nil
+	mysql.Transaction = false
+	return mysql.EndTransaction(false)
 }
