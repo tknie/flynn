@@ -290,7 +290,7 @@ func TestSearchAdaStruct(t *testing.T) {
 		return nil
 	})
 	assert.NoError(t, err)
-	assert.Equal(t, 49, counter)
+	assert.Equal(t, 50, counter)
 }
 
 type Albums struct {
@@ -333,7 +333,7 @@ func TestSearchAdaPtrStruct(t *testing.T) {
 		return nil
 	})
 	assert.NoError(t, err)
-	assert.Equal(t, 49, counter)
+	assert.Equal(t, 50, counter)
 }
 
 func TestSearchMariaDBRows(t *testing.T) {
