@@ -79,14 +79,15 @@ Feature | Ready-State | Description
  Update MySQL | :heavy_check_mark: | Draft
  Query Adabas | :heavy_check_mark: | Draft
  Search Adabas | | Draft
- Create table Adabas |  | Draft
+ Create table Adabas | Not possible | 
  Insert Adabas |  | Draft
- Update Adabas |  | Draft
+ Update Adabas |  | Not implemented
  Work with large objects (LOB) |  | partial done
  Work with database-specific queries |  | planned
- Use Golang structure with query | | MySQL and PostgresSQL
+ Use Golang structure with query | partial done | MySQL and PostgresSQL
  Function-based query | | Used during search and query
- Support creating batch jobs for database-specific tasks like SQL scripts | | planned
+ Support creating batch jobs for database-specific tasks like SQL scripts | | partial done
  Create index or other enhancements on database configuration | | planned
  Enhanced Search topics || planned
  Common search queries (common to SQL or NonSQL databases) |  | planned
+ Use globale transaction (combine update and insert) | partial done | MySQL and PostgresSQL
