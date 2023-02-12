@@ -75,7 +75,7 @@ func (mysql *Mysql) generateURL() string {
 func (mysql *Mysql) open() (dbOpen any, err error) {
 	if mysql.openDB == nil {
 		log.Log.Debugf("Open postgres database to %s", mysql.dbURL)
-		mysql.openDB, err = sql.Open(layer, mysql.generateURL())
+		mysql.openDB, err = sql.Open(layer, mysql.generateURL()+"?parseTime=true")
 		if err != nil {
 			return
 		}
