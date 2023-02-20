@@ -223,3 +223,12 @@ func (id RegDbID) Rollback() error {
 	}
 	return driver.Rollback()
 }
+
+// URL URL string
+func (id RegDbID) URL() string {
+	driver, err := searchDataDriver(id)
+	if err != nil {
+		return "Error: " + err.Error()
+	}
+	return driver.URL()
+}
