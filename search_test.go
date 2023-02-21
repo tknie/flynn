@@ -110,13 +110,13 @@ func TestSearchPgRows(t *testing.T) {
 		switch counter {
 		case 1:
 			assert.Equal(t, "1.Hälfte Sommerferien 2019 sind vorbei", ns)
-			assert.Equal(t, "2023-01-02 19:17:15.607621 +0000 UTC", ts.String())
+			assert.Equal(t, "2023-02-19 15:08:48.608419 +0000 UTC", ts.String())
 		case 10:
 			assert.Equal(t, "Fasching 2019", ns)
-			assert.Equal(t, "2023-01-02 19:17:15.996992 +0000 UTC", ts.String())
+			assert.Equal(t, "2023-02-19 15:08:48.748263 +0000 UTC", ts.String())
 		case 48:
 			assert.Equal(t, "Weihnachtszeit 2019", ns)
-			assert.Equal(t, "2023-01-02 19:17:19.235311 +0000 UTC", ts.String())
+			assert.Equal(t, "2023-02-19 15:08:50.487811 +0000 UTC", ts.String())
 		default:
 			assert.NotEqual(t, "blabla", ns)
 		}
@@ -153,7 +153,7 @@ func TestSearchPgCriteriaRows(t *testing.T) {
 		switch counter {
 		case 1:
 			assert.Equal(t, "5. Klasse", ns)
-			assert.Equal(t, "2023-01-02 19:17:15.208117 +0000 UTC", ts.String())
+			assert.Equal(t, "2023-02-19 15:08:48.439758 +0000 UTC", ts.String())
 		default:
 			assert.Fail(t, "Should not come here")
 		}
@@ -252,7 +252,7 @@ func TestSearchPgPtrStruct(t *testing.T) {
 		return nil
 	})
 	assert.NoError(t, err)
-	assert.Equal(t, 49, counter)
+	assert.Equal(t, 50, counter)
 }
 
 func TestSearchAdaStruct(t *testing.T) {
@@ -413,14 +413,14 @@ func TestSearchPgRowsOrdered(t *testing.T) {
 		counter++
 		switch counter {
 		case 1:
-			assert.Equal(t, "3 Geburtstage und ein Trauerfall", ns)
-			assert.Equal(t, "2022-10-30 21:25:56 +0000 UTC", ts.String())
+			assert.Equal(t, "Winter 2023", ns)
+			assert.Equal(t, "2023-02-11 19:32:15 +0000 UTC", ts.String())
 		case 10:
-			assert.Equal(t, "Sommer 2021", ns)
-			assert.Equal(t, "2021-10-23 23:16:17 +0000 UTC", ts.String())
+			assert.Equal(t, "Weihnachtsgruß2021", ns)
+			assert.Equal(t, "2021-12-19 09:45:07 +0000 UTC", ts.String())
 		case 48:
-			assert.Equal(t, "Der Osterferien", ns)
-			assert.Equal(t, "2016-04-07 10:15:48 +0000 UTC", ts.String())
+			assert.Equal(t, "Die Familienausflüge", ns)
+			assert.Equal(t, "2016-05-25 08:07:48 +0000 UTC", ts.String())
 		default:
 			assert.NotEqual(t, "blabla", ns)
 		}
