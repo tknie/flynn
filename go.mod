@@ -9,6 +9,8 @@ require (
 
 require github.com/rogpeppe/go-internal v1.9.0 // indirect
 
+require golang.org/x/net v0.7.0 // indirect
+
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-sql-driver/mysql v1.7.0
@@ -21,7 +23,7 @@ require (
 	github.com/tknie/errorrepo v0.0.0-20230124153350-f9ec9b317573
 	golang.org/x/crypto v0.5.0 // indirect
 	golang.org/x/exp v0.0.0-20230203172020-98cc5a0785f9
-	golang.org/x/sys v0.4.0 // indirect
-	golang.org/x/text v0.6.0 // indirect
+	golang.org/x/sys v0.5.0 // indirect
+	golang.org/x/text v0.7.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
