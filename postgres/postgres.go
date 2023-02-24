@@ -116,10 +116,13 @@ func (pg *PostGres) open() (dbOpen any, err error) {
 		log.Log.Debugf("Open postgres database to %s", pg.dbURL)
 		pg.openDB, err = sql.Open("pgx", pg.generateURL())
 		if err != nil {
-			return
+			return nil, err
 		}
 	}
 	log.Log.Debugf("Opened postgres database")
+	if pg.openDB == nil {
+		log.Log.Fatal("Error open handle and err nil")
+	}
 	return pg.openDB, nil
 }
 
