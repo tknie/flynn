@@ -110,13 +110,13 @@ func TestSearchPgRows(t *testing.T) {
 		switch counter {
 		case 1:
 			assert.Equal(t, "1.Hälfte Sommerferien 2019 sind vorbei", ns)
-			assert.Equal(t, "2023-02-19 15:08:48.608419 +0000 UTC", ts.String())
+			assert.Equal(t, "2023-02-24 20:48:10.443828 +0000 UTC", ts.String())
 		case 10:
 			assert.Equal(t, "Fasching 2019", ns)
-			assert.Equal(t, "2023-02-19 15:08:48.748263 +0000 UTC", ts.String())
+			assert.Equal(t, "2023-02-24 20:48:11.060807 +0000 UTC", ts.String())
 		case 48:
 			assert.Equal(t, "Weihnachtszeit 2019", ns)
-			assert.Equal(t, "2023-02-19 15:08:50.487811 +0000 UTC", ts.String())
+			assert.Equal(t, "2023-02-24 20:48:16.458292 +0000 UTC", ts.String())
 		default:
 			assert.NotEqual(t, "blabla", ns)
 		}
@@ -153,7 +153,7 @@ func TestSearchPgCriteriaRows(t *testing.T) {
 		switch counter {
 		case 1:
 			assert.Equal(t, "5. Klasse", ns)
-			assert.Equal(t, "2023-02-19 15:08:48.439758 +0000 UTC", ts.String())
+			assert.Equal(t, "2023-02-24 20:48:09.881439 +0000 UTC", ts.String())
 		default:
 			assert.Fail(t, "Should not come here")
 		}
