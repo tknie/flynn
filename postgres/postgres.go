@@ -121,7 +121,7 @@ func (pg *PostGres) open() (dbOpen any, err error) {
 	}
 	log.Log.Debugf("Opened postgres database")
 	if pg.openDB == nil {
-		log.Log.Fatal("Error open handle and err nil")
+		return nil, fmt.Errorf("Error open handle and err nil")
 	}
 	return pg.openDB, nil
 }
