@@ -213,11 +213,11 @@ func (pg *PostGres) Ping() error {
 	}
 	defer pg.Close()
 
-	db := dbOpen.(*sql.DB)
+	db := dbOpen.(*pgx.Conn)
 
 	pg.dbTableNames = make([]string, 0)
 
-	rows, err := db.Query("SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'")
+	rows, err := db.Query(context.Background(), "SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'")
 	if err != nil {
 		return err
 	}
@@ -271,10 +271,10 @@ func (pg *PostGres) GetTableColumn(tableName string) ([]string, error) {
 	}
 	defer pg.Close()
 
-	db := dbOpen.(*sql.DB)
+	db := dbOpen.(*pgx.Conn)
 	// rows, err := db.Query(`SELECT table_schema, table_name, column_name, data_type
 	// FROM INFORMATION_SCHEMA.COLUMNS
-	rows, err := db.Query(`SELECT column_name FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = '` + strings.ToLower(tableName) + `'`)
+	rows, err := db.Query(context.Background(), `SELECT column_name FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = '`+strings.ToLower(tableName)+`'`)
 	if err != nil {
 		return nil, err
 	}

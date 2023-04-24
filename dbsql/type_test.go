@@ -105,7 +105,7 @@ func TestDataTypeStruct(t *testing.T) {
 		Int int
 	}{"aaa", 1}
 
-	s, err := SqlDataType(tSQL, &x)
+	s, err := SqlDataType(tSQL.ByteArrayAvailable(), &x)
 	assert.NoError(t, err)
 	assert.Equal(t, "St VARCHAR(255), Int INTEGER", s)
 	y := struct {
@@ -115,28 +115,28 @@ func TestDataTypeStruct(t *testing.T) {
 			Xii uint64
 		}
 	}{"aaa", 1, struct{ Xii uint64 }{2}}
-	s, err = SqlDataType(tSQL, &y)
+	s, err = SqlDataType(tSQL.ByteArrayAvailable(), &y)
 	assert.NoError(t, err)
 	assert.Equal(t, "XSt VARCHAR(255), XInt INTEGER, Xii INTEGER", s)
 	global := &GlobStruct{}
-	s, err = SqlDataType(tSQL, global)
+	s, err = SqlDataType(tSQL.ByteArrayAvailable(), global)
 	assert.NoError(t, err)
 	assert.Equal(t, "Test VARCHAR(255), ABC VARCHAR(255), Nr INTEGER, Value INTEGER, Doub DECIMAL(10,5), DoIt BIT(1)", s)
 	global2 := &GlobStruct2{}
-	s, err = SqlDataType(tSQL, global2)
+	s, err = SqlDataType(tSQL.ByteArrayAvailable(), global2)
 	assert.NoError(t, err)
 	assert.Equal(t, "Test VARCHAR(255), ABC VARCHAR(255), Nr INTEGER, Value INTEGER, Doub DECIMAL(10,5), DoIt BIT(1)", s)
 	global3 := &GlobStruct3{}
-	s, err = SqlDataType(tSQL, global3)
+	s, err = SqlDataType(tSQL.ByteArrayAvailable(), global3)
 	assert.NoError(t, err)
 	assert.Equal(t, "Test VARCHAR(255), XYZ VARCHAR(255), UUU VARCHAR(255), ID INTEGER IDENTITY(1, 1), Value INTEGER, Doub DECIMAL(10,5), DoIt BIT(1)", s)
 	slice := &SliceStruct{}
-	s, err = SqlDataType(tSQL, slice)
+	s, err = SqlDataType(tSQL.ByteArrayAvailable(), slice)
 	assert.Error(t, err)
 	assert.Equal(t, "DB000009: Slice types are not supported used by field Test", err.Error())
 	assert.Equal(t, "", s)
 	arr := &ArrayStruct{}
-	s, err = SqlDataType(tSQL, arr)
+	s, err = SqlDataType(tSQL.ByteArrayAvailable(), arr)
 	assert.Error(t, err)
 	assert.Equal(t, "DB000008: Array types are not supported used by field Test", err.Error())
 	assert.Equal(t, "", s)
