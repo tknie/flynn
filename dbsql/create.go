@@ -47,9 +47,9 @@ func CreateTable(dbsql DBsql, name string, col any) error {
 	createCmd := `CREATE TABLE ` + name + ` (`
 	switch columns := col.(type) {
 	case []*common.Column:
-		createCmd += createTableByColumns(dbsql, columns)
+		createCmd += CreateTableByColumns(dbsql.ByteArrayAvailable(), columns)
 	default:
-		c, err := createTableByStruct(dbsql, col)
+		c, err := CreateTableByStruct(dbsql.ByteArrayAvailable(), col)
 		if err != nil {
 			log.Log.Errorf("Error parsing structure: %v", err)
 			return err
@@ -86,7 +86,7 @@ func DeleteTable(dbsql DBsql, name string) error {
 	return nil
 }
 
-func createTableByColumns(dbsql DBsql, columns []*common.Column) string {
+func CreateTableByColumns(baAvailable bool, columns []*common.Column) string {
 	var buffer bytes.Buffer
 	for i, c := range columns {
 		if i > 0 {
@@ -99,7 +99,7 @@ func createTableByColumns(dbsql DBsql, columns []*common.Column) string {
 		case common.Decimal:
 			buffer.WriteString(c.DataType.SqlType(c.Length, c.Digits))
 		case common.Bytes:
-			buffer.WriteString(c.DataType.SqlType(dbsql.ByteArrayAvailable(),
+			buffer.WriteString(c.DataType.SqlType(baAvailable,
 				c.Length))
 		default:
 			buffer.WriteString(c.DataType.SqlType())
@@ -108,9 +108,9 @@ func createTableByColumns(dbsql DBsql, columns []*common.Column) string {
 	return buffer.String()
 }
 
-func createTableByStruct(dbsql DBsql, columns any) (string, error) {
+func CreateTableByStruct(baAvailable bool, columns any) (string, error) {
 	log.Log.Debugf("Create table by structs")
-	return SqlDataType(dbsql, columns)
+	return SqlDataType(baAvailable, columns)
 }
 
 func Batch(dbsql DBsql, batch string) error {
@@ -133,7 +133,7 @@ func Batch(dbsql DBsql, batch string) error {
 	return nil
 }
 
-func SqlDataType(dbsql DBsql, columns any) (string, error) {
+func SqlDataType(baAvailable bool, columns any) (string, error) {
 	x := reflect.TypeOf(columns)
 	if x.Kind() == reflect.Pointer {
 		x = x.Elem()
@@ -147,7 +147,7 @@ func SqlDataType(dbsql DBsql, columns any) (string, error) {
 				buffer.WriteString(", ")
 			}
 			f := x.Field(i)
-			s, err := sqlDataTypeStructField(dbsql, f)
+			s, err := sqlDataTypeStructField(baAvailable, f)
 			if err != nil {
 				return "", err
 			}
@@ -160,7 +160,7 @@ func SqlDataType(dbsql DBsql, columns any) (string, error) {
 	return "", errorrepo.NewError("DB000005", "", fmt.Sprintf("%T", columns))
 }
 
-func sqlDataTypeStructField(dbsql DBsql, field reflect.StructField) (string, error) {
+func sqlDataTypeStructField(baAvailable bool, field reflect.StructField) (string, error) {
 	x := field.Type
 	if x.Kind() == reflect.Pointer {
 		x = x.Elem()
@@ -178,7 +178,7 @@ func sqlDataTypeStructField(dbsql DBsql, field reflect.StructField) (string, err
 				buffer.WriteString(", ")
 			}
 			f := x.Field(i)
-			s, err := sqlDataTypeStructFieldDataType(dbsql, f)
+			s, err := sqlDataTypeStructFieldDataType(baAvailable, f)
 			if err != nil {
 				return "", err
 			}
@@ -186,12 +186,12 @@ func sqlDataTypeStructField(dbsql DBsql, field reflect.StructField) (string, err
 		}
 		return buffer.String(), nil
 	default:
-		return sqlDataTypeStructFieldDataType(dbsql, field)
+		return sqlDataTypeStructFieldDataType(baAvailable, field)
 	}
 	// return "", NewError(5, field.Name, x.Kind())
 }
 
-func sqlDataTypeStructFieldDataType(dbsql DBsql, sf reflect.StructField) (string, error) {
+func sqlDataTypeStructFieldDataType(baAvailable bool, sf reflect.StructField) (string, error) {
 	t := sf.Type
 	name, additional, info := evaluateName(sf, t)
 	if info != "" {
@@ -222,7 +222,7 @@ func sqlDataTypeStructFieldDataType(dbsql DBsql, sf reflect.StructField) (string
 			}
 			f := ty.Field(i)
 			fmt.Println("Struct Field: " + f.Name)
-			s, err := sqlDataTypeStructFieldDataType(dbsql, f)
+			s, err := sqlDataTypeStructFieldDataType(baAvailable, f)
 			if err != nil {
 				return "", err
 			}
@@ -234,7 +234,7 @@ func sqlDataTypeStructFieldDataType(dbsql DBsql, sf reflect.StructField) (string
 	case reflect.Array:
 		log.Log.Debugf("Arrays %d", t.Len())
 		if t.Elem().Kind() == reflect.Uint8 {
-			return name + " " + common.Bytes.SqlType(dbsql.ByteArrayAvailable(), 8) + additional, nil
+			return name + " " + common.Bytes.SqlType(baAvailable, 8) + additional, nil
 		}
 		return "", errorrepo.NewError("DB000008", sf.Name)
 	case reflect.Slice:

@@ -303,3 +303,7 @@ func (mysql *Mysql) Rollback() error {
 	mysql.Transaction = false
 	return mysql.EndTransaction(false)
 }
+
+func (mysql *Mysql) Stream(search *def.Query, sf def.StreamFunction) error {
+	return errorrepo.NewError("DB065535")
+}

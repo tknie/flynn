@@ -25,6 +25,10 @@ type Result struct {
 	Data   any
 }
 
+type Stream struct {
+	Data []byte
+}
+
 type Entries struct {
 	Fields []string
 	Update []string
@@ -50,6 +54,7 @@ type Database interface {
 	BeginTransaction() error
 	Commit() error
 	Rollback() error
+	Stream(search *Query, sf StreamFunction) error
 }
 
 type Column struct {
@@ -61,6 +66,7 @@ type Column struct {
 }
 
 type ResultFunction func(search *Query, result *Result) error
+type StreamFunction func(search *Query, stream *Stream) error
 
 type CommonDatabase struct {
 	RegDbID     RegDbID
@@ -231,4 +237,14 @@ func (id RegDbID) URL() string {
 		return "Error: " + err.Error()
 	}
 	return driver.URL()
+}
+
+// Stream streaming data from a field
+func (id RegDbID) Stream(search *Query, sf StreamFunction) error {
+	driver, err := searchDataDriver(id)
+	if err != nil {
+		return err
+	}
+	return driver.Stream(search, sf)
+
 }

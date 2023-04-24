@@ -90,7 +90,7 @@ func Insert(dbsql DBsql, name string, insert *common.Entries) error {
 	return nil
 }
 
-func generateUpdate(indexNeeded bool, name string, updateInfo *common.Entries) (string, []int) {
+func GenerateUpdate(indexNeeded bool, name string, updateInfo *common.Entries) (string, []int) {
 	insertCmd := "UPDATE " + name + " SET "
 
 	whereFields := make([]int, 0)
@@ -112,7 +112,7 @@ func generateUpdate(indexNeeded bool, name string, updateInfo *common.Entries) (
 	return insertCmd, whereFields
 }
 
-func generateDelete(indexNeeded bool, name string, valueIndex int, deleteInfo *common.Entries) (string, []any) {
+func GenerateDelete(indexNeeded bool, name string, valueIndex int, deleteInfo *common.Entries) (string, []any) {
 	deleteCmd := "DELETE FROM " + name + " WHERE "
 
 	values := make([]any, 0)
@@ -147,9 +147,9 @@ func Update(dbsql DBsql, name string, updateInfo *common.Entries) (rowsAffected 
 	if !dbsql.IsTransaction() {
 		defer dbsql.Close()
 	}
-	insertCmd, whereFields := generateUpdate(dbsql.IndexNeeded(), name, updateInfo)
+	insertCmd, whereFields := GenerateUpdate(dbsql.IndexNeeded(), name, updateInfo)
 	for i, v := range updateInfo.Values {
-		whereClause := createWhere(i, updateInfo, whereFields)
+		whereClause := CreateWhere(i, updateInfo, whereFields)
 		ic := insertCmd + whereClause
 		log.Log.Debugf("Update values: %d -> %#v tx=%v %v", len(v), v, tx, ctx)
 		res, err := tx.ExecContext(ctx, ic, v...)
@@ -170,7 +170,7 @@ func Update(dbsql DBsql, name string, updateInfo *common.Entries) (rowsAffected 
 	return rowsAffected, nil
 }
 
-func createWhere(valueIndex int, updateInfo *common.Entries, whereFields []int) string {
+func CreateWhere(valueIndex int, updateInfo *common.Entries, whereFields []int) string {
 	var buffer bytes.Buffer
 	for i, x := range updateInfo.Update {
 		if strings.ContainsAny(x, "=<>") {
@@ -210,7 +210,7 @@ func Delete(dbsql DBsql, name string, updateInfo *common.Entries) (rowsAffected 
 	}
 
 	for i := 0; i < len(updateInfo.Values); i++ {
-		deleteCmd, av := generateDelete(dbsql.IndexNeeded(), name, 0, updateInfo)
+		deleteCmd, av := GenerateDelete(dbsql.IndexNeeded(), name, 0, updateInfo)
 		log.Log.Debugf("Delete cmd: %s -> %#v", deleteCmd, av)
 		res, err := tx.ExecContext(ctx, deleteCmd, av...)
 		if err != nil {

@@ -383,13 +383,17 @@ func (ada *Adabas) Batch(batch string) error {
 }
 
 func (ada *Adabas) BeginTransaction() error {
-	return nil
+	return errorrepo.NewError("DB065535")
 }
 
 func (ada *Adabas) Commit() error {
-	return nil
+	return errorrepo.NewError("DB065535")
 }
 
 func (ada *Adabas) Rollback() error {
-	return nil
+	return errorrepo.NewError("DB065535")
+}
+
+func (ada *Adabas) Stream(search *def.Query, sf def.StreamFunction) error {
+	return errorrepo.NewError("DB065535")
 }
