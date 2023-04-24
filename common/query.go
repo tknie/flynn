@@ -107,7 +107,7 @@ func (search *Query) ParseRows(rows *sql.Rows, f ResultFunction) (result *Result
 	if search.DataStruct == nil {
 		scanRows, err = generateColumnByValues(rows)
 	} else {
-		_, scanRows, err = result.GenerateColumnByStruct(search, rows)
+		_, scanRows, err = result.GenerateColumnByStruct(search)
 	}
 	if err != nil {
 		log.Log.Debugf("Error generating column: %v", err)
@@ -191,7 +191,7 @@ func (search *Query) ParseStruct(rows *sql.Rows, f ResultFunction) (result *Resu
 	result = &Result{}
 
 	result.Data = search.DataStruct
-	copy, values, err := result.GenerateColumnByStruct(search, rows)
+	copy, values, err := result.GenerateColumnByStruct(search)
 	if err != nil {
 		log.Log.Debugf("Error generating column: %v", err)
 		return nil, err

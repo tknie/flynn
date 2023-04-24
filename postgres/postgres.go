@@ -301,18 +301,75 @@ func (pg *PostGres) Query(search *def.Query, f def.ResultFunction) (*common.Resu
 	}
 	defer pg.Close()
 
-	db := dbOpen.(*sql.DB)
+	db := dbOpen.(*pgx.Conn)
 	selectCmd := search.Select()
 
 	log.Log.Debugf("Query: %s", selectCmd)
-	rows, err := db.Query(selectCmd)
+	rows, err := db.Query(context.Background(), selectCmd)
 	if err != nil {
 		return nil, err
 	}
 	if search.DataStruct == nil {
-		return search.ParseRows(rows, f)
+		return pg.ParseRows(search, rows, f)
 	}
-	return search.ParseStruct(rows, f)
+	return pg.ParseStruct(search, rows, f)
+}
+
+func (pg *PostGres) ParseRows(search *def.Query, rows pgx.Rows, f common.ResultFunction) (result *common.Result, err error) {
+	result = &common.Result{}
+	result.Data = search.DataStruct
+	result.Fields = make([]string, 0)
+	for _, f := range rows.FieldDescriptions() {
+		result.Fields = append(result.Fields, f.Name)
+	}
+	for rows.Next() {
+		result.Rows, err = rows.Values()
+		if err != nil {
+			return nil, err
+		}
+		err = f(search, result)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (pg *PostGres) ParseStruct(search *def.Query, rows pgx.Rows, f common.ResultFunction) (result *common.Result, err error) {
+	if search.DataStruct == nil {
+		return pg.ParseRows(search, rows, f)
+	}
+	result = &common.Result{}
+
+	result.Data = search.DataStruct
+	copy, values, err := result.GenerateColumnByStruct(search)
+	if err != nil {
+		log.Log.Debugf("Error generating column: %v", err)
+		return nil, err
+	}
+	log.Log.Debugf("Parse columns rows")
+	for rows.Next() {
+		if len(result.Fields) == 0 {
+			for _, f := range rows.FieldDescriptions() {
+				result.Fields = append(result.Fields, f.Name)
+			}
+		}
+		err := rows.Scan(values...)
+		if err != nil {
+			fmt.Println("Error scanning structs", values, err)
+			log.Log.Debugf("Error during scan of struct: %v/%v", err, copy)
+			return nil, err
+		}
+		result.Data = copy
+		err = f(search, result)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return
 }
 
 // CreateTable create a new table

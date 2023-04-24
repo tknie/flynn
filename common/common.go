@@ -12,8 +12,6 @@
 package common
 
 import (
-	"database/sql"
-
 	"github.com/tknie/log"
 )
 
@@ -195,7 +193,7 @@ func (id RegDbID) GetTableColumn(tableName string) ([]string, error) {
 	return driver.GetTableColumn(tableName)
 }
 
-func (result *Result) GenerateColumnByStruct(search *Query, rows *sql.Rows) (any, []any, error) {
+func (result *Result) GenerateColumnByStruct(search *Query) (any, []any, error) {
 	ti := search.TypeInfo.(*typeInterface)
 	copy, values := ti.CreateQueryValues()
 	result.Rows = ti.RowValues
