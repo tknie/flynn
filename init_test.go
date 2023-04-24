@@ -34,7 +34,7 @@ func postgresTarget(t *testing.T) (string, error) {
 	if !assert.NoError(t, err) {
 		return "", fmt.Errorf("Postgres Port not set")
 	}
-	pg := fmt.Sprintf("postgres://%s:%s@%s:%d/%s", "admin", postgresPassword, postgresHost, port, "Bitgarten")
+	pg := fmt.Sprintf("postgres://%s:%s@%s:%d/%s", "admin", postgresPassword, postgresHost, port, "bitgarten")
 
 	return pg, nil
 }
@@ -51,7 +51,7 @@ func postgresTargetInstance(t *testing.T) (*common.Reference, string, error) {
 	if !assert.NoError(t, err) {
 		return nil, "", fmt.Errorf("Postgres Port not set")
 	}
-	pgInstance := &common.Reference{User: "admin", Host: postgresHost, Port: port, Database: "Bitgarten"}
+	pgInstance := &common.Reference{User: "admin", Host: postgresHost, Port: port, Database: "bitgarten"}
 
 	return pgInstance, postgresPassword, nil
 }
@@ -67,7 +67,7 @@ func postgresUserTarget(t *testing.T) (string, error) {
 	if !assert.NoError(t, err) {
 		return "", fmt.Errorf("Postgres Port not set")
 	}
-	pg := fmt.Sprintf("postgres://<user>:<password>@%s:%d/%s", postgresHost, port, "Bitgarten")
+	pg := fmt.Sprintf("postgres://<user>:<password>@%s:%d/%s", postgresHost, port, "bitgarten")
 
 	return pg, nil
 }
@@ -84,7 +84,7 @@ func mysqlTarget(t *testing.T) (string, error) {
 	if !assert.NoError(t, err) {
 		return "", fmt.Errorf("MYSQL Port not set")
 	}
-	mysql := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", "admin", mysqlPassword, mysqlHost, port, "Bitgarten")
+	mysql := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", "admin", mysqlPassword, mysqlHost, port, "bitgarten")
 
 	return mysql, nil
 }
@@ -100,7 +100,7 @@ func mysqlUserTarget(t *testing.T) (string, error) {
 	if !assert.NoError(t, err) {
 		return "", fmt.Errorf("MYSQL Port not set")
 	}
-	pg := fmt.Sprintf("<user>:<password>@tcp(%s:%d)/%s", mysqlHost, port, "Bitgarten")
+	pg := fmt.Sprintf("<user>:<password>@tcp(%s:%d)/%s", mysqlHost, port, "bitgarten")
 
 	return pg, nil
 }
@@ -161,7 +161,7 @@ func TestInitWrongDatabases(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
-	pg := fmt.Sprintf("postgres://%s:%s@%s:%d/%s", "admin", "Test123", "abs", port, "Bitgarten")
+	pg := fmt.Sprintf("postgres://%s:%s@%s:%d/%s", "admin", "Test123", "abs", port, "bitgarten")
 	x, err := Register("postgres", pg)
 	assert.NoError(t, err)
 	assert.NotEqual(t, def.RegDbID(0), x)

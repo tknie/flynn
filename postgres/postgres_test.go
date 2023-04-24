@@ -70,7 +70,7 @@ func PostgresTable(t *testing.T) string {
 	if !assert.NoError(t, err) {
 		return ""
 	}
-	url := fmt.Sprintf("postgres://%s:%s@%s:%d/%s", "admin", postgresPassword, postgresHost, port, "Bitgarten")
+	url := fmt.Sprintf("postgres://%s:%s@%s:%d/%s", "admin", postgresPassword, postgresHost, port, "bitgarten")
 	return url
 }
 

@@ -33,7 +33,7 @@ func mysqlTarget(t *testing.T) (string, error) {
 	if !assert.NoError(t, err) {
 		return "", fmt.Errorf("MYSQL Port not set")
 	}
-	mysqlUrl := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", "admin", mysqlPassword, mysqlHost, port, "Bitgarten")
+	mysqlUrl := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", "admin", mysqlPassword, mysqlHost, port, "bitgarten")
 
 	return mysqlUrl, nil
 }
