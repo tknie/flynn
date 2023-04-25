@@ -120,9 +120,7 @@ func TestCreateStruct(t *testing.T) {
 	initLog()
 	for _, target := range getTestTargets(t) {
 		err := createStruct(t, target)
-		if !assert.NoError(t, err) {
-			return
-		}
+		assert.NoError(t, err)
 	}
 }
 
