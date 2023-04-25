@@ -104,19 +104,19 @@ func TestSearchPgRows(t *testing.T) {
 		assert.NotNil(t, result)
 		assert.Len(t, result.Fields, 2)
 		fmt.Println("RESULT:", result.Rows)
-		ns := *(result.Rows[0].(*string))
-		ts := result.Rows[1].(*time.Time)
+		ns := result.Rows[0].(string)
+		ts := result.Rows[1].(time.Time)
 		counter++
 		switch counter {
 		case 1:
 			assert.Equal(t, "1.Hälfte Sommerferien 2019 sind vorbei", ns)
-			assert.Equal(t, "2023-02-24 20:48:10.443828 +0000 UTC", ts.String())
+			assert.Equal(t, "2023-03-15 14:54:51.305585 +0000 UTC", ts.String())
 		case 10:
 			assert.Equal(t, "Fasching 2019", ns)
-			assert.Equal(t, "2023-02-24 20:48:11.060807 +0000 UTC", ts.String())
+			assert.Equal(t, "2023-03-15 14:54:51.849488 +0000 UTC", ts.String())
 		case 48:
 			assert.Equal(t, "Weihnachtszeit 2019", ns)
-			assert.Equal(t, "2023-02-24 20:48:16.458292 +0000 UTC", ts.String())
+			assert.Equal(t, "2023-03-15 14:54:53.617203 +0000 UTC", ts.String())
 		default:
 			assert.NotEqual(t, "blabla", ns)
 		}
@@ -147,8 +147,8 @@ func TestSearchPgCriteriaRows(t *testing.T) {
 		assert.NotNil(t, result)
 		assert.Len(t, result.Fields, 2)
 		fmt.Println("RESULT:", result.Rows)
-		ns := *(result.Rows[0].(*string))
-		ts := result.Rows[1].(*time.Time)
+		ns := result.Rows[0].(string)
+		ts := result.Rows[1].(time.Time)
 		counter++
 		switch counter {
 		case 1:
@@ -407,8 +407,8 @@ func TestSearchPgRowsOrdered(t *testing.T) {
 		assert.NotNil(t, search)
 		assert.NotNil(t, result)
 		assert.Len(t, result.Fields, 2)
-		ns := *(result.Rows[0].(*string))
-		ts := result.Rows[1].(*time.Time)
+		ns := result.Rows[0].(string)
+		ts := result.Rows[1].(time.Time)
 		fmt.Println("RESULT:", ns, ts)
 		counter++
 		switch counter {
@@ -503,7 +503,7 @@ func TestSearchPgRowsDistinct(t *testing.T) {
 		assert.NotNil(t, search)
 		assert.NotNil(t, result)
 		assert.Len(t, result.Fields, 1)
-		ns := *(result.Rows[0].(*string))
+		ns := result.Rows[0].(string)
 		counter++
 		switch counter {
 		case 1:
