@@ -28,6 +28,7 @@ type Query struct {
 	Fields       []string
 	Order        []string
 	Limit        uint32
+	Blocksize    int32
 	Descriptor   bool
 	DataStruct   any
 	TypeInfo     any

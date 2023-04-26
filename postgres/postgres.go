@@ -15,17 +15,19 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 
 	"github.com/jackc/pgx/v5"
 	_ "github.com/jackc/pgx/v5/stdlib"
-	"github.com/tknie/errorrepo"
 	"github.com/tknie/flynn/common"
 	def "github.com/tknie/flynn/common"
 	"github.com/tknie/flynn/dbsql"
 	"github.com/tknie/log"
 )
+
+const defaultBlocksize = 4096
 
 // PostGres instane for PostgresSQL
 type PostGres struct {
@@ -572,5 +574,43 @@ func (pg *PostGres) Rollback() error {
 }
 
 func (pg *PostGres) Stream(search *def.Query, sf def.StreamFunction) error {
-	return errorrepo.NewError("DB065535")
+	dbOpen, err := pg.Open()
+	if err != nil {
+		return err
+	}
+	defer pg.Close()
+
+	conn := dbOpen.(*pgx.Conn)
+
+	blocksize := search.Blocksize
+	if blocksize == 0 {
+		blocksize = defaultBlocksize
+	}
+	offset := int32(0)
+	dataMaxLen := int32(math.MaxInt32)
+
+	for offset < dataMaxLen {
+		selectCmd := fmt.Sprintf("SELECT substring(%s,%d,%d),length(%s) FROM %s WHERE %s",
+			search.Fields[0], offset, blocksize, search.Fields[0], search.TableName, search.Search)
+		rows, err := conn.Query(context.Background(), selectCmd)
+		if err != nil {
+			return err
+		}
+		stream := &def.Stream{}
+		for rows.Next() {
+			v, err := rows.Values()
+			if err != nil {
+				return err
+			}
+			dataMaxLen = v[1].(int32)
+			// fmt.Printf("Len = %d\n", dataMaxLen)
+			stream.Data = v[0].([]uint8)
+			err = sf(search, stream)
+			if err != nil {
+				return err
+			}
+		}
+		offset += blocksize
+	}
+	return nil
 }
