@@ -318,6 +318,7 @@ func (pg *PostGres) Query(search *def.Query, f def.ResultFunction) (*common.Resu
 }
 
 func (pg *PostGres) ParseRows(search *def.Query, rows pgx.Rows, f common.ResultFunction) (result *common.Result, err error) {
+	log.Log.Debugf("Parse rows ....")
 	result = &common.Result{}
 	result.Data = search.DataStruct
 	result.Fields = make([]string, 0)
@@ -325,6 +326,8 @@ func (pg *PostGres) ParseRows(search *def.Query, rows pgx.Rows, f common.ResultF
 		result.Fields = append(result.Fields, f.Name)
 	}
 	for rows.Next() {
+		log.Log.Debugf("Checking row...")
+
 		result.Rows, err = rows.Values()
 		if err != nil {
 			return nil, err
@@ -334,7 +337,9 @@ func (pg *PostGres) ParseRows(search *def.Query, rows pgx.Rows, f common.ResultF
 			return nil, err
 		}
 	}
+	log.Log.Debugf("Finishing row...")
 	if err = rows.Err(); err != nil {
+		log.Log.Debugf("Error found: %v", err)
 		return nil, err
 	}
 	return result, nil

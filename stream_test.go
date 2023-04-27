@@ -20,7 +20,15 @@ import (
 	"github.com/tknie/flynn/common"
 )
 
-func TestPgStream(t *testing.T) {
+var checksumPictureTest = []struct {
+	chksum string
+	length int
+}{{"02E88E36FF888D0344B633B329AE8C5E", 927518},
+	{"4CA51423A6E4850514760FCD7F1B1EB2", 402404},
+	{"86B3B97B2A90F128B06437A78FD5B63A", 703794},
+	{"6041C33476C4C49859106647C733A0E3", 518002}}
+
+func TestPgStreamPartial(t *testing.T) {
 	initLog()
 	pgInstance, passwd, err := postgresTargetInstance(t)
 	if !assert.NoError(t, err) {
@@ -58,7 +66,6 @@ func TestPgStream(t *testing.T) {
 	err = x.Stream(q, func(search *common.Query, stream *common.Stream) error {
 		length += len(stream.Data)
 		data = append(data, stream.Data...)
-		// fmt.Printf("XXXX %X %d\n", md5.Sum(data), len(data))
 		return nil
 	})
 	chkMd5 := fmt.Sprintf("%X", md5.Sum(data))
@@ -66,4 +73,107 @@ func TestPgStream(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, 927518, length)
+}
+
+func TestPgStreamAbort(t *testing.T) {
+	initLog()
+	pgInstance, passwd, err := postgresTargetInstance(t)
+	if !assert.NoError(t, err) {
+		return
+	}
+
+	x, err := RegisterDatabase("postgres", pgInstance, passwd)
+	if !assert.NoError(t, err) {
+		return
+	}
+	defer Unregister(x)
+
+	q := &common.Query{TableName: "Pictures",
+		Search:     "checksumpicture='02E88E36FF888D0344B633B329AE8C5E'",
+		Descriptor: true,
+		Limit:      1,
+		Fields:     []string{"Media"},
+	}
+
+	length := 0
+	data := make([]byte, 0)
+	err = x.Stream(q, func(search *common.Query, stream *common.Stream) error {
+		length += len(stream.Data)
+		data = append(data, stream.Data...)
+		if length > 10000 {
+			return fmt.Errorf("aborted")
+		}
+		return nil
+	})
+	chkMd5 := fmt.Sprintf("%X", md5.Sum(data))
+	assert.Equal(t, "FF18D3948B21012D7044A60855659952", chkMd5)
+
+	assert.Error(t, err)
+	assert.Equal(t, 12287, length)
+}
+
+func TestPgStreamListTest(t *testing.T) {
+	initLog()
+	pgInstance, passwd, err := postgresTargetInstance(t)
+	if !assert.NoError(t, err) {
+		return
+	}
+
+	x, err := RegisterDatabase("postgres", pgInstance, passwd)
+	if !assert.NoError(t, err) {
+		return
+	}
+	defer Unregister(x)
+
+	for _, p := range checksumPictureTest {
+		q := &common.Query{TableName: "Pictures",
+			Search:     "checksumpicture='" + p.chksum + "'",
+			Descriptor: true,
+			Limit:      1,
+			Fields:     []string{"Media"},
+		}
+
+		data := make([]byte, 0)
+		err = x.Stream(q, func(search *common.Query, stream *common.Stream) error {
+			data = append(data, stream.Data...)
+			return nil
+		})
+		chkMd5 := fmt.Sprintf("%X", md5.Sum(data))
+		assert.Equal(t, p.chksum, chkMd5)
+
+		assert.NoError(t, err)
+		assert.Equal(t, p.length, len(data))
+	}
+}
+
+func TestPgQueryListTest(t *testing.T) {
+	initLog()
+	pgInstance, passwd, err := postgresTargetInstance(t)
+	if !assert.NoError(t, err) {
+		return
+	}
+
+	x, err := RegisterDatabase("postgres", pgInstance, passwd)
+	if !assert.NoError(t, err) {
+		return
+	}
+	defer Unregister(x)
+
+	for _, p := range checksumPictureTest {
+		q := &common.Query{TableName: "Pictures",
+			Search: "checksumpicture='" + p.chksum + "'",
+			Fields: []string{"Media"},
+		}
+
+		_, err = x.Query(q, func(search *common.Query, result *common.Result) error {
+			assert.Len(t, result.Fields, 1)
+			ns := result.Rows[0].([]uint8)
+			chkMd5 := fmt.Sprintf("%X", md5.Sum(ns))
+			assert.Equal(t, p.chksum, chkMd5)
+			assert.Equal(t, p.length, len(ns))
+			return nil
+		})
+
+		assert.NoError(t, err)
+	}
 }

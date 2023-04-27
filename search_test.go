@@ -35,11 +35,14 @@ func startLog() {
 	fmt.Println("Init logging")
 	fileName := "db.trace.log"
 	level := os.Getenv("ENABLE_DB_DEBUG")
-	logLevel := logrus.InfoLevel
+	logLevel := logrus.WarnLevel
 	switch level {
-	case "debug":
+	case "debug", "1":
 		log.SetDebugLevel(true)
 		logLevel = logrus.DebugLevel
+	case "info", "2":
+		log.SetDebugLevel(false)
+		logLevel = logrus.InfoLevel
 	default:
 	}
 	logRus.SetFormatter(&logrus.TextFormatter{
@@ -63,6 +66,7 @@ func startLog() {
 }
 
 func TestSearchQuery(t *testing.T) {
+	initLog()
 	pg, err := postgresTarget(t)
 	if !assert.NoError(t, err) {
 		return
@@ -82,6 +86,7 @@ func TestSearchQuery(t *testing.T) {
 }
 
 func TestSearchPgRows(t *testing.T) {
+	initLog()
 	pg, err := postgresTarget(t)
 	if !assert.NoError(t, err) {
 		return
@@ -126,7 +131,44 @@ func TestSearchPgRows(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestQueryPgFunctions(t *testing.T) {
+	initLog()
+	pg, err := postgresTarget(t)
+	if !assert.NoError(t, err) {
+		return
+	}
+
+	x, err := Register("postgres", pg)
+	if !assert.NoError(t, err) {
+		return
+	}
+	defer Unregister(x)
+
+	q := &common.Query{TableName: "Pictures",
+		Search: "",
+		Fields: []string{"length(Media)", "checksumpicture"},
+	}
+	counter := 0
+	length := uint64(0)
+	_, err = x.Query(q, func(search *common.Query, result *common.Result) error {
+		log.Log.Debugf("Query row function called...")
+		assert.NotNil(t, search)
+		assert.NotNil(t, result)
+		assert.Len(t, result.Fields, 2)
+		l := uint64(result.Rows[0].(int32))
+		length += l
+		log.Log.Debugf("RESULT: %d -> %s", l, result.Rows[1].(string))
+		counter++
+
+		return nil
+	})
+	assert.Equal(t, 1689, counter)
+	assert.Equal(t, uint64(2846143299), length)
+	assert.NoError(t, err)
+}
+
 func TestSearchPgCriteriaRows(t *testing.T) {
+	initLog()
 	pg, err := postgresTarget(t)
 	if !assert.NoError(t, err) {
 		return
@@ -168,6 +210,7 @@ type TestString struct {
 }
 
 func TestSearchPgStruct(t *testing.T) {
+	initLog()
 	pg, err := postgresTarget(t)
 	if !assert.NoError(t, err) {
 		return
@@ -210,6 +253,7 @@ func TestSearchPgStruct(t *testing.T) {
 }
 
 func TestSearchPgPtrStruct(t *testing.T) {
+	initLog()
 	pg, err := postgresTarget(t)
 	if !assert.NoError(t, err) {
 		return
@@ -256,6 +300,7 @@ func TestSearchPgPtrStruct(t *testing.T) {
 }
 
 func TestSearchAdaStruct(t *testing.T) {
+	initLog()
 	ada, err := adabasTarget(t)
 	if !assert.NoError(t, err) {
 		return
@@ -298,6 +343,7 @@ type Albums struct {
 }
 
 func TestSearchAdaPtrStruct(t *testing.T) {
+	initLog()
 	ada, err := adabasTarget(t)
 	if !assert.NoError(t, err) {
 		return
@@ -337,6 +383,7 @@ func TestSearchAdaPtrStruct(t *testing.T) {
 }
 
 func TestSearchMariaDBRows(t *testing.T) {
+	initLog()
 
 	db, err := mysqlTarget(t)
 	if !assert.NoError(t, err) {
@@ -380,6 +427,7 @@ func TestSearchMariaDBRows(t *testing.T) {
 }
 
 func TestSearchPgRowsOrdered(t *testing.T) {
+	initLog()
 	pg, err := postgresUserTarget(t)
 	if !assert.NoError(t, err) {
 		return
@@ -431,6 +479,7 @@ func TestSearchPgRowsOrdered(t *testing.T) {
 }
 
 func TestSearchMySQLRowsOrdered(t *testing.T) {
+	initLog()
 	mysql, err := mysqlUserTarget(t)
 	if !assert.NoError(t, err) {
 		return
@@ -484,6 +533,8 @@ func TestSearchPgRowsDistinct(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
+
+	log.Log.Debugf("Postgres target registered")
 
 	x, err := RegisterDatabase("postgres", pgInstance, passwd)
 	if !assert.NoError(t, err) {
