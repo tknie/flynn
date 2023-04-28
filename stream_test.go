@@ -20,13 +20,15 @@ import (
 	"github.com/tknie/flynn/common"
 )
 
+var testBlocksize = 65536
 var checksumPictureTest = []struct {
 	chksum string
 	length int
-}{{"02E88E36FF888D0344B633B329AE8C5E", 927518},
-	{"4CA51423A6E4850514760FCD7F1B1EB2", 402404},
-	{"86B3B97B2A90F128B06437A78FD5B63A", 703794},
-	{"6041C33476C4C49859106647C733A0E3", 518002}}
+	count  int
+}{{"02E88E36FF888D0344B633B329AE8C5E", 927518, 927518/testBlocksize + 1},
+	{"4CA51423A6E4850514760FCD7F1B1EB2", 402404, 402404/testBlocksize + 1},
+	{"86B3B97B2A90F128B06437A78FD5B63A", 703794, 703794/testBlocksize + 1},
+	{"6041C33476C4C49859106647C733A0E3", 518002, 518002/testBlocksize + 1}}
 
 func TestPgStreamPartial(t *testing.T) {
 	initLog()
@@ -130,18 +132,22 @@ func TestPgStreamListTest(t *testing.T) {
 			Search:     "checksumpicture='" + p.chksum + "'",
 			Descriptor: true,
 			Limit:      1,
+			Blocksize:  65536,
 			Fields:     []string{"Media"},
 		}
 
+		count := 0
 		data := make([]byte, 0)
 		err = x.Stream(q, func(search *common.Query, stream *common.Stream) error {
 			data = append(data, stream.Data...)
+			count++
 			return nil
 		})
 		chkMd5 := fmt.Sprintf("%X", md5.Sum(data))
 		assert.Equal(t, p.chksum, chkMd5)
 
 		assert.NoError(t, err)
+		assert.Equal(t, p.count, count)
 		assert.Equal(t, p.length, len(data))
 	}
 }
