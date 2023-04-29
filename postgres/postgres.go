@@ -301,13 +301,14 @@ func (pg *PostGres) Query(search *def.Query, f def.ResultFunction) (*common.Resu
 	if err != nil {
 		return nil, err
 	}
-	defer pg.Close()
 
 	db := dbOpen.(*pgx.Conn)
+	ctx := context.Background()
+	defer db.Close(ctx)
 	selectCmd := search.Select()
 
 	log.Log.Debugf("Query: %s", selectCmd)
-	rows, err := db.Query(context.Background(), selectCmd)
+	rows, err := db.Query(ctx, selectCmd)
 	if err != nil {
 		return nil, err
 	}
@@ -583,9 +584,10 @@ func (pg *PostGres) Stream(search *def.Query, sf def.StreamFunction) error {
 	if err != nil {
 		return err
 	}
-	defer pg.Close()
 
+	ctx := context.Background()
 	conn := dbOpen.(*pgx.Conn)
+	defer conn.Close(ctx)
 
 	blocksize := search.Blocksize
 	if blocksize == 0 {
@@ -597,7 +599,7 @@ func (pg *PostGres) Stream(search *def.Query, sf def.StreamFunction) error {
 	for offset < dataMaxLen {
 		selectCmd := fmt.Sprintf("SELECT substring(%s,%d,%d),length(%s) FROM %s WHERE %s",
 			search.Fields[0], offset, blocksize, search.Fields[0], search.TableName, search.Search)
-		rows, err := conn.Query(context.Background(), selectCmd)
+		rows, err := conn.Query(ctx, selectCmd)
 		if err != nil {
 			return err
 		}

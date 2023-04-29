@@ -9,7 +9,7 @@
 *
  */
 
-package db
+package flynn
 
 import (
 	"sync/atomic"

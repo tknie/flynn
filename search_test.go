@@ -9,11 +9,12 @@
 *
  */
 
-package db
+package flynn
 
 import (
 	"fmt"
 	"os"
+	"sort"
 	"sync"
 	"testing"
 	"time"
@@ -150,6 +151,7 @@ func TestQueryPgFunctions(t *testing.T) {
 	}
 	counter := 0
 	length := uint64(0)
+	lenList := make([]uint64, 0)
 	_, err = x.Query(q, func(search *common.Query, result *common.Result) error {
 		log.Log.Debugf("Query row function called...")
 		assert.NotNil(t, search)
@@ -157,14 +159,24 @@ func TestQueryPgFunctions(t *testing.T) {
 		assert.Len(t, result.Fields, 2)
 		l := uint64(result.Rows[0].(int32))
 		length += l
+		if l == 158005189 {
+			fmt.Println(result.Rows[1].(string))
+		}
+		lenList = append(lenList, l)
 		log.Log.Debugf("RESULT: %d -> %s", l, result.Rows[1].(string))
 		counter++
 
 		return nil
 	})
+	sort.Slice(lenList, func(i, j int) bool {
+		return lenList[i] < lenList[j]
+	})
 	assert.Equal(t, 1689, counter)
 	assert.Equal(t, uint64(2846143299), length)
 	assert.NoError(t, err)
+	for i := len(lenList) - 3; i < len(lenList); i++ {
+		fmt.Println(lenList[i])
+	}
 }
 
 func TestSearchPgCriteriaRows(t *testing.T) {
