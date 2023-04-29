@@ -176,7 +176,8 @@ func (pg *PostGres) EndTransaction(commit bool) (err error) {
 	if pg.tx == nil && pg.ctx == nil {
 		return nil
 	}
-	if pg.IsTransaction() {
+	log.Log.Debugf("End transaction ...%v", pg.IsTransaction())
+	if !pg.IsTransaction() {
 		return nil
 	}
 	if commit {
@@ -186,6 +187,8 @@ func (pg *PostGres) EndTransaction(commit bool) (err error) {
 	}
 	pg.tx = nil
 	pg.ctx = nil
+	log.Log.Debugf("End transaction done")
+
 	return
 }
 
@@ -424,6 +427,7 @@ func (pg *PostGres) DeleteTable(name string) error {
 	}
 	defer db.Close()
 
+	log.Log.Debugf("Init Drop table %s", name)
 	_, err = db.Query("DROP TABLE " + name)
 	if err != nil {
 		log.Log.Debugf("Drop table error: %v", err)
@@ -553,10 +557,15 @@ func (pg *PostGres) Batch(batch string) error {
 
 // StartTransaction start transaction
 func (pg *PostGres) StartTransaction() (pgx.Tx, context.Context, error) {
-	_, err := pg.open()
-	if err != nil {
-		return nil, nil, err
+	var err error
+	if pg.openDB == nil {
+		pg.Transaction = true
+		pg.openDB, err = pg.open()
+		if err != nil {
+			return nil, nil, err
+		}
 	}
+	log.Log.Debugf("Start transaction opened")
 	pg.ctx = context.Background()
 	pg.tx, err = pg.openDB.Begin(pg.ctx)
 	if err != nil {
@@ -564,18 +573,21 @@ func (pg *PostGres) StartTransaction() (pgx.Tx, context.Context, error) {
 		pg.tx = nil
 		return nil, nil, err
 	}
+	log.Log.Debugf("Start transaction begin")
 	return pg.tx, pg.ctx, nil
 }
 
 // Commit commit the transaction
 func (pg *PostGres) Commit() error {
 	pg.Transaction = false
+	log.Log.Debugf("Commit transaction")
 	return pg.EndTransaction(true)
 }
 
 // Rollback rollback the transaction
 func (pg *PostGres) Rollback() error {
 	pg.Transaction = false
+	log.Log.Debugf("Rollback transaction")
 	return pg.EndTransaction(false)
 }
 

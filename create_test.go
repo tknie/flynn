@@ -93,11 +93,13 @@ func TestCreateStringArray(t *testing.T) {
 		if !assert.NoError(t, err, "insert fail using "+target.layer) {
 			return
 		}
+		log.Log.Debugf("Delete TEST records")
 		dr, err := id.Delete(testCreationTable, &def.Entries{Fields: []string{"%Id"},
 			Values: [][]any{{"TEST%"}}})
 		if !assert.NoError(t, err, "insert fail using "+target.layer) {
 			return
 		}
+		log.Log.Debugf("Delete of records done")
 		assert.Equal(t, int64(101), dr)
 		if target.layer != "adabas" {
 			deleteTable(t, id, testCreationTable, target.layer)
@@ -107,11 +109,13 @@ func TestCreateStringArray(t *testing.T) {
 }
 
 func unregisterDatabase(t *testing.T, id def.RegDbID) {
+	log.Log.Debugf("Unregister id=%d", id)
 	err := Unregister(id)
 	assert.NoError(t, err)
 }
 
 func deleteTable(t *testing.T, id def.RegDbID, name, layer string) {
+	log.Log.Debugf("Delete table %s", name)
 	err := id.DeleteTable(name)
 	assert.NoError(t, err, "delete fail using "+layer)
 }
