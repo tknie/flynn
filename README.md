@@ -19,6 +19,8 @@ In advance real main database functionality should be contained like:
 * Support creating batch jobs for database-specific tasks like SQL scripts
 * Create index or other enhancements on database configuration
 
+For details have a look at the API documentation. It can be referenced here: <https://godoc.org/github.com/tknie/flynn>
+
 ## Example of Flynn usage
 
 ### Query records in database

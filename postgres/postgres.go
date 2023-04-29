@@ -117,19 +117,19 @@ func (pg *PostGres) Maps() ([]string, error) {
 }
 
 func (pg *PostGres) open() (dbOpen *pgx.Conn, err error) {
-	if pg.openDB == nil {
-		log.Log.Debugf("Open postgres database to %s", pg.dbURL)
-		pg.openDB, err = pgx.Connect(context.Background(), pg.generateURL())
-		// sql.Open("pgx", pg.generateURL())
-		if err != nil {
-			return nil, err
-		}
+	if pg.IsTransaction() && pg.openDB != nil {
+		return pg.openDB, nil
+	}
+	log.Log.Debugf("Open postgres database to %s", pg.dbURL)
+	dbOpen, err = pgx.Connect(context.Background(), pg.generateURL())
+	if err != nil {
+		return nil, err
 	}
 	log.Log.Debugf("Opened postgres database")
-	if pg.openDB == nil {
+	if dbOpen == nil {
 		return nil, fmt.Errorf("error open handle and err nil")
 	}
-	return pg.openDB, nil
+	return dbOpen, nil
 }
 
 // Open open the database connection
