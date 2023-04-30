@@ -120,8 +120,9 @@ func (pg *PostGres) open() (dbOpen *pgx.Conn, err error) {
 	if pg.IsTransaction() && pg.openDB != nil {
 		return pg.openDB, nil
 	}
+	pg.ctx = context.Background()
 	log.Log.Debugf("Open postgres database to %s", pg.dbURL)
-	dbOpen, err = pgx.Connect(context.Background(), pg.generateURL())
+	dbOpen, err = pgx.Connect(pg.ctx, pg.generateURL())
 	if err != nil {
 		return nil, err
 	}
@@ -173,20 +174,19 @@ func (pg *PostGres) BeginTransaction() error {
 }
 
 func (pg *PostGres) EndTransaction(commit bool) (err error) {
-	if pg.tx == nil && pg.ctx == nil {
-		return nil
-	}
-	log.Log.Debugf("End transaction ...%v", pg.IsTransaction())
 	if !pg.IsTransaction() {
 		return nil
 	}
+	if pg.tx == nil {
+		return fmt.Errorf("error transaction not started")
+	}
+	log.Log.Debugf("End transaction ...%v", pg.IsTransaction())
 	if commit {
 		err = pg.tx.Commit(pg.ctx)
 	} else {
 		err = pg.tx.Rollback(pg.ctx)
 	}
 	pg.tx = nil
-	pg.ctx = nil
 	log.Log.Debugf("End transaction done")
 
 	return
@@ -199,7 +199,7 @@ func (pg *PostGres) Close() {
 		pg.EndTransaction(false)
 	}
 	if pg.openDB != nil {
-		pg.openDB.Close(context.Background())
+		pg.openDB.Close(pg.ctx)
 		pg.openDB = nil
 		pg.tx = nil
 		pg.ctx = nil
@@ -244,9 +244,7 @@ func (pg *PostGres) Delete(name string, remove *def.Entries) (rowsAffected int64
 	if err != nil {
 		return -1, err
 	}
-	if !pg.IsTransaction() {
-		defer pg.Close()
-	}
+	defer pg.Close()
 
 	for i := 0; i < len(remove.Values); i++ {
 		deleteCmd, av := dbsql.GenerateDelete(pg.IndexNeeded(), name, 0, remove)
@@ -451,10 +449,10 @@ func (pg *PostGres) Insert(name string, insert *def.Entries) error {
 	}
 	if !pg.IsTransaction() {
 		log.Log.Debugf("Init defer close ... in inserting")
-		pg.openDB.Close(ctx)
+		pg.Close()
 		return fmt.Errorf("init of transaction fails")
 	}
-	defer pg.openDB.Close(ctx)
+	defer pg.Close()
 
 	log.Log.Debugf("Insert SQL record")
 
