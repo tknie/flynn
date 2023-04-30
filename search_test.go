@@ -28,8 +28,9 @@ import (
 var logRus = logrus.StandardLogger()
 var once = new(sync.Once)
 
-func initLog() {
+func InitLog(t *testing.T) {
 	once.Do(startLog)
+	log.Log.Debugf("TEST: %s", t.Name())
 }
 
 func startLog() {
@@ -67,7 +68,7 @@ func startLog() {
 }
 
 func TestSearchQuery(t *testing.T) {
-	initLog()
+	InitLog(t)
 	pg, err := postgresTarget(t)
 	if !assert.NoError(t, err) {
 		return
@@ -87,7 +88,7 @@ func TestSearchQuery(t *testing.T) {
 }
 
 func TestSearchPgRows(t *testing.T) {
-	initLog()
+	InitLog(t)
 	pg, err := postgresTarget(t)
 	if !assert.NoError(t, err) {
 		return
@@ -133,7 +134,7 @@ func TestSearchPgRows(t *testing.T) {
 }
 
 func TestQueryPgFunctions(t *testing.T) {
-	initLog()
+	InitLog(t)
 	pg, err := postgresTarget(t)
 	if !assert.NoError(t, err) {
 		return
@@ -180,7 +181,7 @@ func TestQueryPgFunctions(t *testing.T) {
 }
 
 func TestSearchPgCriteriaRows(t *testing.T) {
-	initLog()
+	InitLog(t)
 	pg, err := postgresTarget(t)
 	if !assert.NoError(t, err) {
 		return
@@ -222,7 +223,7 @@ type TestString struct {
 }
 
 func TestSearchPgStruct(t *testing.T) {
-	initLog()
+	InitLog(t)
 	pg, err := postgresTarget(t)
 	if !assert.NoError(t, err) {
 		return
@@ -265,7 +266,7 @@ func TestSearchPgStruct(t *testing.T) {
 }
 
 func TestSearchPgPtrStruct(t *testing.T) {
-	initLog()
+	InitLog(t)
 	pg, err := postgresTarget(t)
 	if !assert.NoError(t, err) {
 		return
@@ -312,7 +313,7 @@ func TestSearchPgPtrStruct(t *testing.T) {
 }
 
 func TestSearchAdaStruct(t *testing.T) {
-	initLog()
+	InitLog(t)
 	ada, err := adabasTarget(t)
 	if !assert.NoError(t, err) {
 		return
@@ -355,7 +356,7 @@ type Albums struct {
 }
 
 func TestSearchAdaPtrStruct(t *testing.T) {
-	initLog()
+	InitLog(t)
 	ada, err := adabasTarget(t)
 	if !assert.NoError(t, err) {
 		return
@@ -395,7 +396,7 @@ func TestSearchAdaPtrStruct(t *testing.T) {
 }
 
 func TestSearchMariaDBRows(t *testing.T) {
-	initLog()
+	InitLog(t)
 
 	db, err := mysqlTarget(t)
 	if !assert.NoError(t, err) {
@@ -439,7 +440,7 @@ func TestSearchMariaDBRows(t *testing.T) {
 }
 
 func TestSearchPgRowsOrdered(t *testing.T) {
-	initLog()
+	InitLog(t)
 	pg, err := postgresUserTarget(t)
 	if !assert.NoError(t, err) {
 		return
@@ -491,7 +492,7 @@ func TestSearchPgRowsOrdered(t *testing.T) {
 }
 
 func TestSearchMySQLRowsOrdered(t *testing.T) {
-	initLog()
+	InitLog(t)
 	mysql, err := mysqlUserTarget(t)
 	if !assert.NoError(t, err) {
 		return
@@ -540,7 +541,7 @@ func TestSearchMySQLRowsOrdered(t *testing.T) {
 }
 
 func TestSearchPgRowsDistinct(t *testing.T) {
-	initLog()
+	InitLog(t)
 	pgInstance, passwd, err := postgresTargetInstance(t)
 	if !assert.NoError(t, err) {
 		return

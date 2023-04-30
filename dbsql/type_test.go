@@ -100,6 +100,9 @@ func (t *testSQL) IndexNeeded() bool {
 }
 
 func TestDataTypeStruct(t *testing.T) {
+	InitLog(t)
+	log.Log.Debugf("TEST: %s", t.Name())
+
 	x := struct {
 		St  string
 		Int int

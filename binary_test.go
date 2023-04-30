@@ -22,6 +22,9 @@ import (
 )
 
 func TestBinarySearchPgRows(t *testing.T) {
+	InitLog(t)
+	log.Log.Debugf("TEST: %s", t.Name())
+
 	pg, err := postgresTarget(t)
 	if !assert.NoError(t, err) {
 		return
@@ -59,6 +62,9 @@ func TestBinarySearchPgRows(t *testing.T) {
 }
 
 func TestBinarySearchMariaRows(t *testing.T) {
+	InitLog(t)
+	log.Log.Debugf("TEST: %s", t.Name())
+
 	mysql, err := mysqlTarget(t)
 	if !assert.NoError(t, err) {
 		return

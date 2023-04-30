@@ -50,7 +50,8 @@ func getTestTargets(t *testing.T) (targets []*target) {
 }
 
 func TestCreateStringArray(t *testing.T) {
-	initLog()
+	InitLog(t)
+	log.Log.Debugf("TEST: %s", t.Name())
 
 	columns := make([]*def.Column, 0)
 	columns = append(columns, &def.Column{Name: "Id", DataType: def.Alpha, Length: 8})
@@ -121,7 +122,9 @@ func deleteTable(t *testing.T, id def.RegDbID, name, layer string) {
 }
 
 func TestCreateStruct(t *testing.T) {
-	initLog()
+	InitLog(t)
+	log.Log.Debugf("TEST: %s", t.Name())
+
 	for _, target := range getTestTargets(t) {
 		log.Log.Debugf("Work on target %#v", target)
 		err := createStruct(t, target)

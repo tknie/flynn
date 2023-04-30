@@ -27,19 +27,23 @@ import (
 var logRus = logrus.StandardLogger()
 var once = new(sync.Once)
 
-func initLog() {
+func InitLog(t *testing.T) {
 	once.Do(startLog)
+	log.Log.Debugf("TEST: %s", t.Name())
 }
 
 func startLog() {
 	fmt.Println("Init logging")
 	fileName := "db.trace.log"
 	level := os.Getenv("ENABLE_DB_DEBUG")
-	logLevel := logrus.InfoLevel
+	logLevel := logrus.WarnLevel
 	switch level {
-	case "debug":
+	case "debug", "1":
 		log.SetDebugLevel(true)
 		logLevel = logrus.DebugLevel
+	case "info", "2":
+		log.SetDebugLevel(false)
+		logLevel = logrus.InfoLevel
 	default:
 	}
 	logRus.SetFormatter(&logrus.TextFormatter{
@@ -75,7 +79,8 @@ func PostgresTable(t *testing.T) string {
 }
 
 func TestPostgresInit(t *testing.T) {
-	initLog()
+	InitLog(t)
+
 	url := PostgresTable(t)
 	pg, err := New(1, url)
 	assert.NoError(t, err)
@@ -90,7 +95,8 @@ func TestPostgresInit(t *testing.T) {
 }
 
 func TestPostgresTableColumns(t *testing.T) {
-	initLog()
+	InitLog(t)
+
 	url := PostgresTable(t)
 	pg, err := New(1, url)
 	assert.NoError(t, err)

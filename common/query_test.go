@@ -18,6 +18,8 @@ import (
 )
 
 func TestQuery(t *testing.T) {
+	InitLog(t)
+
 	q := Query{}
 	selectCmd := q.Select()
 	assert.Equal(t, "", selectCmd)

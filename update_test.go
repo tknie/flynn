@@ -21,7 +21,7 @@ import (
 )
 
 func TestUpdateInit(t *testing.T) {
-	initLog()
+	InitLog(t)
 	for _, target := range getTestTargets(t) {
 		if target.layer == "adabas" {
 			continue
@@ -74,7 +74,7 @@ func updateTest(t *testing.T, target *target) error {
 }
 
 func TestPostgresUpdateTransaction(t *testing.T) {
-	initLog()
+	InitLog(t)
 	url, _ := postgresTarget(t)
 	fmt.Println("Start postgres transaction update test for layer")
 	x, err := Register("postgres", url)
@@ -125,7 +125,7 @@ func TestPostgresUpdateTransaction(t *testing.T) {
 }
 
 func TestMySQLUpdateTransaction(t *testing.T) {
-	initLog()
+	InitLog(t)
 	url, _ := mysqlTarget(t)
 	fmt.Println("Start mySQL transaction update test for layer")
 	x, err := Register("mysql", url)

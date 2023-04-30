@@ -596,7 +596,7 @@ func (pg *PostGres) Stream(search *def.Query, sf def.StreamFunction) error {
 		return err
 	}
 
-	ctx := context.Background()
+	ctx := pg.ctx
 	conn := dbOpen.(*pgx.Conn)
 	defer conn.Close(ctx)
 
@@ -607,28 +607,49 @@ func (pg *PostGres) Stream(search *def.Query, sf def.StreamFunction) error {
 	offset := int32(0)
 	dataMaxLen := int32(math.MaxInt32)
 
+	log.Log.Debugf("Start stream for %s for %s", search.Fields[0], search.TableName)
 	for offset < dataMaxLen {
-		selectCmd := fmt.Sprintf("SELECT substring(%s,%d,%d),length(%s) FROM %s WHERE %s",
-			search.Fields[0], offset, blocksize, search.Fields[0], search.TableName, search.Search)
+		selectCmd := ""
+		if dataMaxLen == int32(math.MaxInt32) {
+			selectCmd = fmt.Sprintf("SELECT substring(%s,%d,%d),length(%s) FROM %s WHERE %s",
+				search.Fields[0], offset, blocksize, search.Fields[0], search.TableName, search.Search)
+		} else {
+			selectCmd = fmt.Sprintf("SELECT substring(%s,%d,%d) FROM %s WHERE %s",
+				search.Fields[0], offset, blocksize, search.TableName, search.Search)
+		}
+		log.Log.Debugf("Read = %d,%d -> %s\n", offset, offset+blocksize, selectCmd)
 		rows, err := conn.Query(ctx, selectCmd)
 		if err != nil {
+			log.Log.Debugf("Stream query error: %v", err)
 			return err
 		}
 		stream := &def.Stream{}
 		for rows.Next() {
 			v, err := rows.Values()
 			if err != nil {
+				log.Log.Debugf("Stream value error: %v", err)
 				return err
 			}
-			dataMaxLen = v[1].(int32)
-			// fmt.Printf("Len = %d\n", dataMaxLen)
+			if dataMaxLen == int32(math.MaxInt32) {
+				dataMaxLen = v[1].(int32)
+				log.Log.Debugf("Data maximal length = %d\n", dataMaxLen)
+			}
 			stream.Data = v[0].([]uint8)
 			err = sf(search, stream)
 			if err != nil {
+				log.Log.Debugf("Stream error: %v", err)
 				return err
 			}
 		}
 		offset += blocksize
+		if offset >= dataMaxLen {
+			break
+		}
+		if offset+blocksize > dataMaxLen {
+			blocksize = dataMaxLen - offset + 1
+		}
+		log.Log.Debugf("Stream offset = %d,%d\n", offset, blocksize)
 	}
+	log.Log.Debugf("Stream finished")
 	return nil
 }
