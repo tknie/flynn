@@ -118,8 +118,8 @@ func TestPostgresUpdateTransaction(t *testing.T) {
 		Search: "",
 		Fields: []string{"ID"}}
 	_, err = x.Query(q, func(search *common.Query, result *common.Result) error {
-		fmt.Println("Result", *(result.Rows[0].(*string)))
-		return fmt.Errorf("found fail")
+		fmt.Println("Result", result.Rows[0].(string))
+		return fmt.Errorf("found fail, should not come here, record should be rollbacked")
 	})
 	assert.NoError(t, err)
 }

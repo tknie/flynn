@@ -169,7 +169,7 @@ func (pg *PostGres) BeginTransaction() error {
 	if err != nil {
 		return err
 	}
-	pg.Transaction = true
+	//	pg.Transaction = true
 	return nil
 }
 
@@ -178,6 +178,7 @@ func (pg *PostGres) EndTransaction(commit bool) (err error) {
 		return nil
 	}
 	if pg.tx == nil {
+		pg.Transaction = false
 		return fmt.Errorf("error transaction not started")
 	}
 	log.Log.Debugf("End transaction ...%v", pg.IsTransaction())
@@ -188,6 +189,7 @@ func (pg *PostGres) EndTransaction(commit bool) (err error) {
 	}
 	pg.tx = nil
 	log.Log.Debugf("End transaction done")
+	pg.Transaction = false
 
 	return
 }
@@ -441,18 +443,29 @@ func (pg *PostGres) DeleteTable(name string) error {
 }
 
 // Insert insert record into table
-func (pg *PostGres) Insert(name string, insert *def.Entries) error {
-	log.Log.Debugf("Transaction (begin insert): %v", pg.IsTransaction())
-	tx, ctx, err := pg.StartTransaction()
-	if err != nil {
-		return err
+func (pg *PostGres) Insert(name string, insert *def.Entries) (err error) {
+	var ctx context.Context
+	var tx pgx.Tx
+	transaction := pg.IsTransaction()
+	log.Log.Debugf("Transaction (begin insert): %v", transaction)
+	if !transaction {
+		tx, ctx, err = pg.StartTransaction()
+		if err != nil {
+			return err
+		}
+		defer pg.Close()
+	} else {
+		tx = pg.tx
+		ctx = pg.ctx
+	}
+	if tx == nil || ctx == nil {
+		return fmt.Errorf("transaction=%v or context=%v not set", tx, ctx)
 	}
 	if !pg.IsTransaction() {
 		log.Log.Debugf("Init defer close ... in inserting")
 		pg.Close()
 		return fmt.Errorf("init of transaction fails")
 	}
-	defer pg.Close()
 
 	log.Log.Debugf("Insert SQL record")
 
@@ -481,8 +494,9 @@ func (pg *PostGres) Insert(name string, insert *def.Entries) error {
 		log.Log.Debugf("Insert values: %d -> %#v", len(av), av)
 		res, err := tx.Exec(ctx, insertCmd, av...)
 		if err != nil {
-			pg.EndTransaction(false)
-			log.Log.Debugf("Error insert CMD: %v of %s and cmd %s", err, name, insertCmd)
+			trErr := pg.EndTransaction(false)
+			log.Log.Debugf("Error insert CMD: %v of %s and cmd %s trErr=%v",
+				err, name, insertCmd, trErr)
 			return err
 		}
 		l := res.RowsAffected()
@@ -490,11 +504,13 @@ func (pg *PostGres) Insert(name string, insert *def.Entries) error {
 			return fmt.Errorf("insert of rows failed")
 		}
 	}
-	log.Log.Debugf("Transaction: %v", pg.IsTransaction())
-	err = pg.EndTransaction(true)
-	if err != nil {
-		log.Log.Debugf("Error transaction %v", err)
-		return err
+	if !transaction {
+		log.Log.Debugf("Need to end because not in Transaction: %v", pg.IsTransaction())
+		err = pg.EndTransaction(true)
+		if err != nil {
+			log.Log.Debugf("Error transaction %v", err)
+			return err
+		}
 	}
 	return nil
 }
@@ -578,14 +594,12 @@ func (pg *PostGres) StartTransaction() (pgx.Tx, context.Context, error) {
 
 // Commit commit the transaction
 func (pg *PostGres) Commit() error {
-	pg.Transaction = false
 	log.Log.Debugf("Commit transaction")
 	return pg.EndTransaction(true)
 }
 
 // Rollback rollback the transaction
 func (pg *PostGres) Rollback() error {
-	pg.Transaction = false
 	log.Log.Debugf("Rollback transaction")
 	return pg.EndTransaction(false)
 }
