@@ -123,6 +123,7 @@ func deleteTable(t *testing.T, id def.RegDbID, name, layer string) {
 func TestCreateStruct(t *testing.T) {
 	initLog()
 	for _, target := range getTestTargets(t) {
+		log.Log.Debugf("Work on target %#v", target)
 		err := createStruct(t, target)
 		assert.NoError(t, err)
 	}
@@ -167,10 +168,10 @@ func createStruct(t *testing.T, target *target) error {
 	if !assert.NoError(t, err, "insert fail using "+target.layer) {
 		return err
 	}
-	log.Log.Debugf("Inserting into table: {}", testCreationTableStruct)
+	log.Log.Debugf("Inserting into table: %s", testCreationTableStruct)
 	err = id.Batch("SELECT NAME FROM " + testCreationTableStruct)
 	assert.NoError(t, err, "select fail using "+target.layer)
-	log.Log.Debugf("Deleting table: {}", testCreationTableStruct)
+	log.Log.Debugf("Deleting table: %s", testCreationTableStruct)
 	deleteTable(t, id, testCreationTableStruct, target.layer)
 	return nil
 }

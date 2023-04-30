@@ -407,14 +407,19 @@ func (pg *PostGres) CreateTable(name string, col any) error {
 	}
 	createCmd += ")"
 	log.Log.Debugf("Create cmd %s", createCmd)
-	_, err = db.Query(createCmd)
+	_, err = db.Exec(createCmd)
 	if err != nil {
 		log.Log.Errorf("Error returned by SQL: %v", err)
 		return err
 	}
-	log.Log.Debugf("Table created, waiting ....")
+	//log.Log.Debugf("Table created, waiting ....")
 	//time.Sleep(60 * time.Second)
 	log.Log.Debugf("Table created")
+	err = db.Close()
+	if err != nil {
+		return err
+	}
+	log.Log.Debugf("Table db handler closed")
 	return nil
 }
 
@@ -446,8 +451,10 @@ func (pg *PostGres) Insert(name string, insert *def.Entries) error {
 	}
 	if !pg.IsTransaction() {
 		log.Log.Debugf("Init defer close ... in inserting")
-		defer pg.Close()
+		pg.openDB.Close(ctx)
+		return fmt.Errorf("init of transaction fails")
 	}
+	defer pg.openDB.Close(ctx)
 
 	log.Log.Debugf("Insert SQL record")
 
@@ -486,18 +493,10 @@ func (pg *PostGres) Insert(name string, insert *def.Entries) error {
 		}
 	}
 	log.Log.Debugf("Transaction: %v", pg.IsTransaction())
-	if !pg.IsTransaction() {
-		log.Log.Debugf("No transaction, end and close")
-		err = pg.EndTransaction(true)
-		if err != nil {
-			log.Log.Debugf("Error transaction %v", err)
-			pg.Close()
-			return err
-		}
-		log.Log.Debugf("Close ...")
-		pg.Close()
-	} else {
-		log.Log.Debugf("Transaction, NO end and close")
+	err = pg.EndTransaction(true)
+	if err != nil {
+		log.Log.Debugf("Error transaction %v", err)
+		return err
 	}
 	return nil
 }
@@ -562,6 +561,7 @@ func (pg *PostGres) StartTransaction() (pgx.Tx, context.Context, error) {
 		pg.Transaction = true
 		pg.openDB, err = pg.open()
 		if err != nil {
+			log.Log.Debugf("Error opening connection for transaction")
 			return nil, nil, err
 		}
 	}
@@ -571,6 +571,7 @@ func (pg *PostGres) StartTransaction() (pgx.Tx, context.Context, error) {
 	if err != nil {
 		pg.ctx = nil
 		pg.tx = nil
+		log.Log.Debugf("Begin of transaction fails: %v", err)
 		return nil, nil, err
 	}
 	log.Log.Debugf("Start transaction begin")
