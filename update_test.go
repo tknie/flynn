@@ -73,7 +73,7 @@ func updateTest(t *testing.T, target *target) error {
 	return nil
 }
 
-func TestPostgresUpdateTransaction(t *testing.T) {
+func TestPostgresUpdateRollbackTransaction(t *testing.T) {
 	InitLog(t)
 	url, _ := postgresTarget(t)
 	fmt.Println("Start postgres transaction update test for layer")
@@ -121,6 +121,68 @@ func TestPostgresUpdateTransaction(t *testing.T) {
 		fmt.Println("Result", result.Rows[0].(string))
 		return fmt.Errorf("found fail, should not come here, record should be rollbacked")
 	})
+	assert.NoError(t, err)
+}
+
+func TestPostgresTransaction(t *testing.T) {
+	InitLog(t)
+	url, _ := postgresTarget(t)
+	fmt.Println("Start postgres transaction update test for layer")
+	x, err := Register("postgres", url)
+	if !assert.NoError(t, err) {
+		return
+	}
+	defer Unregister(x)
+
+	err = x.Batch("TRUNCATE TABLE " + testStructTable)
+	assert.NoError(t, err)
+
+	err = x.BeginTransaction()
+	if !assert.NoError(t, err) {
+		return
+	}
+	nameValue := time.Now().Format("20060102")
+	vId1 := "t-" + nameValue + "-1"
+	vId2 := "t-" + nameValue + "-2"
+	list := [][]any{{vId1, "xxxxxx", 1}, {vId2, "yyywqwqwqw", 2}}
+	input := &common.Entries{Fields: []string{"ID", "Name", "account"},
+		Update: []string{"ID"},
+		Values: list}
+	err = x.Insert(testStructTable, input)
+	if !assert.NoError(t, err) {
+		return
+	}
+
+	vId1b := "u-" + nameValue + "-3"
+	vId2b := "u-" + nameValue + "-4"
+	input.Values = [][]any{{vId1b, "jhhhhmmmmm", 1}, {vId2b, "ppppoiierer", 2}}
+	err = x.Insert(testStructTable, input)
+	if !assert.NoError(t, err) {
+		return
+	}
+	newID := "a-" + nameValue + "-1111"
+	input.Values = [][]any{{newID}}
+	input.Fields = []string{"ID"}
+	input.Update[0] = "ID='" + vId1b + "'"
+	_, err = x.Update(testStructTable, input)
+	if !assert.NoError(t, err) {
+		return
+	}
+	err = x.Commit()
+	if !assert.NoError(t, err) {
+		return
+	}
+
+	q := &common.Query{TableName: testStructTable,
+		Search: "ID='" + newID + "'",
+		Fields: []string{"ID"}}
+	count := 0
+	_, err = x.Query(q, func(search *common.Query, result *common.Result) error {
+		fmt.Println("Result", result.Rows[0].(string))
+		count++
+		return nil
+	})
+	assert.Equal(t, count, 1)
 	assert.NoError(t, err)
 }
 

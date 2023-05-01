@@ -517,12 +517,18 @@ func (pg *PostGres) Insert(name string, insert *def.Entries) (err error) {
 
 // Update update record in table
 func (pg *PostGres) Update(name string, updateInfo *def.Entries) (rowsAffected int64, err error) {
-	tx, ctx, err := pg.StartTransaction()
-	if err != nil {
-		return -1, err
-	}
-	if !pg.IsTransaction() {
+	transaction := pg.IsTransaction()
+	var ctx context.Context
+	var tx pgx.Tx
+	if !transaction {
+		tx, ctx, err = pg.StartTransaction()
+		if err != nil {
+			return -1, err
+		}
 		defer pg.Close()
+	} else {
+		tx = pg.tx
+		ctx = pg.ctx
 	}
 	insertCmd, whereFields := dbsql.GenerateUpdate(pg.IndexNeeded(), name, updateInfo)
 	for i, v := range updateInfo.Values {
@@ -539,9 +545,11 @@ func (pg *PostGres) Update(name string, updateInfo *def.Entries) (rowsAffected i
 	}
 	log.Log.Debugf("Update done")
 
-	err = pg.EndTransaction(true)
-	if err != nil {
-		return -1, err
+	if !transaction {
+		err = pg.EndTransaction(true)
+		if err != nil {
+			return -1, err
+		}
 	}
 	return rowsAffected, nil
 }
