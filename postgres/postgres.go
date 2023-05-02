@@ -562,7 +562,7 @@ func (pg *PostGres) Batch(batch string) error {
 		return err
 	}
 	defer db.Close()
-	// TODO
+	// Query batch SQL
 	rows, err := db.Query(batch)
 	if err != nil {
 		return err

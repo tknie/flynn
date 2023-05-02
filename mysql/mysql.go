@@ -305,5 +305,23 @@ func (mysql *Mysql) Rollback() error {
 }
 
 func (mysql *Mysql) Stream(search *def.Query, sf def.StreamFunction) error {
+	dbOpen, err := mysql.Open()
+	if err != nil {
+		return err
+	}
+	defer mysql.Close()
+
+	db := dbOpen.(*sql.DB)
+	selectCmd := fmt.Sprintf("")
+
+	log.Log.Debugf("Query: %s", selectCmd)
+	rows, err := db.Query(selectCmd)
+	if err != nil {
+		return err
+	}
+	if search.DataStruct == nil {
+		return search.ParseRows(rows, f)
+	}
+	return search.ParseStruct(rows, f)
 	return errorrepo.NewError("DB065535")
 }
