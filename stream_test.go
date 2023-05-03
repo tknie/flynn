@@ -246,3 +246,45 @@ func TestQueryListPgTest(t *testing.T) {
 		assert.NoError(t, err)
 	}
 }
+
+func TestStreamAdabasTest(t *testing.T) {
+	InitLog(t)
+	log.Log.Debugf("TEST: %s", t.Name())
+	target, err := adabasTarget(t)
+	if !assert.NoError(t, err) {
+		return
+	}
+
+	x, err := Register("adabas", target)
+	if !assert.NoError(t, err) {
+		return
+	}
+	defer Unregister(x)
+
+	md5Query := "AB88C24B1B88A936DA8F8D8289B5A6FA"
+	chksum := "B0DC5D4538E7C000F2269D2D046CB5C6"
+	fmt.Println("Checking read of chksum=", chksum, "... length=", 111)
+	q := &common.Query{TableName: "PictureData",
+		Search:     "Md5='" + md5Query + "'",
+		Descriptor: true,
+		Limit:      1,
+		Blocksize:  65536,
+		Fields:     []string{"Media"},
+	}
+
+	count := 0
+	data := make([]byte, 0)
+	err = x.Stream(q, func(search *common.Query, stream *common.Stream) error {
+		data = append(data, stream.Data...)
+		//assert.Len(t, stream.Data, 65536)
+		count++
+		return nil
+	})
+	chkMd5 := fmt.Sprintf("%X", md5.Sum(data))
+	assert.Equal(t, strings.Trim(chksum, " "), chkMd5)
+
+	assert.NoError(t, err)
+	assert.Equal(t, 17, count)
+	assert.Equal(t, 1050752, len(data))
+
+}

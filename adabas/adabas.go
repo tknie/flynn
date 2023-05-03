@@ -183,8 +183,8 @@ func (ada *Adabas) Delete(name string, remove *def.Entries) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-
 	conn := con.(*adabas.Connection)
+	defer conn.Close()
 	req, err := conn.CreateMapDeleteRequest(name)
 	if err != nil {
 		return 0, err
@@ -395,5 +395,44 @@ func (ada *Adabas) Rollback() error {
 }
 
 func (ada *Adabas) Stream(search *def.Query, sf def.StreamFunction) error {
-	return errorrepo.NewError("DB065535")
+	con, err := ada.Open()
+	if err != nil {
+		return err
+	}
+	conn := con.(*adabas.Connection)
+	defer conn.Close()
+	sread, err := conn.CreateMapReadRequest(search.TableName)
+	if err != nil {
+		return err
+	}
+	err = sread.QueryFields("")
+	if err != nil {
+		return err
+	}
+	result, err := sread.ReadLogicalWith(search.Search)
+	if err != nil {
+		return err
+	}
+	if result.NrRecords() == 0 {
+		return fmt.Errorf("no record found with search")
+	}
+	stream := &def.Stream{}
+	dataRead := 0
+	for {
+		stream.Data, err = sread.ReadLOBSegment(result.Values[0].Isn, search.Fields[0], uint64(search.Blocksize))
+		if err != nil {
+			fmt.Printf("Error read LOB segment: %v\n", err)
+			return err
+		}
+		dataRead += len(stream.Data)
+		err = sf(search, stream)
+		if err != nil {
+			fmt.Printf("user error/abort: %v\n", err)
+			return err
+		}
+		if len(stream.Data) < int(search.Blocksize) {
+			break
+		}
+	}
+	return nil
 }
