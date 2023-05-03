@@ -14,6 +14,7 @@ package flynn
 import (
 	"crypto/md5"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -154,6 +155,58 @@ func TestStreamListPgTest(t *testing.T) {
 		})
 		chkMd5 := fmt.Sprintf("%X", md5.Sum(data))
 		assert.Equal(t, p.chksum, chkMd5)
+
+		assert.NoError(t, err)
+		assert.Equal(t, p.count, count)
+		assert.Equal(t, p.length, len(data))
+	}
+}
+
+var checksumPictureTestMySQL = []struct {
+	chksum string
+	length int
+	count  int
+}{{"02E88E36FF888D0344B633B329AE8C5E        ", 927518, 927518/testBlocksize + 1},
+	{"0A9DEC7418F4B1A98AC5CC7C56CC54FC        ", 954608, 954608/testBlocksize + 1},
+	{"EEA7ED90C6694256FE4B0854E6950F9C        ", 1252387, 1252387/testBlocksize + 1},
+	// {"A34E983D50EF3264567EF27EEB24DE2E", 158005189, 158005189/testBlocksize + 1},
+	{"B6BE0CF1DF9E336CFF56AB7043317855        ", 1575236, 1575236/testBlocksize + 1},
+}
+
+func TestStreamListMySQLTest(t *testing.T) {
+	InitLog(t)
+	log.Log.Debugf("TEST: %s", t.Name())
+	target, err := mysqlTarget(t)
+	if !assert.NoError(t, err) {
+		return
+	}
+
+	x, err := Register("mysql", target)
+	if !assert.NoError(t, err) {
+		return
+	}
+	defer Unregister(x)
+
+	for _, p := range checksumPictureTestMySQL {
+		fmt.Println("Checking read of chksum=", p.chksum, "... length=", p.length)
+		q := &common.Query{TableName: "Pictures",
+			Search:     "checksumpicture='" + p.chksum + "'",
+			Descriptor: true,
+			Limit:      1,
+			Blocksize:  65536,
+			Fields:     []string{"Media"},
+		}
+
+		count := 0
+		data := make([]byte, 0)
+		err = x.Stream(q, func(search *common.Query, stream *common.Stream) error {
+			data = append(data, stream.Data...)
+			//assert.Len(t, stream.Data, 65536)
+			count++
+			return nil
+		})
+		chkMd5 := fmt.Sprintf("%X", md5.Sum(data))
+		assert.Equal(t, strings.Trim(p.chksum, " "), chkMd5)
 
 		assert.NoError(t, err)
 		assert.Equal(t, p.count, count)

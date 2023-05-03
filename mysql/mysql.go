@@ -15,6 +15,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"math"
 	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -312,16 +313,50 @@ func (mysql *Mysql) Stream(search *def.Query, sf def.StreamFunction) error {
 	defer mysql.Close()
 
 	db := dbOpen.(*sql.DB)
-	selectCmd := fmt.Sprintf("")
+	offset := int32(1)
+	blocksize := search.Blocksize
+	dataMaxLen := int32(math.MaxInt32)
 
-	log.Log.Debugf("Query: %s", selectCmd)
-	rows, err := db.Query(selectCmd)
-	if err != nil {
-		return err
+	log.Log.Debugf("Start stream for %s for %s", search.Fields[0], search.TableName)
+	selectCmd := fmt.Sprintf("SELECT SUBSTRING(%s FROM %d FOR %d),LENGTH(%s) FROM %s WHERE %s",
+		search.Fields[0], offset, blocksize, search.Fields[0], search.TableName, search.Search)
+	for offset < dataMaxLen {
+		log.Log.Debugf("Query: %s", selectCmd)
+		rows, err := db.Query(selectCmd)
+		if err != nil {
+			log.Log.Errorf("Stream query error: %v", err)
+			return err
+		}
+		stream := &def.Stream{}
+		stream.Data = make([]byte, 0)
+		if !rows.Next() {
+			log.Log.Errorf("rows missing")
+			return fmt.Errorf("rows read missing")
+		}
+		if dataMaxLen == int32(math.MaxInt32) {
+			err = rows.Scan(&stream.Data, &dataMaxLen)
+		} else {
+			err = rows.Scan(&stream.Data)
+		}
+		if err != nil {
+			log.Log.Errorf("rows scan error: %s", err)
+			return err
+		}
+		err = sf(search, stream)
+		if err != nil {
+			log.Log.Errorf("stream function error: %s", err)
+			return err
+		}
+		offset += blocksize
+		if offset >= dataMaxLen {
+			break
+		}
+		if offset+blocksize > dataMaxLen {
+			blocksize = dataMaxLen - offset + 1
+		}
+
+		selectCmd = fmt.Sprintf("SELECT SUBSTRING(%s FROM %d FOR %d) FROM %s WHERE %s",
+			search.Fields[0], offset, blocksize, search.TableName, search.Search)
 	}
-	if search.DataStruct == nil {
-		return search.ParseRows(rows, f)
-	}
-	return search.ParseStruct(rows, f)
-	return errorrepo.NewError("DB065535")
+	return nil
 }

@@ -33,7 +33,11 @@ func postgresTarget(t *testing.T) (string, error) {
 		return "", fmt.Errorf(postgresHostNotSet)
 	}
 	assert.NotEmpty(t, postgresPort)
-	port, err := strconv.Atoi(postgresPort)
+	port := 5432
+	var err error
+	if postgresPort != "" {
+		port, err = strconv.Atoi(postgresPort)
+	}
 	if !assert.NoError(t, err) {
 		return "", fmt.Errorf(postPortNotSet)
 	}
@@ -50,9 +54,13 @@ func postgresTargetInstance(t *testing.T) (*common.Reference, string, error) {
 		return nil, "", fmt.Errorf(postgresHostNotSet)
 	}
 	assert.NotEmpty(t, postgresPort)
-	port, err := strconv.Atoi(postgresPort)
-	if !assert.NoError(t, err) {
-		return nil, "", fmt.Errorf(postPortNotSet)
+	port := 5432
+	if postgresPort == "" {
+		var err error
+		port, err = strconv.Atoi(postgresPort)
+		if !assert.NoError(t, err) {
+			return nil, "", fmt.Errorf(postPortNotSet)
+		}
 	}
 	pgInstance := &common.Reference{User: "admin", Host: postgresHost, Port: port, Database: "bitgarten"}
 
