@@ -21,7 +21,6 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/tknie/errorrepo"
 	"github.com/tknie/flynn/common"
-	def "github.com/tknie/flynn/common"
 	"github.com/tknie/flynn/dbsql"
 	"github.com/tknie/log"
 )
@@ -30,7 +29,7 @@ const layer = "mysql"
 
 // Mysql instance for MySQL
 type Mysql struct {
-	def.CommonDatabase
+	common.CommonDatabase
 	openDB       any
 	dbURL        string
 	dbTableNames []string
@@ -41,16 +40,16 @@ type Mysql struct {
 }
 
 // NewInstance create new postgres reference instance
-func NewInstance(id def.RegDbID, reference *common.Reference, password string) (def.Database, error) {
+func NewInstance(id common.RegDbID, reference *common.Reference, password string) (common.Database, error) {
 	url := fmt.Sprintf("%s:<Password>@tcp(%s:%d)/%s", reference.User, reference.Host, reference.Port, reference.Database)
-	mysql := &Mysql{def.CommonDatabase{RegDbID: id},
+	mysql := &Mysql{common.CommonDatabase{RegDbID: id},
 		nil, url, nil, "", "", nil, nil}
 	return mysql, nil
 }
 
 // New create new postgres reference instance
-func New(id def.RegDbID, url string) (def.Database, error) {
-	mysql := &Mysql{def.CommonDatabase{RegDbID: id},
+func New(id common.RegDbID, url string) (common.Database, error) {
+	mysql := &Mysql{common.CommonDatabase{RegDbID: id},
 		nil, url, nil, "", "", nil, nil}
 	return mysql, nil
 }
@@ -172,7 +171,7 @@ func (mysql *Mysql) Reference() (string, string) {
 }
 
 // ID current id used
-func (mysql *Mysql) ID() def.RegDbID {
+func (mysql *Mysql) ID() common.RegDbID {
 	return mysql.RegDbID
 }
 
@@ -221,7 +220,7 @@ func (mysql *Mysql) Ping() error {
 }
 
 // Delete Delete database records
-func (mysql *Mysql) Delete(name string, remove *def.Entries) (int64, error) {
+func (mysql *Mysql) Delete(name string, remove *common.Entries) (int64, error) {
 	return dbsql.Delete(mysql, name, remove)
 }
 
@@ -231,7 +230,7 @@ func (mysql *Mysql) GetTableColumn(tableName string) ([]string, error) {
 }
 
 // Query query database records with search or SELECT
-func (mysql *Mysql) Query(search *def.Query, f def.ResultFunction) (*common.Result, error) {
+func (mysql *Mysql) Query(search *common.Query, f common.ResultFunction) (*common.Result, error) {
 	dbOpen, err := mysql.Open()
 	if err != nil {
 		return nil, err
@@ -263,12 +262,12 @@ func (mysql *Mysql) DeleteTable(name string) error {
 }
 
 // Insert insert record into table
-func (mysql *Mysql) Insert(name string, insert *def.Entries) error {
+func (mysql *Mysql) Insert(name string, insert *common.Entries) error {
 	return dbsql.Insert(mysql, name, insert)
 }
 
 // Update update record in table
-func (mysql *Mysql) Update(name string, insert *def.Entries) (int64, error) {
+func (mysql *Mysql) Update(name string, insert *common.Entries) (int64, error) {
 	return dbsql.Update(mysql, name, insert)
 }
 
@@ -305,7 +304,7 @@ func (mysql *Mysql) Rollback() error {
 	return mysql.EndTransaction(false)
 }
 
-func (mysql *Mysql) Stream(search *def.Query, sf def.StreamFunction) error {
+func (mysql *Mysql) Stream(search *common.Query, sf common.StreamFunction) error {
 	dbOpen, err := mysql.Open()
 	if err != nil {
 		return err
@@ -327,7 +326,7 @@ func (mysql *Mysql) Stream(search *def.Query, sf def.StreamFunction) error {
 			log.Log.Errorf("Stream query error: %v", err)
 			return err
 		}
-		stream := &def.Stream{}
+		stream := &common.Stream{}
 		stream.Data = make([]byte, 0)
 		if !rows.Next() {
 			log.Log.Errorf("rows missing")

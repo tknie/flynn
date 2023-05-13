@@ -36,7 +36,6 @@ type DBsql interface {
 }
 
 func CreateTable(dbsql DBsql, name string, col any) error {
-	//	columns []*def.Column
 	log.Log.Debugf("Create SQL table")
 	layer, url := dbsql.Reference()
 	db, err := sql.Open(layer, url)

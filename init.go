@@ -17,20 +17,19 @@ import (
 	"github.com/tknie/errorrepo"
 	"github.com/tknie/flynn/adabas"
 	"github.com/tknie/flynn/common"
-	def "github.com/tknie/flynn/common"
 	"github.com/tknie/flynn/mysql"
 	"github.com/tknie/flynn/postgres"
 	"github.com/tknie/log"
 )
 
-var globalRegID = def.RegDbID(0)
+var globalRegID = common.RegDbID(0)
 
 // Register database driver with a database URL returning a
 // reference id for the driver path to database
 func RegisterDatabase(typeName string, dbref *common.Reference, password string) (common.RegDbID, error) {
-	id := def.RegDbID(atomic.AddUint64((*uint64)(&globalRegID), 1))
+	id := common.RegDbID(atomic.AddUint64((*uint64)(&globalRegID), 1))
 
-	var db def.Database
+	var db common.Database
 	var err error
 	switch typeName {
 	case "postgres":
@@ -45,16 +44,16 @@ func RegisterDatabase(typeName string, dbref *common.Reference, password string)
 	if err != nil {
 		return 0, err
 	}
-	def.Databases = append(def.Databases, db)
+	common.Databases = append(common.Databases, db)
 	return db.ID(), nil
 }
 
 // Register database driver with a database URL returning a
 // reference id for the driver path to database
-func Register(typeName, url string) (def.RegDbID, error) {
-	id := def.RegDbID(atomic.AddUint64((*uint64)(&globalRegID), 1))
+func Register(typeName, url string) (common.RegDbID, error) {
+	id := common.RegDbID(atomic.AddUint64((*uint64)(&globalRegID), 1))
 
-	var db def.Database
+	var db common.Database
 	var err error
 	switch typeName {
 	case "postgres":
@@ -69,14 +68,14 @@ func Register(typeName, url string) (def.RegDbID, error) {
 	if err != nil {
 		return 0, err
 	}
-	def.Databases = append(def.Databases, db)
+	common.Databases = append(common.Databases, db)
 	return db.ID(), nil
 }
 
 // Maps database tables,views and/or maps usable for queries
 func Maps() []string {
 	databaseMaps := make([]string, 0)
-	for _, database := range def.Databases {
+	for _, database := range common.Databases {
 		log.Log.Debugf(database.URL())
 		subMaps, err := database.Maps()
 		if err != nil {
@@ -89,18 +88,18 @@ func Maps() []string {
 }
 
 // Unregister unregister registry id for the driver
-func Unregister(id def.RegDbID) error {
-	for i, d := range def.Databases {
+func Unregister(id common.RegDbID) error {
+	for i, d := range common.Databases {
 		if d.ID() == id {
 			id.Close()
-			newDatabases := make([]def.Database, 0)
+			newDatabases := make([]common.Database, 0)
 			if i > 0 {
-				newDatabases = append(newDatabases, def.Databases[0:i-1]...)
+				newDatabases = append(newDatabases, common.Databases[0:i-1]...)
 			}
-			if len(def.Databases)-1 > i {
-				newDatabases = append(newDatabases, def.Databases[i+1:]...)
+			if len(common.Databases)-1 > i {
+				newDatabases = append(newDatabases, common.Databases[i+1:]...)
 			}
-			def.Databases = newDatabases
+			common.Databases = newDatabases
 			return nil
 		}
 	}

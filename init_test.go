@@ -19,7 +19,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/tknie/flynn/common"
-	def "github.com/tknie/flynn/common"
 )
 
 const postPortNotSet = "Postgres Port not set"
@@ -141,7 +140,7 @@ func TestInitDatabases(t *testing.T) {
 	x, err := Register("postgres", pg)
 	assert.NoError(t, err)
 	assert.True(t, x > 0)
-	assert.Len(t, def.Databases, 1)
+	assert.Len(t, common.Databases, 1)
 	err = Unregister(x)
 	if !assert.NoError(t, err) {
 		return
@@ -156,13 +155,13 @@ func TestInitDatabases(t *testing.T) {
 	x2, err := Register("postgres", pg2)
 	assert.NoError(t, err)
 	assert.True(t, x2 > 0)
-	assert.Len(t, def.Databases, 2)
+	assert.Len(t, common.Databases, 2)
 	err = Unregister(x)
 	assert.NoError(t, err)
-	assert.Len(t, def.Databases, 1)
+	assert.Len(t, common.Databases, 1)
 	err = Unregister(x2)
 	assert.NoError(t, err)
-	assert.Len(t, def.Databases, 0)
+	assert.Len(t, common.Databases, 0)
 }
 
 func TestInitWrongDatabases(t *testing.T) {
@@ -175,8 +174,8 @@ func TestInitWrongDatabases(t *testing.T) {
 	pg := fmt.Sprintf("postgres://%s:%s@%s:%d/%s", "admin", "Test123", "abs", port, "bitgarten")
 	x, err := Register("postgres", pg)
 	assert.NoError(t, err)
-	assert.NotEqual(t, def.RegDbID(0), x)
+	assert.NotEqual(t, common.RegDbID(0), x)
 	err = x.Ping()
 	assert.Error(t, err)
-	assert.Len(t, def.Databases, 1)
+	assert.Len(t, common.Databases, 1)
 }

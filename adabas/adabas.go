@@ -21,12 +21,11 @@ import (
 	"github.com/tknie/adabas-go-api/adatypes"
 	"github.com/tknie/errorrepo"
 	"github.com/tknie/flynn/common"
-	def "github.com/tknie/flynn/common"
 	"github.com/tknie/log"
 )
 
 type Adabas struct {
-	def.CommonDatabase
+	common.CommonDatabase
 	dbURL        string
 	conn         *adabas.Connection
 	dbTableNames []string
@@ -42,19 +41,19 @@ func syncLog() {
 }
 
 // NewInstance create new postgres reference instance
-func NewInstance(id def.RegDbID, reference *common.Reference, password string) (def.Database, error) {
+func NewInstance(id common.RegDbID, reference *common.Reference, password string) (common.Database, error) {
 	url := fmt.Sprintf("acj;map;config=[adatcp://%s:%d,4]", reference.Host, reference.Port)
-	ada := &Adabas{def.CommonDatabase{RegDbID: id}, url,
+	ada := &Adabas{common.CommonDatabase{RegDbID: id}, url,
 		nil, nil, reference.User, password}
 	return ada, nil
 }
 
 // New create new postgres reference instance
-func New(id def.RegDbID, url string) (def.Database, error) {
+func New(id common.RegDbID, url string) (common.Database, error) {
 	if adatypes.Central.Log != log.Log {
 		syncLog()
 	}
-	ada := &Adabas{def.CommonDatabase{RegDbID: id}, url,
+	ada := &Adabas{common.CommonDatabase{RegDbID: id}, url,
 		nil, nil, "", ""}
 	return ada, nil
 }
@@ -67,7 +66,7 @@ func (ada *Adabas) SetCredentials(user, password string) error {
 }
 
 // ID current id used
-func (ada *Adabas) ID() def.RegDbID {
+func (ada *Adabas) ID() common.RegDbID {
 	return ada.RegDbID
 }
 
@@ -127,7 +126,7 @@ func (ada *Adabas) Close() {
 }
 
 // Insert insert record into table
-func (ada *Adabas) Insert(name string, insert *def.Entries) error {
+func (ada *Adabas) Insert(name string, insert *common.Entries) error {
 	con, err := ada.Open()
 	if err != nil {
 		return err
@@ -173,12 +172,12 @@ func (ada *Adabas) Insert(name string, insert *def.Entries) error {
 }
 
 // Update update record in table
-func (ada *Adabas) Update(name string, insert *def.Entries) (int64, error) {
+func (ada *Adabas) Update(name string, insert *common.Entries) (int64, error) {
 	return 0, errorrepo.NewError("DB065535")
 }
 
 // Delete Delete database records
-func (ada *Adabas) Delete(name string, remove *def.Entries) (int64, error) {
+func (ada *Adabas) Delete(name string, remove *common.Entries) (int64, error) {
 	con, err := ada.Open()
 	if err != nil {
 		return 0, err
@@ -259,7 +258,7 @@ func (ada *Adabas) Delete(name string, remove *def.Entries) (int64, error) {
 	return int64(len(isns)), nil
 }
 
-func createSearch(remove *def.Entries) string {
+func createSearch(remove *common.Entries) string {
 	var buffer bytes.Buffer
 	for i, f := range remove.Fields {
 		if f[0] == '%' {
@@ -290,7 +289,7 @@ func (ada *Adabas) GetTableColumn(tableName string) ([]string, error) {
 }
 
 // Query query database records with search or SELECT
-func (ada *Adabas) Query(search *def.Query, f def.ResultFunction) (*common.Result, error) {
+func (ada *Adabas) Query(search *common.Query, f common.ResultFunction) (*common.Result, error) {
 	con, err := ada.Open()
 	if err != nil {
 		return nil, err
@@ -327,7 +326,7 @@ func (ada *Adabas) Query(search *def.Query, f def.ResultFunction) (*common.Resul
 	if err != nil {
 		return nil, err
 	}
-	result := &def.Result{}
+	result := &common.Result{}
 	for cursor.HasNextRecord() {
 		if search.DataStruct != nil {
 			record, err := cursor.NextData()
@@ -394,7 +393,7 @@ func (ada *Adabas) Rollback() error {
 	return errorrepo.NewError("DB065535")
 }
 
-func (ada *Adabas) Stream(search *def.Query, sf def.StreamFunction) error {
+func (ada *Adabas) Stream(search *common.Query, sf common.StreamFunction) error {
 	con, err := ada.Open()
 	if err != nil {
 		return err
@@ -416,7 +415,7 @@ func (ada *Adabas) Stream(search *def.Query, sf def.StreamFunction) error {
 	if result.NrRecords() == 0 {
 		return fmt.Errorf("no record found with search")
 	}
-	stream := &def.Stream{}
+	stream := &common.Stream{}
 	dataRead := 0
 	for {
 		stream.Data, err = sread.ReadLOBSegment(result.Values[0].Isn, search.Fields[0], uint64(search.Blocksize))

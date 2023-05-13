@@ -22,7 +22,6 @@ import (
 	"github.com/jackc/pgx/v5"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/tknie/flynn/common"
-	def "github.com/tknie/flynn/common"
 	"github.com/tknie/flynn/dbsql"
 	"github.com/tknie/log"
 )
@@ -31,7 +30,7 @@ const defaultBlocksize = 4096
 
 // PostGres instane for PostgresSQL
 type PostGres struct {
-	def.CommonDatabase
+	common.CommonDatabase
 	openDB       *pgx.Conn
 	dbURL        string
 	dbTableNames []string
@@ -42,17 +41,17 @@ type PostGres struct {
 }
 
 // New create new postgres reference instance
-func NewInstance(id def.RegDbID, reference *common.Reference, password string) (def.Database, error) {
+func NewInstance(id common.RegDbID, reference *common.Reference, password string) (common.Database, error) {
 	url := fmt.Sprintf("postgres://%s:<password>@%s:%d/%s", reference.User, reference.Host, reference.Port, reference.Database)
-	pg := &PostGres{def.CommonDatabase{RegDbID: id}, nil,
+	pg := &PostGres{common.CommonDatabase{RegDbID: id}, nil,
 		url, nil, "", password, nil, nil}
 
 	return pg, nil
 }
 
 // New create new postgres reference instance
-func New(id def.RegDbID, url string) (def.Database, error) {
-	pg := &PostGres{def.CommonDatabase{RegDbID: id}, nil,
+func New(id common.RegDbID, url string) (common.Database, error) {
+	pg := &PostGres{common.CommonDatabase{RegDbID: id}, nil,
 		url, nil, "", "", nil, nil}
 	// err := pg.check()
 	// if err != nil {
@@ -96,7 +95,7 @@ func (pg *PostGres) ByteArrayAvailable() bool {
 }
 
 // ID current id used
-func (pg *PostGres) ID() def.RegDbID {
+func (pg *PostGres) ID() common.RegDbID {
 	return pg.RegDbID
 }
 
@@ -241,7 +240,7 @@ func (pg *PostGres) Ping() error {
 }
 
 // Delete Delete database records
-func (pg *PostGres) Delete(name string, remove *def.Entries) (rowsAffected int64, err error) {
+func (pg *PostGres) Delete(name string, remove *common.Entries) (rowsAffected int64, err error) {
 	tx, ctx, err := pg.StartTransaction()
 	if err != nil {
 		return -1, err
@@ -298,7 +297,7 @@ func (pg *PostGres) GetTableColumn(tableName string) ([]string, error) {
 }
 
 // Query query database records with search or SELECT
-func (pg *PostGres) Query(search *def.Query, f def.ResultFunction) (*common.Result, error) {
+func (pg *PostGres) Query(search *common.Query, f common.ResultFunction) (*common.Result, error) {
 	log.Log.Debugf("Query postgres database")
 	dbOpen, err := pg.Open()
 	if err != nil {
@@ -321,7 +320,7 @@ func (pg *PostGres) Query(search *def.Query, f def.ResultFunction) (*common.Resu
 	return pg.ParseStruct(search, rows, f)
 }
 
-func (pg *PostGres) ParseRows(search *def.Query, rows pgx.Rows, f common.ResultFunction) (result *common.Result, err error) {
+func (pg *PostGres) ParseRows(search *common.Query, rows pgx.Rows, f common.ResultFunction) (result *common.Result, err error) {
 	log.Log.Debugf("Parse rows ....")
 	result = &common.Result{}
 	result.Data = search.DataStruct
@@ -349,7 +348,7 @@ func (pg *PostGres) ParseRows(search *def.Query, rows pgx.Rows, f common.ResultF
 	return result, nil
 }
 
-func (pg *PostGres) ParseStruct(search *def.Query, rows pgx.Rows, f common.ResultFunction) (result *common.Result, err error) {
+func (pg *PostGres) ParseStruct(search *common.Query, rows pgx.Rows, f common.ResultFunction) (result *common.Result, err error) {
 	if search.DataStruct == nil {
 		return pg.ParseRows(search, rows, f)
 	}
@@ -385,7 +384,7 @@ func (pg *PostGres) ParseStruct(search *def.Query, rows pgx.Rows, f common.Resul
 
 // CreateTable create a new table
 func (pg *PostGres) CreateTable(name string, col any) error {
-	//	columns []*def.Column
+	//	columns []*common.Column
 	log.Log.Debugf("Create SQL table")
 	layer, url := pg.Reference()
 	db, err := sql.Open(layer, url)
@@ -443,7 +442,7 @@ func (pg *PostGres) DeleteTable(name string) error {
 }
 
 // Insert insert record into table
-func (pg *PostGres) Insert(name string, insert *def.Entries) (err error) {
+func (pg *PostGres) Insert(name string, insert *common.Entries) (err error) {
 	var ctx context.Context
 	var tx pgx.Tx
 	transaction := pg.IsTransaction()
@@ -516,7 +515,7 @@ func (pg *PostGres) Insert(name string, insert *def.Entries) (err error) {
 }
 
 // Update update record in table
-func (pg *PostGres) Update(name string, updateInfo *def.Entries) (rowsAffected int64, err error) {
+func (pg *PostGres) Update(name string, updateInfo *common.Entries) (rowsAffected int64, err error) {
 	transaction := pg.IsTransaction()
 	var ctx context.Context
 	var tx pgx.Tx
@@ -612,7 +611,7 @@ func (pg *PostGres) Rollback() error {
 	return pg.EndTransaction(false)
 }
 
-func (pg *PostGres) Stream(search *def.Query, sf def.StreamFunction) error {
+func (pg *PostGres) Stream(search *common.Query, sf common.StreamFunction) error {
 	dbOpen, err := pg.Open()
 	if err != nil {
 		return err
@@ -645,7 +644,7 @@ func (pg *PostGres) Stream(search *def.Query, sf def.StreamFunction) error {
 			log.Log.Debugf("Stream query error: %v", err)
 			return err
 		}
-		stream := &def.Stream{}
+		stream := &common.Stream{}
 		for rows.Next() {
 			v, err := rows.Values()
 			if err != nil {

@@ -9,7 +9,7 @@ require (
 
 require github.com/rogpeppe/go-internal v1.9.0 // indirect
 
-require golang.org/x/net v0.9.0 // indirect
+require golang.org/x/net v0.10.0 // indirect
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -21,9 +21,9 @@ require (
 	github.com/stretchr/testify v1.8.1
 	github.com/tknie/adabas-go-api v1.7.9
 	github.com/tknie/errorrepo v0.0.0-20230429175850-6f60500223d5
-	golang.org/x/crypto v0.8.0 // indirect
-	golang.org/x/exp v0.0.0-20230425010034-47ecfdc1ba53
-	golang.org/x/sys v0.7.0 // indirect
+	golang.org/x/crypto v0.9.0 // indirect
+	golang.org/x/exp v0.0.0-20230510235704-dd950f8aeaea
+	golang.org/x/sys v0.8.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
