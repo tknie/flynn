@@ -238,8 +238,10 @@ func (mysql *Mysql) Query(search *common.Query, f common.ResultFunction) (*commo
 	defer mysql.Close()
 
 	db := dbOpen.(*sql.DB)
-	selectCmd := search.Select()
-
+	selectCmd, err := search.Select()
+	if err != nil {
+		return nil, err
+	}
 	log.Log.Debugf("Query: %s", selectCmd)
 	rows, err := db.Query(selectCmd)
 	if err != nil {

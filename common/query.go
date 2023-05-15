@@ -35,12 +35,12 @@ type Query struct {
 	FctParameter any
 }
 
-func (q *Query) Select() string {
-	if q.TableName == "" {
-		return ""
-	}
+func (q *Query) Select() (string, error) {
 	var selectCmd bytes.Buffer
 	switch {
+	case q.TableName == "":
+		log.Log.Debugf("Table name missing")
+		return "", fmt.Errorf("table name missing")
 	case q.DataStruct != nil:
 		selectCmd.WriteString("SELECT ")
 		if q.Descriptor {
@@ -81,7 +81,8 @@ func (q *Query) Select() string {
 			}
 			entry := strings.Split(s, ":")
 			if len(entry) != 2 {
-				return ""
+				log.Log.Debugf("Split order incorect")
+				return "", fmt.Errorf("order by syntax error (':' separator missing)")
 			}
 			x := strings.ToUpper(entry[1])
 			switch x {
@@ -96,7 +97,7 @@ func (q *Query) Select() string {
 		selectCmd.WriteString(fmt.Sprintf(" LIMIT %d", q.Limit))
 	}
 	log.Log.Debugf("Final select: %s", selectCmd.String())
-	return selectCmd.String()
+	return selectCmd.String(), nil
 }
 
 func (search *Query) ParseRows(rows *sql.Rows, f ResultFunction) (result *Result, err error) {

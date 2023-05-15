@@ -307,8 +307,10 @@ func (pg *PostGres) Query(search *common.Query, f common.ResultFunction) (*commo
 	db := dbOpen.(*pgx.Conn)
 	ctx := context.Background()
 	defer db.Close(ctx)
-	selectCmd := search.Select()
-
+	selectCmd, err := search.Select()
+	if err != nil {
+		return nil, err
+	}
 	log.Log.Debugf("Query: %s", selectCmd)
 	rows, err := db.Query(ctx, selectCmd)
 	if err != nil {
