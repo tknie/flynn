@@ -22,7 +22,7 @@ require (
 	github.com/tknie/adabas-go-api v1.7.9
 	github.com/tknie/errorrepo v0.0.0-20230429175850-6f60500223d5
 	golang.org/x/crypto v0.9.0 // indirect
-	golang.org/x/exp v0.0.0-20230510235704-dd950f8aeaea
+	golang.org/x/exp v0.0.0-20230515195305-f3d0a9c9a5cc
 	golang.org/x/sys v0.8.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
