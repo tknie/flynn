@@ -26,12 +26,12 @@ var globalRegID = common.RegDbID(0)
 
 // Register database driver with a database URL returning a
 // reference id for the driver path to database
-func RegisterDatabase(typeName string, dbref *common.Reference, password string) (common.RegDbID, error) {
+func RegisterDatabase(dbref *common.Reference, password string) (common.RegDbID, error) {
 	id := common.RegDbID(atomic.AddUint64((*uint64)(&globalRegID), 1))
 
 	var db common.Database
 	var err error
-	switch typeName {
+	switch dbref.TypeName {
 	case "postgres":
 		db, err = postgres.NewInstance(id, dbref, password)
 	case "mysql":

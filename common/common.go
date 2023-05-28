@@ -72,6 +72,7 @@ type CommonDatabase struct {
 }
 
 type Reference struct {
+	TypeName string
 	Host     string
 	Port     int
 	User     string

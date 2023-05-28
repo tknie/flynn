@@ -43,7 +43,7 @@ func TestStreamPgPartial(t *testing.T) {
 		return
 	}
 
-	x, err := RegisterDatabase("postgres", pgInstance, passwd)
+	x, err := RegisterDatabase(pgInstance, passwd)
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -91,7 +91,7 @@ func TestStreamPgAbort(t *testing.T) {
 		return
 	}
 
-	x, err := RegisterDatabase("postgres", pgInstance, passwd)
+	x, err := RegisterDatabase(pgInstance, passwd)
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -129,7 +129,7 @@ func TestStreamListPgTest(t *testing.T) {
 		return
 	}
 
-	x, err := RegisterDatabase("postgres", pgInstance, passwd)
+	x, err := RegisterDatabase(pgInstance, passwd)
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -222,7 +222,7 @@ func TestQueryListPgTest(t *testing.T) {
 		return
 	}
 
-	x, err := RegisterDatabase("postgres", pgInstance, passwd)
+	x, err := RegisterDatabase(pgInstance, passwd)
 	if !assert.NoError(t, err) {
 		return
 	}

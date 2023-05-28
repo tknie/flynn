@@ -61,7 +61,9 @@ func postgresTargetInstance(t *testing.T) (*common.Reference, string, error) {
 			return nil, "", fmt.Errorf(postPortNotSet)
 		}
 	}
-	pgInstance := &common.Reference{User: "admin", Host: postgresHost, Port: port, Database: "bitgarten"}
+	pgInstance := &common.Reference{TypeName: "postgres",
+		User: "admin", Host: postgresHost,
+		Port: port, Database: "bitgarten"}
 
 	return pgInstance, postgresPassword, nil
 }
@@ -77,7 +79,8 @@ func postgresUserTarget(t *testing.T) (string, error) {
 	if !assert.NoError(t, err) {
 		return "", fmt.Errorf(postPortNotSet)
 	}
-	pg := fmt.Sprintf("postgres://<user>:<password>@%s:%d/%s", postgresHost, port, "bitgarten")
+	pg := fmt.Sprintf("postgres://<user>:<password>@%s:%d/%s",
+		postgresHost, port, "bitgarten")
 
 	return pg, nil
 }
@@ -94,7 +97,8 @@ func mysqlTarget(t *testing.T) (string, error) {
 	if !assert.NoError(t, err) {
 		return "", fmt.Errorf("MYSQL Port not set")
 	}
-	mysql := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", "admin", mysqlPassword, mysqlHost, port, "Bitgarten")
+	mysql := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", "admin",
+		mysqlPassword, mysqlHost, port, "Bitgarten")
 
 	return mysql, nil
 }

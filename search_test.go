@@ -549,7 +549,7 @@ func TestSearchPgRowsDistinct(t *testing.T) {
 
 	log.Log.Debugf("Postgres target registered")
 
-	x, err := RegisterDatabase("postgres", pgInstance, passwd)
+	x, err := RegisterDatabase(pgInstance, passwd)
 	if !assert.NoError(t, err) {
 		return
 	}
