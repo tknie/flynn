@@ -45,6 +45,7 @@ func RegisterDatabase(dbref *common.Reference, password string) (common.RegDbID,
 		return 0, err
 	}
 	common.Databases = append(common.Databases, db)
+	log.Log.Debugf("Register db type %s on %d", dbref.TypeName, db.ID())
 	return db.ID(), nil
 }
 
@@ -69,6 +70,7 @@ func Register(typeName, url string) (common.RegDbID, error) {
 		return 0, err
 	}
 	common.Databases = append(common.Databases, db)
+	log.Log.Debugf("Register db type %s on %d", typeName, db.ID())
 	return db.ID(), nil
 }
 
@@ -76,7 +78,7 @@ func Register(typeName, url string) (common.RegDbID, error) {
 func Maps() []string {
 	databaseMaps := make([]string, 0)
 	for _, database := range common.Databases {
-		log.Log.Debugf(database.URL())
+		log.Log.Debugf("Map found " + database.URL())
 		subMaps, err := database.Maps()
 		if err != nil {
 			log.Log.Errorf("Error reading sub maps: %v", err)
@@ -91,6 +93,7 @@ func Maps() []string {
 func Unregister(id common.RegDbID) error {
 	for i, d := range common.Databases {
 		if d.ID() == id {
+			log.Log.Debugf("Unregister db %d", d.ID())
 			id.Close()
 			newDatabases := make([]common.Database, 0)
 			if i > 0 {

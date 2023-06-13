@@ -13,6 +13,7 @@ package common
 
 import (
 	"github.com/tknie/errorrepo"
+	"github.com/tknie/log"
 )
 
 var Databases = make([]Database, 0)
@@ -21,10 +22,13 @@ func searchDataDriver(id RegDbID) (Database, error) {
 	if id == 0 {
 		return nil, errorrepo.NewError("DB000010")
 	}
+	log.Log.Debugf("search DataDriver id=%d", id)
 	for _, d := range Databases {
+		log.Log.Debugf("Check id %d", d.ID())
 		if d.ID() == id {
 			return d, nil
 		}
 	}
+	log.Log.Debugf("DataDriver id not found")
 	return nil, errorrepo.NewError("DB000002", id)
 }
