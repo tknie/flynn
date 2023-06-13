@@ -18,10 +18,13 @@ import (
 var Databases = make([]Database, 0)
 
 func searchDataDriver(id RegDbID) (Database, error) {
+	if id == 0 {
+		return nil, errorrepo.NewError("DB000010")
+	}
 	for _, d := range Databases {
 		if d.ID() == id {
 			return d, nil
 		}
 	}
-	return nil, errorrepo.NewError("DB000002")
+	return nil, errorrepo.NewError("DB000002", id)
 }
