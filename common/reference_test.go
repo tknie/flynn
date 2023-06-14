@@ -29,7 +29,7 @@ func TestReferenceURL(t *testing.T) {
 	ref, p, err = NewReference("postgres://admin:<password>@localhost:5432/bitgarten")
 	assert.NoError(t, err)
 	assert.Equal(t, &Reference{Driver: PostgresType, Host: "localhost", Port: 5432, User: "admin", Database: "bitgarten"}, ref)
-	assert.Equal(t, "", p)
+	assert.Equal(t, "<password>", p)
 	ref, p, err = NewReference("jdbc:mysql://localhost:3306/sonoo")
 	assert.NoError(t, err)
 	assert.Equal(t, &Reference{Driver: MysqlType, Host: "localhost", Port: 3306, Database: "sonoo"}, ref)
@@ -43,9 +43,11 @@ func TestReferenceURL(t *testing.T) {
 	ref, _, err = NewReference("adatcp://adahost:123")
 	assert.NoError(t, err)
 	assert.Equal(t, &Reference{Driver: AdabasType, Host: "adahost", Port: 123, Database: "4"}, ref)
-	ref, _, err = NewReference("postgres://<user>:<password>@lion:5432/bitgarten")
+	ref, p, err = NewReference("postgres://<user>:<password>@lion:5432/bitgarten")
 	assert.NoError(t, err)
-	assert.Equal(t, &Reference{Driver: PostgresType, Host: "lion", Port: 5432, Database: "bitgarten"}, ref)
+	assert.Equal(t, &Reference{Driver: PostgresType, Host: "lion", Port: 5432, Database: "bitgarten",
+		User: "<user>"}, ref)
+	assert.Equal(t, "<password>", p)
 
 }
 

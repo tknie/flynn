@@ -67,12 +67,6 @@ func NewReference(url string) (*Reference, string, error) {
 	case ref.Driver == AdabasType && ref.Database == "":
 		ref.Database = "4"
 	}
-	if ref.User == "<user>" {
-		ref.User = ""
-	}
-	if passwd == "<password>" {
-		passwd = ""
-	}
 	return ref, passwd, nil
 }
 
