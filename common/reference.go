@@ -57,12 +57,15 @@ func NewReference(url string) (*Reference, string, error) {
 	}
 	ref := &Reference{Driver: checkType(match[2]),
 		Host: match[8], Port: p, User: match[4], Database: match[11]}
-	for i, match := range re.FindStringSubmatch(url) {
+	/*for i, match := range re.FindStringSubmatch(url) {
 		fmt.Println(match, "found at index", i)
-	}
+	}*/
 	passwd := match[6]
-	if ref.Driver == NoType && strings.Contains(url, "@tcp(") {
+	switch {
+	case ref.Driver == NoType && strings.Contains(url, "@tcp("):
 		ref.Driver = MysqlType
+	case ref.Driver == AdabasType && ref.Database == "":
+		ref.Database = "4"
 	}
 	return ref, passwd, nil
 }
@@ -73,7 +76,7 @@ func checkType(t string) ReferenceType {
 		return PostgresType
 	case "mysql":
 		return MysqlType
-	case "acj":
+	case "acj", "adatcp":
 		return AdabasType
 	}
 	return NoType

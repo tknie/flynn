@@ -43,7 +43,7 @@ type Mysql struct {
 	ctx          context.Context
 }
 
-// NewInstance create new postgres reference instance
+// NewInstance create new mysql reference instance
 func NewInstance(id common.RegDbID, reference *common.Reference, password string) (common.Database, error) {
 	url := fmt.Sprintf("%s:"+passwdPlaceholder+"@tcp(%s:%d)/%s", reference.User, reference.Host, reference.Port, reference.Database)
 	mysql := &Mysql{common.CommonDatabase{RegDbID: id},
@@ -51,7 +51,7 @@ func NewInstance(id common.RegDbID, reference *common.Reference, password string
 	return mysql, nil
 }
 
-// New create new postgres reference instance
+// New create new mysql reference instance
 func New(id common.RegDbID, url string) (common.Database, error) {
 	mysql := &Mysql{common.CommonDatabase{RegDbID: id},
 		nil, url, nil, "", "", nil, nil}
@@ -170,9 +170,9 @@ func (mysql *Mysql) ByteArrayAvailable() bool {
 	return false
 }
 
-// Reference reference to postgres URL
+// Reference reference to mysql URL
 func (mysql *Mysql) Reference() (string, string) {
-	return "mysql", mysql.dbURL
+	return "mysql", mysql.generateURL()
 }
 
 // ID current id used

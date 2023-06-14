@@ -51,7 +51,6 @@ func getTestTargets(t *testing.T) (targets []*target) {
 
 func TestCreateStringArray(t *testing.T) {
 	InitLog(t)
-	log.Log.Debugf("TEST: %s", t.Name())
 
 	columns := make([]*def.Column, 0)
 	columns = append(columns, &def.Column{Name: "Id", DataType: def.Alpha, Length: 8})
@@ -60,6 +59,7 @@ func TestCreateStringArray(t *testing.T) {
 
 	for _, target := range getTestTargets(t) {
 		fmt.Println("Working at string creation on target " + target.layer)
+		log.Log.Debugf("Working at string creation on target " + target.layer)
 
 		id, err := Register(target.layer, target.url)
 		if !assert.NoError(t, err, "register fail using "+target.layer) {

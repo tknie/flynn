@@ -77,6 +77,7 @@ func (pg *PostGres) generateURL() string {
 	url := pg.dbURL
 	if pg.user != "" {
 		url = strings.Replace(url, userPlaceholder, pg.user, -1)
+
 	}
 	if pg.password != "" {
 		url = strings.Replace(url, passwdPlaceholder, pg.password, -1)
@@ -86,7 +87,7 @@ func (pg *PostGres) generateURL() string {
 
 // Reference reference to postgres URL
 func (pg *PostGres) Reference() (string, string) {
-	return "pgx", pg.dbURL
+	return "pgx", pg.generateURL()
 }
 
 // IndexNeeded index needed for the SELECT statement value reference

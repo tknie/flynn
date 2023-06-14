@@ -131,7 +131,7 @@ func adabasTarget(t *testing.T) (string, error) {
 	if !assert.NoError(t, err) {
 		return "", fmt.Errorf("Adabaas Port not set")
 	}
-	ada := fmt.Sprintf("acj;map;config=[adatcp://%s:%d,4]", adabasHost, port)
+	ada := fmt.Sprintf("adatcp://%s:%d", adabasHost, port)
 
 	return ada, nil
 }

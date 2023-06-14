@@ -42,7 +42,8 @@ func syncLog() {
 
 // NewInstance create new postgres reference instance
 func NewInstance(id common.RegDbID, reference *common.Reference, password string) (common.Database, error) {
-	url := fmt.Sprintf("acj;map;config=[adatcp://%s:%d,4]", reference.Host, reference.Port)
+	url := fmt.Sprintf("acj;map;config=[adatcp://%s:%d,%s]",
+		reference.Host, reference.Port, reference.Database)
 	ada := &Adabas{common.CommonDatabase{RegDbID: id}, url,
 		nil, nil, reference.User, password}
 	return ada, nil

@@ -36,10 +36,14 @@ func TestReferenceURL(t *testing.T) {
 	assert.Equal(t, "", p)
 	ref, p, err = NewReference("admin:test123@tcp(host:123)/datab")
 	assert.NoError(t, err)
-	assert.Equal(t, &Reference{Host: "host", Port: 123, User: "admin", Database: "datab"}, ref)
+	assert.Equal(t, &Reference{Driver: MysqlType, Host: "host", Port: 123, User: "admin", Database: "datab"}, ref)
 	assert.Equal(t, "test123", p)
 	ref.SetType("mysql")
 	assert.Equal(t, &Reference{Driver: MysqlType, Host: "host", Port: 123, User: "admin", Database: "datab"}, ref)
+	ref, _, err = NewReference("adatcp://adahost:123")
+	assert.NoError(t, err)
+	assert.Equal(t, &Reference{Driver: AdabasType, Host: "adahost", Port: 123}, ref)
+
 }
 
 func TestReferenceFailuer(t *testing.T) {
