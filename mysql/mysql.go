@@ -25,7 +25,11 @@ import (
 	"github.com/tknie/log"
 )
 
-const layer = "mysql"
+const (
+	layer             = "mysql"
+	userPlaceholder   = "<user>"
+	passwdPlaceholder = "<password>"
+)
 
 // Mysql instance for MySQL
 type Mysql struct {
@@ -41,9 +45,9 @@ type Mysql struct {
 
 // NewInstance create new postgres reference instance
 func NewInstance(id common.RegDbID, reference *common.Reference, password string) (common.Database, error) {
-	url := fmt.Sprintf("%s:<Password>@tcp(%s:%d)/%s", reference.User, reference.Host, reference.Port, reference.Database)
+	url := fmt.Sprintf("%s:"+passwdPlaceholder+"@tcp(%s:%d)/%s", reference.User, reference.Host, reference.Port, reference.Database)
 	mysql := &Mysql{common.CommonDatabase{RegDbID: id},
-		nil, url, nil, "", "", nil, nil}
+		nil, url, nil, reference.User, password, nil, nil}
 	return mysql, nil
 }
 
@@ -64,10 +68,10 @@ func (mysql *Mysql) SetCredentials(user, password string) error {
 func (mysql *Mysql) generateURL() string {
 	url := mysql.dbURL
 	if mysql.user != "" {
-		url = strings.Replace(url, "<user>", mysql.user, -1)
+		url = strings.Replace(url, userPlaceholder, mysql.user, -1)
 	}
 	if mysql.password != "" {
-		url = strings.Replace(url, "<password>", mysql.password, -1)
+		url = strings.Replace(url, passwdPlaceholder, mysql.password, -1)
 	}
 	return url
 }
@@ -75,12 +79,13 @@ func (mysql *Mysql) generateURL() string {
 func (mysql *Mysql) open() (dbOpen any, err error) {
 	if mysql.openDB == nil {
 		log.Log.Debugf("Open Mysql database to %s", mysql.dbURL)
+		log.Log.Debugf("Mysql database to %s", mysql.generateURL())
 		mysql.openDB, err = sql.Open(layer, mysql.generateURL()+"?parseTime=true")
 		if err != nil {
 			return
 		}
 	}
-	log.Log.Debugf("Opened postgres database")
+	log.Log.Debugf("Opened Mysql database")
 	return mysql.openDB, nil
 }
 

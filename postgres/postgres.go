@@ -28,6 +28,11 @@ import (
 
 const defaultBlocksize = 4096
 
+const (
+	userPlaceholder   = "<user>"
+	passwdPlaceholder = "<password>"
+)
+
 // PostGres instane for PostgresSQL
 type PostGres struct {
 	common.CommonDatabase
@@ -42,7 +47,7 @@ type PostGres struct {
 
 // New create new postgres reference instance
 func NewInstance(id common.RegDbID, reference *common.Reference, password string) (common.Database, error) {
-	url := fmt.Sprintf("postgres://%s:<password>@%s:%d/%s", reference.User, reference.Host, reference.Port, reference.Database)
+	url := fmt.Sprintf("postgres://%s:"+passwdPlaceholder+"@%s:%d/%s", reference.User, reference.Host, reference.Port, reference.Database)
 	pg := &PostGres{common.CommonDatabase{RegDbID: id}, nil,
 		url, nil, "", password, nil, nil}
 
@@ -71,10 +76,10 @@ func (pg *PostGres) SetCredentials(user, password string) error {
 func (pg *PostGres) generateURL() string {
 	url := pg.dbURL
 	if pg.user != "" {
-		url = strings.Replace(url, "<user>", pg.user, -1)
+		url = strings.Replace(url, userPlaceholder, pg.user, -1)
 	}
 	if pg.password != "" {
-		url = strings.Replace(url, "<password>", pg.password, -1)
+		url = strings.Replace(url, passwdPlaceholder, pg.password, -1)
 	}
 	return url
 }
