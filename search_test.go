@@ -74,6 +74,7 @@ func TestSearchQuery(t *testing.T) {
 		return
 	}
 
+	fmt.Println("Register postgres: " + pg)
 	x, err := Register("postgres", pg)
 	if !assert.NoError(t, err) {
 		return

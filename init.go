@@ -51,6 +51,7 @@ func Register(p ...string) (common.RegDbID, error) {
 func RegisterDatabase(dbref *common.Reference, password string) (common.RegDbID, error) {
 	id := common.RegDbID(atomic.AddUint64((*uint64)(&globalRegID), 1))
 
+	log.Log.Debugf("Register database with password %s", password)
 	var db common.Database
 	var err error
 	switch dbref.Driver {
