@@ -27,6 +27,12 @@ const (
 	AdabasType
 )
 
+var referenceTypeName = []string{"No", "Mysql", "Postgres", "Adabas"}
+
+func (rt ReferenceType) String() string {
+	return referenceTypeName[rt]
+}
+
 type Reference struct {
 	Driver   ReferenceType
 	Host     string
@@ -35,24 +41,25 @@ type Reference struct {
 	Database string
 }
 
-func NewReference(url string) (*Reference, error) {
+func NewReference(url string) (*Reference, string, error) {
 	var re = regexp.MustCompile(`(?m)((\w*)://)?((\w+)(:(\S+))?@)?(tcp\()?(\w+):(\d+)\)?(/(\w+))?`)
 
 	match := re.FindStringSubmatch(url)
 
 	if len(match) < 10 {
-		return nil, fmt.Errorf("URL parse error (match only %d)", len(match))
+		return nil, "", fmt.Errorf("URL parse error (match only %d)", len(match))
 	}
 	p, err := strconv.Atoi(match[9])
 	if err != nil {
-		return nil, fmt.Errorf("Reference url port error: %v", err)
+		return nil, "", fmt.Errorf("Reference url port error: %v", err)
 	}
 	ref := &Reference{Driver: checkType(match[2]),
 		Host: match[8], Port: p, User: match[4], Database: match[11]}
 	for i, match := range re.FindStringSubmatch(url) {
 		fmt.Println(match, "found at index", i)
 	}
-	return ref, nil
+	passwd := match[6]
+	return ref, passwd, nil
 }
 
 func checkType(t string) ReferenceType {

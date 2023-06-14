@@ -32,7 +32,8 @@ func Register(p ...string) (common.RegDbID, error) {
 	if l < 0 {
 		return 0, fmt.Errorf("API error parameter missing")
 	}
-	r, err := common.NewReference(p[l])
+	log.Log.Debugf("Register %#v", p)
+	r, passwd, err := common.NewReference(p[l])
 	if err != nil {
 		return 0, err
 	}
@@ -42,7 +43,7 @@ func Register(p ...string) (common.RegDbID, error) {
 	if r.Driver == common.NoType {
 		return 0, fmt.Errorf("database type not given in API or URL")
 	}
-	return RegisterDatabase(r, "")
+	return RegisterDatabase(r, passwd)
 }
 
 // RegisterDatabase Register database driver with a database URL returning a

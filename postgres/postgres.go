@@ -120,9 +120,11 @@ func (pg *PostGres) open() (dbOpen *pgx.Conn, err error) {
 		return pg.openDB, nil
 	}
 	pg.ctx = context.Background()
-	log.Log.Debugf("Open postgres database to %s", pg.dbURL)
+	log.Log.Debugf("Open Postgres database to %s", pg.dbURL)
+	log.Log.Debugf("Postgres database URL to %s", pg.generateURL())
 	dbOpen, err = pgx.Connect(pg.ctx, pg.generateURL())
 	if err != nil {
+		log.Log.Debugf("Postgres driver connect error: %v", err)
 		return nil, err
 	}
 	log.Log.Debugf("Opened postgres database")
