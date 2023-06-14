@@ -71,14 +71,6 @@ type CommonDatabase struct {
 	Transaction bool
 }
 
-type Reference struct {
-	TypeName string
-	Host     string
-	Port     int
-	User     string
-	Database string
-}
-
 func (cd *CommonDatabase) IsTransaction() bool {
 	return cd.Transaction
 }

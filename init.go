@@ -12,6 +12,7 @@
 package flynn
 
 import (
+	"fmt"
 	"sync/atomic"
 
 	"github.com/tknie/errorrepo"
@@ -26,17 +27,37 @@ var globalRegID = common.RegDbID(0)
 
 // RegisterDatabase Register database driver with a database URL returning a
 // reference id for the driver path to database
+func Register(p ...string) (common.RegDbID, error) {
+	l := len(p) - 1
+	if l < 0 {
+		return 0, fmt.Errorf("API error parameter missing")
+	}
+	r, err := common.NewReference(p[l])
+	if err != nil {
+		return 0, err
+	}
+	if l > 1 {
+		r.SetType(p[0])
+	}
+	if r.Driver == common.NoType {
+		return 0, fmt.Errorf("database type not given in API or URL")
+	}
+	return RegisterDatabase(r, "")
+}
+
+// RegisterDatabase Register database driver with a database URL returning a
+// reference id for the driver path to database
 func RegisterDatabase(dbref *common.Reference, password string) (common.RegDbID, error) {
 	id := common.RegDbID(atomic.AddUint64((*uint64)(&globalRegID), 1))
 
 	var db common.Database
 	var err error
-	switch dbref.TypeName {
-	case "postgres":
+	switch dbref.Driver {
+	case common.PostgresType:
 		db, err = postgres.NewInstance(id, dbref, password)
-	case "mysql":
+	case common.MysqlType:
 		db, err = mysql.NewInstance(id, dbref, password)
-	case "adabas":
+	case common.AdabasType:
 		db, err = adabas.NewInstance(id, dbref, password)
 	default:
 		return 0, errorrepo.NewError("DB065535")
@@ -45,32 +66,7 @@ func RegisterDatabase(dbref *common.Reference, password string) (common.RegDbID,
 		return 0, err
 	}
 	common.Databases = append(common.Databases, db)
-	log.Log.Debugf("Register db type %s on %d", dbref.TypeName, db.ID())
-	return db.ID(), nil
-}
-
-// Register database driver with a database URL returning a
-// reference id for the driver path to database
-func Register(typeName, url string) (common.RegDbID, error) {
-	id := common.RegDbID(atomic.AddUint64((*uint64)(&globalRegID), 1))
-
-	var db common.Database
-	var err error
-	switch typeName {
-	case "postgres":
-		db, err = postgres.New(id, url)
-	case "mysql":
-		db, err = mysql.New(id, url)
-	case "adabas":
-		db, err = adabas.New(id, url)
-	default:
-		return 0, errorrepo.NewError("DB065535")
-	}
-	if err != nil {
-		return 0, err
-	}
-	common.Databases = append(common.Databases, db)
-	log.Log.Debugf("Register db type %s on %d", typeName, db.ID())
+	log.Log.Debugf("Register db type %s on %d", dbref.Driver, db.ID())
 	return db.ID(), nil
 }
 

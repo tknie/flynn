@@ -61,7 +61,7 @@ func postgresTargetInstance(t *testing.T) (*common.Reference, string, error) {
 			return nil, "", fmt.Errorf(postPortNotSet)
 		}
 	}
-	pgInstance := &common.Reference{TypeName: "postgres",
+	pgInstance := &common.Reference{Driver: common.PostgresType,
 		User: "admin", Host: postgresHost,
 		Port: port, Database: "bitgarten"}
 

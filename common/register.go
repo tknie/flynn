@@ -22,7 +22,7 @@ func searchDataDriver(id RegDbID) (Database, error) {
 	if id == 0 {
 		return nil, errorrepo.NewError("DB000010")
 	}
-	log.Log.Debugf("search DataDriver id=%d", id)
+	log.Log.Debugf("search DataDriver id=%d in %d entries", id, len(Databases))
 	for _, d := range Databases {
 		log.Log.Debugf("Check id %d", d.ID())
 		if d.ID() == id {
