@@ -29,7 +29,7 @@ const (
 	AdabasType
 )
 
-var referenceTypeName = []string{"No", "Mysql", "Postgres", "Adabas"}
+var referenceTypeName = []string{"No valid Type", "Mysql", "Postgres", "Adabas"}
 
 func (rt ReferenceType) String() string {
 	return referenceTypeName[rt]
@@ -43,6 +43,7 @@ type Reference struct {
 	Database string
 }
 
+// NewReference new reference of database link
 func NewReference(url string) (*Reference, string, error) {
 	var re = regexp.MustCompile(referenceRegexp)
 
@@ -55,7 +56,7 @@ func NewReference(url string) (*Reference, string, error) {
 	if err != nil {
 		return nil, "", fmt.Errorf("Reference url port error: %v", err)
 	}
-	ref := &Reference{Driver: checkType(match[2]),
+	ref := &Reference{Driver: ParseTypeName(match[2]),
 		Host: match[8], Port: p, User: match[4], Database: match[11]}
 	/*for i, match := range re.FindStringSubmatch(url) {
 		fmt.Println(match, "found at index", i)
@@ -70,7 +71,8 @@ func NewReference(url string) (*Reference, string, error) {
 	return ref, passwd, nil
 }
 
-func checkType(t string) ReferenceType {
+// ParseTypeName parse type string to internal type
+func ParseTypeName(t string) ReferenceType {
 	switch strings.ToLower(t) {
 	case "postgres":
 		return PostgresType
@@ -83,5 +85,5 @@ func checkType(t string) ReferenceType {
 }
 
 func (r *Reference) SetType(t string) {
-	r.Driver = checkType(t)
+	r.Driver = ParseTypeName(t)
 }
