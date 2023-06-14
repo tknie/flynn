@@ -42,7 +42,7 @@ type Reference struct {
 }
 
 func NewReference(url string) (*Reference, string, error) {
-	var re = regexp.MustCompile(`(?m)((\w*)://)?((\w+)(:(\S+))?@)?(tcp\()?(\w+):(\d+)\)?(/(\w+))?`)
+	var re = regexp.MustCompile(`(?m)((\w*)://)?((\w+)(:(\S+))?@)?(tcp\()?(\w[\w.]*):(\d+)\)?(/(\w+))?`)
 
 	match := re.FindStringSubmatch(url)
 
