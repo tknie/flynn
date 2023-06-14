@@ -18,6 +18,8 @@ import (
 	"strings"
 )
 
+const referenceRegexp = `(?m)((\w*)://)?((\w+)(:(\S+))?@)?(tcp\()?(\w[\w.]*):(\d+)\)?(/(\w+))?`
+
 type ReferenceType byte
 
 const (
@@ -42,7 +44,7 @@ type Reference struct {
 }
 
 func NewReference(url string) (*Reference, string, error) {
-	var re = regexp.MustCompile(`(?m)((\w*)://)?((\w+)(:(\S+))?@)?(tcp\()?(\w[\w.]*):(\d+)\)?(/(\w+))?`)
+	var re = regexp.MustCompile(referenceRegexp)
 
 	match := re.FindStringSubmatch(url)
 
@@ -59,6 +61,9 @@ func NewReference(url string) (*Reference, string, error) {
 		fmt.Println(match, "found at index", i)
 	}
 	passwd := match[6]
+	if ref.Driver == NoType && strings.Contains(url, "@tcp(") {
+		ref.Driver = MysqlType
+	}
 	return ref, passwd, nil
 }
 
