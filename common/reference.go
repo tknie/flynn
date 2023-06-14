@@ -18,7 +18,7 @@ import (
 	"strings"
 )
 
-const referenceRegexp = `(?m)((\w*)://)?((\w+)(:(\S+))?@)?(tcp\()?(\w[\w.]*):(\d+)\)?(/(\w+))?`
+const referenceRegexp = `(?m)((\w*)://)?(([\w<>]+)(:(\S+))?@)?(tcp\()?(\w[\w.]*):(\d+)\)?(/(\w+))?`
 
 type ReferenceType byte
 
@@ -66,6 +66,12 @@ func NewReference(url string) (*Reference, string, error) {
 		ref.Driver = MysqlType
 	case ref.Driver == AdabasType && ref.Database == "":
 		ref.Database = "4"
+	}
+	if ref.User == "<user>" {
+		ref.User = ""
+	}
+	if passwd == "<password>" {
+		passwd = ""
 	}
 	return ref, passwd, nil
 }
