@@ -80,11 +80,6 @@ func (dynamic *typeInterface) createQueryValues(dataType interface{}) {
 		if cv.Kind() == reflect.Struct {
 			dynamic.createQueryValues(cv.Interface())
 		} else {
-			if log.IsDebugLevel() {
-				log.Log.Debugf("FieldCV: %s %T %T %v %v indirect=%v\n",
-					cv.Type().Name(), cv, cv.Interface(), cv.CanAddr(),
-					cv.CanInterface(), reflect.Indirect(cv))
-			}
 			var ptr reflect.Value
 			if cv.CanAddr() {
 				log.Log.Debugf("Use Addr")
