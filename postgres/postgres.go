@@ -137,6 +137,7 @@ func (pg *PostGres) open() (dbOpen *pgx.Conn, err error) {
 	if dbOpen == nil {
 		return nil, fmt.Errorf("error open handle and err nil")
 	}
+	pg.openDB = dbOpen
 	return dbOpen, nil
 }
 
