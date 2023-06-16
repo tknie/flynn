@@ -137,7 +137,6 @@ func (pg *PostGres) open() (dbOpen *pgx.Conn, err error) {
 	if dbOpen == nil {
 		return nil, fmt.Errorf("error open handle and err nil")
 	}
-	pg.openDB = dbOpen
 	return dbOpen, nil
 }
 
@@ -226,8 +225,8 @@ func (pg *PostGres) Ping() error {
 	if err != nil {
 		return err
 	}
-	defer pg.Close()
 	db := dbOpen.(*pgx.Conn)
+	defer db.Close(pg.ctx)
 
 	pg.dbTableNames = make([]string, 0)
 
