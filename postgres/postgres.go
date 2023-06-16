@@ -156,7 +156,7 @@ func (pg *PostGres) Open() (dbOpen any, err error) {
 		}
 
 	}
-	log.Log.Debugf("Open database %s after transaction", pg.dbURL)
+	log.Log.Debugf("Opened database %s after transaction", pg.dbURL)
 	return db, nil
 }
 
@@ -212,37 +212,39 @@ func (pg *PostGres) Close() {
 		pg.openDB = nil
 		pg.tx = nil
 		pg.ctx = nil
-		log.Log.Debugf("Close database")
-	} else {
-		log.Log.Debugf("Close not opened database")
+		log.Log.Debugf("Closing database done")
+		return
 	}
+	log.Log.Debugf("Close not opened database")
 }
 
 // Ping create short test database connection
 func (pg *PostGres) Ping() error {
-
+	log.Log.Debugf("Ping database ... by receiving table names")
 	dbOpen, err := pg.Open()
 	if err != nil {
 		return err
 	}
 	defer pg.Close()
-
 	db := dbOpen.(*pgx.Conn)
 
 	pg.dbTableNames = make([]string, 0)
 
 	rows, err := db.Query(context.Background(), "SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'")
 	if err != nil {
+		log.Log.Debugf("Error pinging database ...%v", err)
 		return err
 	}
 	tableName := ""
 	for rows.Next() {
 		err = rows.Scan(&tableName)
 		if err != nil {
+			log.Log.Debugf("Error pinging and scan database ...%v", err)
 			return err
 		}
 		pg.dbTableNames = append(pg.dbTableNames, tableName)
 	}
+	log.Log.Debugf("Pinging and scanning database ended")
 
 	return nil
 }
@@ -277,6 +279,7 @@ func (pg *PostGres) Delete(name string, remove *common.Entries) (rowsAffected in
 
 // GetTableColumn get table columne names
 func (pg *PostGres) GetTableColumn(tableName string) ([]string, error) {
+	log.Log.Debugf("Get table column ...")
 	dbOpen, err := pg.Open()
 	if err != nil {
 		return nil, err
