@@ -235,6 +235,18 @@ type TestDeepString struct {
 	Ignore string `db:":ignore"`
 }
 
+type SubPtr struct {
+	Directory string
+	Thumbnail string
+}
+
+type TestDeepPtrString struct {
+	Title     string
+	Published time.Time
+	SubPtr    *SubPtr
+	Ignore    string `db:":ignore"`
+}
+
 func TestSearchPgStruct(t *testing.T) {
 	InitLog(t)
 	pg, err := postgresTarget(t)
@@ -407,6 +419,54 @@ func TestSearchPgPtrStructAll(t *testing.T) {
 		default:
 			assert.NotEqual(t, td.Title, "blabla")
 			assert.NotEmpty(t, td.Sub.Thumbnail)
+		}
+		return nil
+	})
+	assert.NoError(t, err)
+	assert.Equal(t, 50, counter)
+}
+
+func TestSearchPgPtrPtrStructAll(t *testing.T) {
+	InitLog(t)
+	pg, err := postgresTarget(t)
+	if !assert.NoError(t, err) {
+		return
+	}
+
+	x, err := Register("postgres", pg)
+	if !assert.NoError(t, err) {
+		return
+	}
+	defer Unregister(x)
+
+	q := &common.Query{TableName: "Albums",
+		Search:     "",
+		DataStruct: &TestDeepPtrString{Title: "blabla"},
+		Fields:     []string{"*"}}
+	counter := 0
+	_, err = x.Query(q, func(search *common.Query, result *common.Result) error {
+		assert.NotNil(t, search)
+		assert.NotNil(t, result)
+		assert.IsType(t, &TestDeepPtrString{}, result.Data)
+		td := result.Data.(*TestDeepPtrString)
+		// fmt.Printf("%d: Deep %#v\n", counter, td)
+		counter++
+		if assert.NotNil(t, td.SubPtr) {
+			assert.NotEmpty(t, td.SubPtr.Directory)
+			switch counter {
+			case 1:
+				assert.Equal(t, td.Title, "5. Klasse")
+				assert.Equal(t, td.SubPtr.Thumbnail, "3C83A22329A7CDCDAAD39D1B5A041E49")
+			case 10:
+				assert.Equal(t, td.Title, "Es ist Herbst.")
+				assert.Equal(t, td.SubPtr.Thumbnail, "37591E6BE9EE899A92943D6862BE9C79")
+			case 48:
+				assert.Equal(t, td.Title, "Vito")
+				assert.Equal(t, td.SubPtr.Thumbnail, "937A61D44BEE8AF355FA2BA28A44076F")
+			default:
+				assert.NotEqual(t, td.Title, "blabla")
+				assert.NotEmpty(t, td.SubPtr.Thumbnail)
+			}
 		}
 		return nil
 	})
