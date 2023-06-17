@@ -21,21 +21,49 @@ import (
 	"github.com/tknie/log"
 )
 
+type SetType byte
+
+const (
+	EmptySet SetType = iota
+	AllSet
+	GivenSet
+)
+
+type void struct{}
+
+var member void
+
 type typeInterface struct {
 	DataType  interface{}
 	RowNames  map[string][]string
 	RowFields []string
+	SetType   SetType
+	FieldSet  map[string]void
 	RowValues []any
 }
 
-func CreateInterface(i interface{}) *typeInterface {
+func CreateInterface(i interface{}, fields []string) *typeInterface {
 	ri := reflect.TypeOf(i)
 	if ri.Kind() == reflect.Ptr {
 		ri = ri.Elem()
 	}
+	log.Log.Debugf("Create dynamic interface with fields %#v", fields)
+	set := make(map[string]void) // New empty set
 	dynamic := &typeInterface{DataType: i, RowNames: make(map[string][]string),
-		RowFields: make([]string, 0)}
-	dynamic.generateFieldNames(ri, dynamic.RowNames)
+		RowFields: make([]string, 0), FieldSet: set}
+	for _, f := range fields {
+		switch f {
+		case "*":
+			dynamic.SetType = AllSet
+		case "":
+			dynamic.SetType = EmptySet
+			return dynamic
+		default:
+			dynamic.SetType = GivenSet
+			dynamic.FieldSet[strings.ToLower(f)] = member
+		}
+	}
+	dynamic.generateFieldNames(ri)
 	log.Log.Debugf("Final created field list generated %#v", dynamic.RowFields)
 	return dynamic
 }
@@ -53,6 +81,9 @@ func (dynamic *typeInterface) CreateQueryFields() string {
 
 // CreateQueryValues create query value copy of struct
 func (dynamic *typeInterface) CreateQueryValues() (any, []any) {
+	if dynamic.SetType == EmptySet {
+		return nil, nil
+	}
 	fieldType := reflect.TypeOf(dynamic.DataType)
 	value := reflect.ValueOf(dynamic.DataType)
 	if value.Type().Kind() == reflect.Pointer {
@@ -78,13 +109,6 @@ func (dynamic *typeInterface) CreateQueryValues() (any, []any) {
 
 func (dynamic *typeInterface) generateField(elemValue reflect.Value) {
 	log.Log.Debugf("Generate field of Struct: %T %s", elemValue.Interface(), elemValue.Type().Name())
-	switch elemValue.Interface().(type) {
-	case time.Time:
-		ptr := elemValue.Addr()
-		log.Log.Debugf("Add value %T %s", ptr.Interface(), elemValue.Type().Name())
-		dynamic.RowValues = append(dynamic.RowValues, ptr.Interface())
-		return
-	}
 	for fi := 0; fi < elemValue.NumField(); fi++ {
 		fieldType := elemValue.Type().Field(fi)
 		tag := fieldType.Tag
@@ -93,108 +117,52 @@ func (dynamic *typeInterface) generateField(elemValue reflect.Value) {
 		if d == ":ignore" {
 			continue
 		}
+		log.Log.Debugf("Work on field %s", fieldType.Name)
 		if cv.Kind() == reflect.Struct {
+			switch elemValue.Interface().(type) {
+			case time.Time:
+				checkField := dynamic.checkFieldSet(fieldType.Name)
+				if checkField {
+					ptr := elemValue.Addr()
+					t := reflect.TypeOf(elemValue)
+					log.Log.Debugf("Add value %T %s %s", ptr.Interface(), elemValue.Type().Name(), t.Name())
+					dynamic.RowValues = append(dynamic.RowValues, ptr.Interface())
+				}
+				continue
+			}
 			dynamic.generateField(cv)
 		} else {
-			var ptr reflect.Value
-			if cv.CanAddr() {
-				log.Log.Debugf("Use Addr")
-				ptr = cv.Addr()
-			} else {
-				ptr = reflect.New(cv.Type())
-				log.Log.Debugf("Got Addr pointer %#v", ptr)
-				ptr.Elem().Set(cv)
-			}
-			log.Log.Debugf("Add value %T %s %s", ptr.Interface(), fieldType.Name, elemValue.Type().Name())
-			dynamic.RowValues = append(dynamic.RowValues, ptr.Interface())
-		}
-	}
-}
-
-func (dynamic *typeInterface) CreateQueryValues2() (any, []any) {
-	log.Log.Debugf("Create query values")
-	rt := reflect.TypeOf(dynamic.DataType)
-	if rt.Kind() == reflect.Pointer {
-		rt = rt.Elem()
-	}
-	ptr2 := reflect.New(rt)
-	dynamic.DataType = ptr2.Interface()
-	dynamic.createQueryValues(dynamic.DataType)
-	log.Log.Debugf("Number values created %d out of %s", len(dynamic.RowValues), dynamic.RowNames)
-	log.Log.Debugf("Values %#v", dynamic.RowValues)
-	return ptr2.Interface(), dynamic.RowValues
-}
-
-func (dynamic *typeInterface) createQueryValues(dataType interface{}) {
-	rv := reflect.ValueOf(dataType)
-	rt := reflect.TypeOf(dataType)
-	if rv.Kind() == reflect.Pointer {
-		rv = rv.Elem()
-		rt = rt.Elem()
-	}
-	if log.IsDebugLevel() {
-		rt := reflect.TypeOf(dataType)
-		log.Log.Debugf("Scan query values in struct %v %d %s", rv, rv.NumField(), rt.Name())
-	}
-	for fi := 0; fi < rv.NumField(); fi++ {
-		f := rv.Field(fi)
-		fmt.Println(f.Kind(), f.Type().Name())
-		if f.Kind() == reflect.Pointer {
-			f = f.Elem()
-		}
-		if f.Kind() == reflect.Struct {
-			dynamic.createQueryValues(f.Interface())
-		} else {
-			if f.IsValid() {
-				if f.CanSet() {
-					log.Log.Debugf("-> %s %T", dataType, dataType)
-					if f.Kind() == reflect.String {
-						f.SetString(dataType.(string))
-					} else if f.Kind() == reflect.Struct {
-						f.Set(reflect.ValueOf(dataType))
-					}
+			checkField := dynamic.checkFieldSet(fieldType.Name)
+			if checkField {
+				var ptr reflect.Value
+				if cv.CanAddr() {
+					log.Log.Debugf("Use Addr")
+					ptr = cv.Addr()
+				} else {
+					ptr = reflect.New(cv.Type())
+					log.Log.Debugf("Got Addr pointer %#v", ptr)
+					ptr.Elem().Set(cv)
 				}
+				log.Log.Debugf("Add value %T %s %s", ptr.Interface(), fieldType.Name, elemValue.Type().Name())
+				dynamic.RowValues = append(dynamic.RowValues, ptr.Interface())
 			}
 		}
-		// subRt := rt.Field(fi)
-		// if log.IsDebugLevel() {
-		// 	log.Log.Debugf("Field %d:%s %v canAddr: %v %s %s", fi, cv.Type().Name(), cv.CanInterface(), cv.CanAddr(), rt.Name(), subRt.Name)
-		// }
-		// if cv.Kind() == reflect.Struct {
-		// 	dynamic.createQueryValues(cv.Interface())
-		// } else {
-		// 	var ptr reflect.Value
-		// 	if cv.CanAddr() {
-		// 		log.Log.Debugf("Use Addr")
-		// 		ptr = cv.Addr()
-		// 	} else {
-		// 		log.Log.Debugf("New Addr pointer")
-		// 		ptr = reflect.New(cv.Type())
-		// 		log.Log.Debugf("Got Addr pointer %#v", ptr)
-		// 		ptr.Elem().Set(cv)
-		// 	}
-		// 	if log.IsDebugLevel() {
-		// 		log.Log.Debugf("FieldPTR: %T / %T / %v\n", ptr.Type().Name(), ptr.Interface(), ptr.Interface())
-		// 	}
-		// 	// x := ptr.Pointer()
-		// 	// xv := reflect.ValueOf(x)
-		// 	// fmt.Println("PTR Kind:", xv.Kind(), xv.Kind() == reflect.Pointer)
-		// 	// if xv.Kind() != reflect.Pointer {
-		// 	// 	log.Fatalf("FATAL ERROR not a pointer ..... exiting FieldPTR: %T / %T / %v\n", ptr.Type().Name(), x, x)
-		// 	// }
-		// 	//rf := reflect.NewAt(cv.Type(), unsafe.Pointer(ptr.Pointer())) // .Elem()
-		// 	//dynamic.RowValues = append(dynamic.RowValues, rf.Interface())
-		// 	dynamic.RowValues = append(dynamic.RowValues, ptr.Interface())
-		// }
 	}
-	if log.IsDebugLevel() {
-		log.Log.Debugf("Len row values: %d", len(dynamic.RowValues))
+}
+
+func (dynamic *typeInterface) checkFieldSet(fieldName string) bool {
+	ok := true
+	if dynamic.SetType == GivenSet {
+		_, ok = dynamic.FieldSet[strings.ToLower(fieldName)]
+		log.Log.Debugf("Restrict to %v", ok)
 	}
+
+	return ok
 }
 
 // generateFieldNames examine all structure-tags in the given structure and build up
 // field names map pointing to corresponding path with names of structures
-func (dynamic *typeInterface) generateFieldNames(ri reflect.Type, f map[string][]string) {
+func (dynamic *typeInterface) generateFieldNames(ri reflect.Type) {
 	if log.IsDebugLevel() {
 		log.Log.Debugf("Generate field names...")
 	}
@@ -213,9 +181,9 @@ func (dynamic *typeInterface) generateFieldNames(ri reflect.Type, f map[string][
 			if len(s) > 1 {
 				switch s[1] {
 				case "key":
-					f["#key"] = []string{fieldName}
+					dynamic.RowNames["#key"] = []string{fieldName}
 				case "isn":
-					f["#index"] = []string{fieldName}
+					dynamic.RowNames["#index"] = []string{fieldName}
 					continue
 				case "ignore":
 					continue
@@ -227,38 +195,37 @@ func (dynamic *typeInterface) generateFieldNames(ri reflect.Type, f map[string][
 			}
 		}
 
-		subFields := make([]string, 0)
 		if ct.Type.Kind() == reflect.Struct {
 			log.Log.Debugf("Struct-Kind of %s", ct.Type.Name())
 			//continue generate field names
 			if ct.Type.Name() != "Time" {
-				dynamic.generateFieldNames(ct.Type, f)
+				dynamic.generateFieldNames(ct.Type)
 			} else {
-				dynamic.RowFields = append(dynamic.RowFields, fieldName)
-				subFields = append(subFields, fieldName)
-				f[fieldName] = subFields
+				ok := dynamic.checkFieldSet(fieldName)
+				if ok {
+					dynamic.RowFields = append(dynamic.RowFields, fieldName)
+				}
 			}
 		} else {
-			dynamic.RowFields = append(dynamic.RowFields, fieldName)
 			log.Log.Debugf("Kind of %s: %s", fieldName, ct.Type.Kind())
 			// copy of subfields
 			// copy(subFields, fields)
-			subFields = append(subFields, fieldName)
-			f[fieldName] = subFields
-			log.Log.Debugf("%s -> SubFields %#v", fieldName, subFields)
+			ok := dynamic.checkFieldSet(fieldName)
+			if ok {
+				dynamic.RowFields = append(dynamic.RowFields, fieldName)
+			}
 		}
 		// Handle special case for pointer and slices
 		switch ct.Type.Kind() {
 		case reflect.Ptr:
-			dynamic.generateFieldNames(ct.Type.Elem(), f)
+			dynamic.generateFieldNames(ct.Type.Elem())
 		case reflect.Slice:
 			sliceT := ct.Type.Elem()
 			if sliceT.Kind() == reflect.Ptr {
 				sliceT = sliceT.Elem()
 			}
-			dynamic.generateFieldNames(sliceT, f)
+			dynamic.generateFieldNames(sliceT)
 		}
-		log.Log.Debugf("Sub field list %#v", subFields)
 	}
 	log.Log.Debugf("Field list generated %#v", dynamic.RowFields)
 }

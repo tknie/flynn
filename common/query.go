@@ -46,7 +46,7 @@ func (q *Query) Select() (string, error) {
 		if q.Descriptor {
 			selectCmd.WriteString("DISTINCT ")
 		}
-		ti := CreateInterface(q.DataStruct)
+		ti := CreateInterface(q.DataStruct, q.Fields)
 		q.TypeInfo = ti
 		selectCmd.WriteString(ti.CreateQueryFields())
 		selectCmd.WriteString(" FROM " + q.TableName)
