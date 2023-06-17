@@ -13,7 +13,6 @@ package common
 
 import (
 	"bytes"
-	"fmt"
 	"reflect"
 	"strings"
 	"time"
@@ -82,12 +81,13 @@ func (dynamic *typeInterface) CreateQueryFields() string {
 // CreateQueryValues create query value copy of struct
 func (dynamic *typeInterface) CreateQueryValues() (any, []any) {
 	if dynamic.SetType == EmptySet {
+		log.Log.Debugf("Empty set defined")
 		return nil, nil
 	}
-	fieldType := reflect.TypeOf(dynamic.DataType)
+	//	fieldType := reflect.TypeOf(dynamic.DataType)
 	value := reflect.ValueOf(dynamic.DataType)
 	if value.Type().Kind() == reflect.Pointer {
-		fmt.Println(fieldType.Kind(), value.Kind())
+		//		fmt.Println(fieldType.Kind(), value.Kind())
 		value = value.Elem()
 	}
 	copyValue := reflect.New(value.Type())
@@ -119,18 +119,19 @@ func (dynamic *typeInterface) generateField(elemValue reflect.Value) {
 		}
 		log.Log.Debugf("Work on field %s", fieldType.Name)
 		if cv.Kind() == reflect.Struct {
-			switch elemValue.Interface().(type) {
+			switch cv.Interface().(type) {
 			case time.Time:
 				checkField := dynamic.checkFieldSet(fieldType.Name)
 				if checkField {
-					ptr := elemValue.Addr()
-					t := reflect.TypeOf(elemValue)
-					log.Log.Debugf("Add value %T %s %s", ptr.Interface(), elemValue.Type().Name(), t.Name())
+					ptr := cv.Addr()
+					t := reflect.TypeOf(cv)
+					log.Log.Debugf("Add Time %T %s %s", ptr.Interface(), cv.Type().Name(), t.Name())
 					dynamic.RowValues = append(dynamic.RowValues, ptr.Interface())
 				}
 				continue
+			default:
+				dynamic.generateField(cv)
 			}
-			dynamic.generateField(cv)
 		} else {
 			checkField := dynamic.checkFieldSet(fieldType.Name)
 			if checkField {

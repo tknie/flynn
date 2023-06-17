@@ -107,8 +107,10 @@ func (search *Query) ParseRows(rows *sql.Rows, f ResultFunction) (result *Result
 	// rows := make([]any, len(result.Rows))
 	var scanRows []any
 	if search.DataStruct == nil {
+		log.Log.Debugf("Generate data struct values")
 		scanRows, err = generateColumnByValues(rows)
 	} else {
+		log.Log.Debugf("Generate data values")
 		_, scanRows, err = result.GenerateColumnByStruct(search)
 	}
 	if err != nil {
@@ -191,7 +193,7 @@ func (search *Query) ParseStruct(rows *sql.Rows, f ResultFunction) (result *Resu
 		return search.ParseRows(rows, f)
 	}
 	result = &Result{}
-
+	log.Log.Debugf("Parse using struct...")
 	result.Data = search.DataStruct
 	copy, values, err := result.GenerateColumnByStruct(search)
 	if err != nil {

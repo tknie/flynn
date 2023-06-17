@@ -325,6 +325,7 @@ func (pg *PostGres) Query(search *common.Query, f common.ResultFunction) (*commo
 	log.Log.Debugf("Query: %s", selectCmd)
 	rows, err := db.Query(ctx, selectCmd)
 	if err != nil {
+		log.Log.Debugf("Query error: %v", err)
 		return nil, err
 	}
 	if search.DataStruct == nil {
@@ -368,7 +369,6 @@ func (pg *PostGres) ParseStruct(search *common.Query, rows pgx.Rows, f common.Re
 	result = &common.Result{}
 
 	result.Data = search.DataStruct
-	fmt.Printf("DataType %T\n", result.Data)
 	copy, values, err := result.GenerateColumnByStruct(search)
 	if err != nil {
 		log.Log.Debugf("Error generating column: %v", err)

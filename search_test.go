@@ -228,10 +228,9 @@ type TestString struct {
 type TestDeepString struct {
 	Title     string
 	Published time.Time
-	Key       string
 	Sub       struct {
-		Directory     string
-		ThumbnailHash string
+		Directory string
+		Thumbnail string
 	}
 	Ignore string `db:":ignore"`
 }
@@ -351,8 +350,7 @@ func TestSearchPgPtrStructDeep(t *testing.T) {
 		td := result.Data.(*TestDeepString)
 		fmt.Printf("Deep %#v\n", td)
 		counter++
-		assert.Equal(t, td.Key, "")
-		assert.Equal(t, td.Sub.ThumbnailHash, "")
+		assert.Equal(t, td.Sub.Thumbnail, "")
 		assert.NotEmpty(t, td.Sub.Directory)
 		switch counter {
 		case 1:
@@ -393,20 +391,22 @@ func TestSearchPgPtrStructAll(t *testing.T) {
 		assert.NotNil(t, result)
 		assert.IsType(t, &TestDeepString{}, result.Data)
 		td := result.Data.(*TestDeepString)
-		fmt.Printf("Deep %#v\n", td)
+		// fmt.Printf("%d: Deep %#v\n", counter, td)
 		counter++
-		assert.Equal(t, td.Key, "")
-		assert.Equal(t, td.Sub.ThumbnailHash, "")
 		assert.NotEmpty(t, td.Sub.Directory)
 		switch counter {
 		case 1:
 			assert.Equal(t, td.Title, "5. Klasse")
+			assert.Equal(t, td.Sub.Thumbnail, "3C83A22329A7CDCDAAD39D1B5A041E49")
 		case 10:
 			assert.Equal(t, td.Title, "Es ist Herbst.")
+			assert.Equal(t, td.Sub.Thumbnail, "37591E6BE9EE899A92943D6862BE9C79")
 		case 48:
 			assert.Equal(t, td.Title, "Vito")
+			assert.Equal(t, td.Sub.Thumbnail, "937A61D44BEE8AF355FA2BA28A44076F")
 		default:
 			assert.NotEqual(t, td.Title, "blabla")
+			assert.NotEmpty(t, td.Sub.Thumbnail)
 		}
 		return nil
 	})
