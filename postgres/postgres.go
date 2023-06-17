@@ -368,12 +368,14 @@ func (pg *PostGres) ParseStruct(search *common.Query, rows pgx.Rows, f common.Re
 	result = &common.Result{}
 
 	result.Data = search.DataStruct
+	fmt.Printf("DataType %T\n", result.Data)
 	copy, values, err := result.GenerateColumnByStruct(search)
 	if err != nil {
 		log.Log.Debugf("Error generating column: %v", err)
 		return nil, err
 	}
-	log.Log.Debugf("Parse columns rows")
+	log.Log.Debugf("Parse columns rows -> flen=%d vlen=%d %T",
+		len(result.Fields), len(values), copy)
 	for rows.Next() {
 		if len(result.Fields) == 0 {
 			for _, f := range rows.FieldDescriptions() {
