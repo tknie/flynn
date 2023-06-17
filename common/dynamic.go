@@ -35,13 +35,14 @@ func CreateInterface(i interface{}) *typeInterface {
 	}
 	dynamic := &typeInterface{DataType: i, RowNames: make(map[string][]string),
 		RowFields: make([]string, 0)}
-	generateFieldNames(ri, dynamic.RowNames, dynamic.RowFields)
+	dynamic.generateFieldNames(ri, dynamic.RowNames)
+	log.Log.Debugf("Final created field list generated %#v", dynamic.RowFields)
 	return dynamic
 }
 
 func (dynamic *typeInterface) CreateQueryFields() string {
 	var buffer bytes.Buffer
-	for fieldName := range dynamic.RowNames {
+	for _, fieldName := range dynamic.RowFields {
 		if buffer.Len() > 0 {
 			buffer.WriteRune(',')
 		}
@@ -52,10 +53,15 @@ func (dynamic *typeInterface) CreateQueryFields() string {
 
 // CreateQueryValues create query value copy of struct
 func (dynamic *typeInterface) CreateQueryValues() (any, []any) {
+	fieldType := reflect.TypeOf(dynamic.DataType)
 	value := reflect.ValueOf(dynamic.DataType)
-	copyValue := reflect.New(value.Elem().Type())
+	if value.Type().Kind() == reflect.Pointer {
+		fmt.Println(fieldType.Kind(), value.Kind())
+		value = value.Elem()
+	}
+	copyValue := reflect.New(value.Type())
 	if log.IsDebugLevel() {
-		log.Log.Debugf("Value %s %T", value.Elem().Type().Name(), value.Interface())
+		log.Log.Debugf("Value %s %T", value.Type().Name(), value.Interface())
 		log.Log.Debugf("Main1: %T", copyValue.Interface())
 	}
 	elemValue := copyValue
@@ -188,7 +194,7 @@ func (dynamic *typeInterface) createQueryValues(dataType interface{}) {
 
 // generateFieldNames examine all structure-tags in the given structure and build up
 // field names map pointing to corresponding path with names of structures
-func generateFieldNames(ri reflect.Type, f map[string][]string, fields []string) {
+func (dynamic *typeInterface) generateFieldNames(ri reflect.Type, f map[string][]string) {
 	if log.IsDebugLevel() {
 		log.Log.Debugf("Generate field names...")
 	}
@@ -221,23 +227,22 @@ func generateFieldNames(ri reflect.Type, f map[string][]string, fields []string)
 			}
 		}
 
-		subFields := make([]string, len(fields))
+		subFields := make([]string, 0)
 		if ct.Type.Kind() == reflect.Struct {
 			log.Log.Debugf("Struct-Kind of %s", ct.Type.Name())
 			//continue generate field names
 			if ct.Type.Name() != "Time" {
-				generateFieldNames(ct.Type, f, fields)
+				dynamic.generateFieldNames(ct.Type, f)
 			} else {
-				fields = append(fields, fieldName)
-				copy(subFields, fields)
+				dynamic.RowFields = append(dynamic.RowFields, fieldName)
 				subFields = append(subFields, fieldName)
 				f[fieldName] = subFields
 			}
 		} else {
-			fields = append(fields, fieldName)
+			dynamic.RowFields = append(dynamic.RowFields, fieldName)
 			log.Log.Debugf("Kind of %s: %s", fieldName, ct.Type.Kind())
 			// copy of subfields
-			copy(subFields, fields)
+			// copy(subFields, fields)
 			subFields = append(subFields, fieldName)
 			f[fieldName] = subFields
 			log.Log.Debugf("%s -> SubFields %#v", fieldName, subFields)
@@ -245,15 +250,15 @@ func generateFieldNames(ri reflect.Type, f map[string][]string, fields []string)
 		// Handle special case for pointer and slices
 		switch ct.Type.Kind() {
 		case reflect.Ptr:
-			generateFieldNames(ct.Type.Elem(), f, subFields)
+			dynamic.generateFieldNames(ct.Type.Elem(), f)
 		case reflect.Slice:
 			sliceT := ct.Type.Elem()
 			if sliceT.Kind() == reflect.Ptr {
 				sliceT = sliceT.Elem()
 			}
-			generateFieldNames(sliceT, f, subFields)
+			dynamic.generateFieldNames(sliceT, f)
 		}
 		log.Log.Debugf("Sub field list %#v", subFields)
-		log.Log.Debugf("Field list %#v", fields)
 	}
+	log.Log.Debugf("Field list generated %#v", dynamic.RowFields)
 }
