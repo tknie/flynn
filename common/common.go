@@ -28,9 +28,10 @@ type Stream struct {
 }
 
 type Entries struct {
-	Fields []string
-	Update []string
-	Values [][]any
+	Fields     []string
+	DataStruct any
+	Update     []string
+	Values     [][]any
 }
 
 type Database interface {

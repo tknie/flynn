@@ -186,3 +186,25 @@ func createStructTestTable(t *testing.T, target *target) error {
 	}
 	return nil
 }
+
+func TestInsertStruct(t *testing.T) {
+	url, _ := postgresTarget(t)
+	target := &target{"postgres", url}
+	x, err := Register(target.layer, target.url)
+	if !assert.NoError(t, err) {
+		return
+	}
+	defer Unregister(x)
+	nameValue := time.Now().Format("20060102150405")
+	vId1 := nameValue + "-1"
+	vId2 := nameValue + "-2"
+	list := [][]any{{vId1, "aaadasfdsnaflksdnf", 1}, {vId2, "dmfklsfgmskdlmgsmgls", 2}}
+	input := &common.Entries{Fields: []string{"ID", "Name", "account"},
+		Update: []string{"ID"},
+		Values: list}
+	err = x.Insert(testStructTable, input)
+	if !assert.NoError(t, err) {
+		return
+	}
+
+}

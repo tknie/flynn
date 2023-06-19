@@ -117,8 +117,14 @@ func (dynamic *typeInterface) generateField(elemValue reflect.Value) {
 		if d == ":ignore" {
 			continue
 		}
-		log.Log.Debugf("Work on field %s", fieldType.Name)
+		if cv.Kind() == reflect.Pointer {
+			x := reflect.New(cv.Type().Elem())
+			log.Log.Debugf("Work on pointer %v %s", x, cv.Type().String())
+			cv.Set(x)
+			cv = x.Elem()
+		}
 		if cv.Kind() == reflect.Struct {
+			log.Log.Debugf("Work on struct %s", fieldType.Name)
 			switch cv.Interface().(type) {
 			case time.Time:
 				checkField := dynamic.checkFieldSet(fieldType.Name)
@@ -133,6 +139,7 @@ func (dynamic *typeInterface) generateField(elemValue reflect.Value) {
 				dynamic.generateField(cv)
 			}
 		} else {
+			log.Log.Debugf("Work on field %s", fieldType.Name)
 			checkField := dynamic.checkFieldSet(fieldType.Name)
 			if checkField {
 				var ptr reflect.Value
@@ -148,6 +155,7 @@ func (dynamic *typeInterface) generateField(elemValue reflect.Value) {
 				dynamic.RowValues = append(dynamic.RowValues, ptr.Interface())
 			}
 		}
+		log.Log.Debugf("Row values len=%d", len(dynamic.RowNames))
 	}
 }
 
@@ -195,16 +203,22 @@ func (dynamic *typeInterface) generateFieldNames(ri reflect.Type) {
 				}
 			}
 		}
-
-		if ct.Type.Kind() == reflect.Struct {
-			log.Log.Debugf("Struct-Kind of %s", ct.Type.Name())
+		st := ct.Type
+		if st.Kind() == reflect.Pointer {
+			log.Log.Debugf("Pointer-Kind of %s", st.Name())
+			st = st.Elem()
+			log.Log.Debugf("Pointer-Struct-Kind of %s -> %s", st.Name(), st.Kind())
+		}
+		if st.Kind() == reflect.Struct {
+			log.Log.Debugf("Struct-Kind of %s", st.Name())
 			//continue generate field names
-			if ct.Type.Name() != "Time" {
-				dynamic.generateFieldNames(ct.Type)
+			if st.Name() != "Time" {
+				dynamic.generateFieldNames(st)
 			} else {
 				ok := dynamic.checkFieldSet(fieldName)
 				if ok {
 					dynamic.RowFields = append(dynamic.RowFields, fieldName)
+					log.Log.Debugf("RowFields: Add field name %s", fieldName)
 				}
 			}
 		} else {
@@ -214,12 +228,13 @@ func (dynamic *typeInterface) generateFieldNames(ri reflect.Type) {
 			ok := dynamic.checkFieldSet(fieldName)
 			if ok {
 				dynamic.RowFields = append(dynamic.RowFields, fieldName)
+				log.Log.Debugf("RowFields: Add field name %s", fieldName)
 			}
 		}
 		// Handle special case for pointer and slices
 		switch ct.Type.Kind() {
 		case reflect.Ptr:
-			dynamic.generateFieldNames(ct.Type.Elem())
+			// dynamic.generateFieldNames(ct.Type.Elem())
 		case reflect.Slice:
 			sliceT := ct.Type.Elem()
 			if sliceT.Kind() == reflect.Ptr {

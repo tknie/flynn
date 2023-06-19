@@ -487,17 +487,23 @@ func (pg *PostGres) Insert(name string, insert *common.Entries) (err error) {
 	values := "("
 
 	indexNeed := pg.IndexNeeded()
-	for i, field := range insert.Fields {
-		if i > 0 {
-			insertCmd += ","
-			values += ","
-		}
-		if indexNeed {
-			insertCmd += `"` + strings.ToLower(field) + `"`
-			values += "$" + strconv.Itoa(i+1)
-		} else {
-			insertCmd += "`" + strings.ToLower(field) + "`"
-			values += "?"
+	if insert.DataStruct != nil {
+		dynamic := common.CreateInterface(insert.DataStruct, insert.Fields)
+		log.Log.Debugf("Row fields: %#v", dynamic.RowFields)
+		log.Log.Fatal("Errrrrr")
+	} else {
+		for i, field := range insert.Fields {
+			if i > 0 {
+				insertCmd += ","
+				values += ","
+			}
+			if indexNeed {
+				insertCmd += `"` + strings.ToLower(field) + `"`
+				values += "$" + strconv.Itoa(i+1)
+			} else {
+				insertCmd += "`" + strings.ToLower(field) + "`"
+				values += "?"
+			}
 		}
 	}
 	values += ")"
