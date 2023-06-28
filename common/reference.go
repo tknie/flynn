@@ -75,6 +75,19 @@ func NewReference(url string) (*Reference, string, error) {
 	return ref, passwd, nil
 }
 
+func (ref *Reference) OptionString() string {
+	options := ""
+	for _, o := range ref.Options {
+		if options == "" {
+			options += "?"
+		} else {
+			options += "&"
+		}
+		options += o
+	}
+	return options
+}
+
 // ParseTypeName parse type string to internal type
 func ParseTypeName(t string) ReferenceType {
 	switch strings.ToLower(t) {

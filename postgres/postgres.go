@@ -47,17 +47,9 @@ type PostGres struct {
 
 // New create new postgres reference instance
 func NewInstance(id common.RegDbID, reference *common.Reference, password string) (common.Database, error) {
-	options := ""
-	for _, o := range reference.Options {
-		if options == "" {
-			options += "?"
-		} else {
-			options += "&"
-		}
-		options += o
-	}
+
 	url := fmt.Sprintf("postgres://%s:"+passwdPlaceholder+"@%s:%d/%s%s", reference.User,
-		reference.Host, reference.Port, reference.Database, options)
+		reference.Host, reference.Port, reference.Database, reference.OptionString())
 	pg := &PostGres{common.CommonDatabase{RegDbID: id}, nil,
 		url, nil, "", password, nil, nil}
 

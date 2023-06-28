@@ -45,7 +45,8 @@ type Mysql struct {
 
 // NewInstance create new mysql reference instance
 func NewInstance(id common.RegDbID, reference *common.Reference, password string) (common.Database, error) {
-	url := fmt.Sprintf("%s:"+passwdPlaceholder+"@tcp(%s:%d)/%s", reference.User, reference.Host, reference.Port, reference.Database)
+	url := fmt.Sprintf("%s:"+passwdPlaceholder+"@tcp(%s:%d)/%s%s", reference.User, reference.Host,
+		reference.Port, reference.Database, reference.OptionString())
 	mysql := &Mysql{common.CommonDatabase{RegDbID: id},
 		nil, url, nil, reference.User, password, nil, nil}
 	return mysql, nil
