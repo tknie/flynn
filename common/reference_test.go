@@ -48,6 +48,11 @@ func TestReferenceURL(t *testing.T) {
 	assert.Equal(t, &Reference{Driver: PostgresType, Host: "lion", Port: 5432, Database: "bitgarten",
 		User: "<user>"}, ref)
 	assert.Equal(t, "<password>", p)
+	ref, p, err = NewReference("postgres://admin:axx@localhost:5432/bitgarten?sslmode=require")
+	assert.NoError(t, err)
+	assert.Equal(t, &Reference{Driver: PostgresType, Host: "lion", Port: 5432, Database: "bitgarten",
+		User: "<user>", Options: []string{"sslmod=require"}}, ref)
+	assert.Equal(t, "axx", p)
 
 }
 

@@ -18,7 +18,7 @@ import (
 	"strings"
 )
 
-const referenceRegexp = `(?m)((\w*)://)?(([\w<>]+)(:(\S+))?@)?(tcp\()?(\w[\w.]*):(\d+)\)?(/(\w+))?`
+const referenceRegexp = `(?m)((\w*)://)?(([\w<>]+)(:(\S+))?@)?(tcp\()?(\w[\w.]*):(\d+)\)?(/(\w+))?\??(.*)`
 
 type ReferenceType byte
 
@@ -41,6 +41,7 @@ type Reference struct {
 	Port     int
 	User     string
 	Database string
+	Options  []string
 }
 
 // NewReference new reference of database link
@@ -67,6 +68,9 @@ func NewReference(url string) (*Reference, string, error) {
 		ref.Driver = MysqlType
 	case ref.Driver == AdabasType && ref.Database == "":
 		ref.Database = "4"
+	}
+	if len(match) == 13 {
+		ref.Options = strings.Split(match[12], "&")
 	}
 	return ref, passwd, nil
 }
