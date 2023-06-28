@@ -45,8 +45,15 @@ type Mysql struct {
 
 // NewInstance create new mysql reference instance
 func NewInstance(id common.RegDbID, reference *common.Reference, password string) (common.Database, error) {
+	o := reference.OptionString()
+	if o == "" {
+		o = "?"
+	} else {
+		o += "&"
+	}
+	o += "parseTime=true"
 	url := fmt.Sprintf("%s:"+passwdPlaceholder+"@tcp(%s:%d)/%s%s", reference.User, reference.Host,
-		reference.Port, reference.Database, reference.OptionString())
+		reference.Port, reference.Database, o)
 	mysql := &Mysql{common.CommonDatabase{RegDbID: id},
 		nil, url, nil, reference.User, password, nil, nil}
 	return mysql, nil
@@ -81,7 +88,7 @@ func (mysql *Mysql) open() (dbOpen any, err error) {
 	if mysql.openDB == nil {
 		log.Log.Debugf("Open Mysql database to %s", mysql.dbURL)
 		log.Log.Debugf("Mysql database to %s", mysql.generateURL())
-		mysql.openDB, err = sql.Open(layer, mysql.generateURL()+"?parseTime=true")
+		mysql.openDB, err = sql.Open(layer, mysql.generateURL())
 		if err != nil {
 			return
 		}
