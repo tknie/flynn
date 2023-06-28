@@ -9,26 +9,31 @@ import (
 func TestReferenceURL(t *testing.T) {
 	ref, _, err := NewReference("host:123")
 	assert.NoError(t, err)
-	assert.Equal(t, &Reference{Host: "host", Port: 123}, ref)
+	assert.Equal(t, &Reference{Host: "host", Port: 123, Options: []string(nil)}, ref)
 	ref, _, err = NewReference("localhost:5432/bitgarten")
 	assert.NoError(t, err)
-	assert.Equal(t, &Reference{Host: "localhost", Port: 5432, Database: "bitgarten"}, ref)
+	assert.Equal(t, &Reference{Host: "localhost", Port: 5432, Database: "bitgarten",
+		Options: []string(nil)}, ref)
 	var p string
 	ref, p, err = NewReference("postgres://admin@localhost:5432/bitgarten")
 	assert.NoError(t, err)
 	assert.Equal(t, "", p)
-	assert.Equal(t, &Reference{Driver: PostgresType, Host: "localhost", Port: 5432, User: "admin", Database: "bitgarten"}, ref)
+	assert.Equal(t, &Reference{Driver: PostgresType, Host: "localhost", Port: 5432, User: "admin",
+		Database: "bitgarten", Options: []string(nil)}, ref)
 	ref, p, err = NewReference("postgres://admin:test123@localhost:5432/bitgarten")
 	assert.NoError(t, err)
 	assert.Equal(t, "test123", p)
-	assert.Equal(t, &Reference{Driver: PostgresType, Host: "localhost", Port: 5432, User: "admin", Database: "bitgarten"}, ref)
+	assert.Equal(t, &Reference{Driver: PostgresType, Host: "localhost", Port: 5432, User: "admin",
+		Database: "bitgarten", Options: []string(nil)}, ref)
 	ref, p, err = NewReference("postgres://admin:test123@test.example.com:5432/bitgarten")
 	assert.NoError(t, err)
 	assert.Equal(t, "test123", p)
-	assert.Equal(t, &Reference{Driver: PostgresType, Host: "test.example.com", Port: 5432, User: "admin", Database: "bitgarten"}, ref)
+	assert.Equal(t, &Reference{Driver: PostgresType, Host: "test.example.com", Port: 5432, User: "admin",
+		Database: "bitgarten", Options: []string(nil)}, ref)
 	ref, p, err = NewReference("postgres://admin:<password>@localhost:5432/bitgarten")
 	assert.NoError(t, err)
-	assert.Equal(t, &Reference{Driver: PostgresType, Host: "localhost", Port: 5432, User: "admin", Database: "bitgarten"}, ref)
+	assert.Equal(t, &Reference{Driver: PostgresType, Host: "localhost", Port: 5432, User: "admin",
+		Database: "bitgarten", Options: []string(nil)}, ref)
 	assert.Equal(t, "<password>", p)
 	ref, p, err = NewReference("jdbc:mysql://localhost:3306/sonoo")
 	assert.NoError(t, err)
@@ -50,8 +55,8 @@ func TestReferenceURL(t *testing.T) {
 	assert.Equal(t, "<password>", p)
 	ref, p, err = NewReference("postgres://admin:axx@localhost:5432/bitgarten?sslmode=require")
 	assert.NoError(t, err)
-	assert.Equal(t, &Reference{Driver: PostgresType, Host: "lion", Port: 5432, Database: "bitgarten",
-		User: "<user>", Options: []string{"sslmod=require"}}, ref)
+	assert.Equal(t, &Reference{Driver: PostgresType, Host: "localhost", Port: 5432, Database: "bitgarten",
+		User: "admin", Options: []string{"sslmode=require"}}, ref)
 	assert.Equal(t, "axx", p)
 
 }

@@ -69,7 +69,7 @@ func NewReference(url string) (*Reference, string, error) {
 	case ref.Driver == AdabasType && ref.Database == "":
 		ref.Database = "4"
 	}
-	if len(match) == 13 {
+	if len(match) == 13 && match[12] != "" {
 		ref.Options = strings.Split(match[12], "&")
 	}
 	return ref, passwd, nil
