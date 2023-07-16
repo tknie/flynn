@@ -209,17 +209,32 @@ func Delete(dbsql DBsql, name string, updateInfo *common.Entries) (rowsAffected 
 		defer dbsql.Close()
 	}
 
-	for i := 0; i < len(updateInfo.Values); i++ {
-		deleteCmd, av := GenerateDelete(dbsql.IndexNeeded(), name, 0, updateInfo)
-		log.Log.Debugf("Delete cmd: %s -> %#v", deleteCmd, av)
-		res, err := tx.ExecContext(ctx, deleteCmd, av...)
+	if updateInfo.Criteria != "" {
+		deleteCmd := "DELETE FROM " + name + " WHERE " + updateInfo.Criteria
+
+		log.Log.Debugf("Delete cmd: %s", deleteCmd)
+		res, err := tx.ExecContext(ctx, deleteCmd)
 		if err != nil {
 			log.Log.Debugf("Delete error: %v", err)
 			dbsql.EndTransaction(false)
 			return -1, err
 		}
+
 		ra, _ := res.RowsAffected()
 		rowsAffected += ra
+	} else {
+		for i := 0; i < len(updateInfo.Values); i++ {
+			deleteCmd, av := GenerateDelete(dbsql.IndexNeeded(), name, 0, updateInfo)
+			log.Log.Debugf("Delete cmd: %s -> %#v", deleteCmd, av)
+			res, err := tx.ExecContext(ctx, deleteCmd, av...)
+			if err != nil {
+				log.Log.Debugf("Delete error: %v", err)
+				dbsql.EndTransaction(false)
+				return -1, err
+			}
+			ra, _ := res.RowsAffected()
+			rowsAffected += ra
+		}
 	}
 	err = dbsql.EndTransaction(true)
 	if err != nil {

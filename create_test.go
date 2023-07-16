@@ -109,7 +109,7 @@ func TestCreateStringArray(t *testing.T) {
 		if !assert.NoError(t, err, "insert fail using "+target.layer) {
 			return
 		}
-		dr, err = id.Delete(testCreationTable, &def.Entries{Criteria: "Id=" + tId})
+		dr, err = id.Delete(testCreationTable, &def.Entries{Criteria: "Id='" + tId + "'"})
 		if !assert.NoError(t, err, "delete fail using "+target.layer) {
 			return
 		}
