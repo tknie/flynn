@@ -259,17 +259,28 @@ func (pg *PostGres) Delete(name string, remove *common.Entries) (rowsAffected in
 	}
 	defer pg.Close()
 
-	for i := 0; i < len(remove.Values); i++ {
-		deleteCmd, av := dbsql.GenerateDelete(pg.IndexNeeded(), name, 0, remove)
-		log.Log.Debugf("Delete cmd: %s -> %#v", deleteCmd, av)
-		res, err := tx.Exec(ctx, deleteCmd, av...)
-		// tx.ExecContext(ctx, deleteCmd, av...)
+	if remove.Criteria != "" {
+		deleteCmd := "DELETE FROM " + name + " WHERE " + remove.Criteria
+		res, err := tx.Exec(ctx, deleteCmd)
 		if err != nil {
 			log.Log.Debugf("Delete error: %v", err)
 			pg.EndTransaction(false)
 			return -1, err
 		}
 		rowsAffected += res.RowsAffected()
+	} else {
+		for i := 0; i < len(remove.Values); i++ {
+			deleteCmd, av := dbsql.GenerateDelete(pg.IndexNeeded(), name, 0, remove)
+			log.Log.Debugf("Delete cmd: %s -> %#v", deleteCmd, av)
+			res, err := tx.Exec(ctx, deleteCmd, av...)
+			// tx.ExecContext(ctx, deleteCmd, av...)
+			if err != nil {
+				log.Log.Debugf("Delete error: %v", err)
+				pg.EndTransaction(false)
+				return -1, err
+			}
+			rowsAffected += res.RowsAffected()
+		}
 	}
 	err = pg.EndTransaction(true)
 	if err != nil {

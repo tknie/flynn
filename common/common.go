@@ -32,6 +32,7 @@ type Entries struct {
 	DataStruct any
 	Update     []string
 	Values     [][]any
+	Criteria   string
 }
 
 type Database interface {
