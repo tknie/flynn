@@ -205,7 +205,10 @@ func (ada *Adabas) Delete(name string, remove *common.Entries) (int64, error) {
 			log.Log.Debugf("Error SEARCH fields %v", err)
 			return 0, err
 		}
-		search := createSearch(remove)
+		search := remove.Criteria
+		if search == "" {
+			createSearch(remove)
+		}
 		log.Log.Debugf("SEARCH %s", search)
 
 		queryReq.Limit = 0
