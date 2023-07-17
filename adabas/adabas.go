@@ -207,7 +207,7 @@ func (ada *Adabas) Delete(name string, remove *common.Entries) (int64, error) {
 		}
 		search := remove.Criteria
 		if search == "" {
-			createSearch(remove)
+			search = createSearch(remove)
 		}
 		log.Log.Debugf("SEARCH %s", search)
 
@@ -219,7 +219,7 @@ func (ada *Adabas) Delete(name string, remove *common.Entries) (int64, error) {
 		}
 		for _, v := range result.Values {
 			isns = append(isns, v.Isn)
-			log.Log.Debugf("Add to delete list:", v.Isn)
+			log.Log.Debugf("Add to delete list: %d", v.Isn)
 		}
 	} else {
 

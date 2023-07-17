@@ -100,6 +100,7 @@ func TestCreateStringArray(t *testing.T) {
 		if !assert.NoError(t, err, "insert fail using "+target.layer) {
 			return
 		}
+		assert.Equal(t, int64(101), dr)
 		count++
 		log.Log.Debugf("Delete of records done")
 		tId := "TEST" + strconv.Itoa(count)
