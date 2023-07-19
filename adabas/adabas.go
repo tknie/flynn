@@ -199,7 +199,6 @@ func (ada *Adabas) Delete(name string, remove *common.Entries) (int64, error) {
 		if err != nil {
 			return 0, err
 		}
-		log.Log.Debugf("SEARCH fields")
 		err = queryReq.QueryFields("")
 		if err != nil {
 			log.Log.Debugf("Error SEARCH fields %v", err)
@@ -209,14 +208,15 @@ func (ada *Adabas) Delete(name string, remove *common.Entries) (int64, error) {
 		if search == "" {
 			search = createSearch(remove)
 		}
-		log.Log.Debugf("SEARCH %s", search)
+		log.Log.Debugf("Delete SEARCH: %s", search)
 
 		queryReq.Limit = 0
 		result, err := queryReq.ReadLogicalWith(search)
-		log.Log.Debugf("Search done")
 		if err != nil {
+			log.Log.Debugf("Search error: %v", err)
 			return 0, err
 		}
+		log.Log.Debugf("Search done")
 		for _, v := range result.Values {
 			isns = append(isns, v.Isn)
 			log.Log.Debugf("Add to delete list: %d", v.Isn)
