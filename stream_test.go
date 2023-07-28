@@ -136,7 +136,7 @@ func TestStreamListPgTest(t *testing.T) {
 	defer Unregister(x)
 
 	for _, p := range checksumPictureTest {
-		fmt.Println("Checking read of chksum=", p.chksum, "... length=", p.length)
+		fmt.Println("Checking read of chksum=", p.chksum, "length=", p.length)
 		q := &common.Query{TableName: "Pictures",
 			Search:     "checksumpicture='" + p.chksum + "'",
 			Descriptor: true,
