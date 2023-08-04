@@ -27,9 +27,10 @@ const (
 	MysqlType
 	PostgresType
 	AdabasType
+	OracleType
 )
 
-var referenceTypeName = []string{"No valid Type", "Mysql", "Postgres", "Adabas"}
+var referenceTypeName = []string{"No valid Type", "Mysql", "Postgres", "Adabas", "Oracle"}
 
 func (rt ReferenceType) String() string {
 	return referenceTypeName[rt]
@@ -97,6 +98,8 @@ func ParseTypeName(t string) ReferenceType {
 		return MysqlType
 	case "acj", "adatcp":
 		return AdabasType
+	case "oracle":
+		return OracleType
 	}
 	return NoType
 }

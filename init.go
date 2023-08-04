@@ -19,6 +19,7 @@ import (
 	"github.com/tknie/flynn/adabas"
 	"github.com/tknie/flynn/common"
 	"github.com/tknie/flynn/mysql"
+	"github.com/tknie/flynn/oracle"
 	"github.com/tknie/flynn/postgres"
 	"github.com/tknie/log"
 )
@@ -61,6 +62,8 @@ func RegisterDatabase(dbref *common.Reference, password string) (common.RegDbID,
 		db, err = mysql.NewInstance(id, dbref, password)
 	case common.AdabasType:
 		db, err = adabas.NewInstance(id, dbref, password)
+	case common.OracleType:
+		db, err = oracle.NewInstance(id, dbref, password)
 	default:
 		return 0, errorrepo.NewError("DB065535")
 	}

@@ -58,6 +58,11 @@ func TestReferenceURL(t *testing.T) {
 	assert.Equal(t, &Reference{Driver: PostgresType, Host: "localhost", Port: 5432, Database: "bitgarten",
 		User: "admin", Options: []string{"sslmode=require"}}, ref)
 	assert.Equal(t, "axx", p)
+	ref, p, err = NewReference("oracle://<user>:<password>@xaaaa:99989/schema")
+	assert.NoError(t, err)
+	assert.Equal(t, &Reference{Driver: OracleType, Host: "xaaaa", Port: 99989, Database: "schema",
+		User: "<user>"}, ref)
+	assert.Equal(t, "<password>", p)
 
 }
 

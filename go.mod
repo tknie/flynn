@@ -9,11 +9,18 @@ require (
 
 require github.com/rogpeppe/go-internal v1.9.0 // indirect
 
-require golang.org/x/net v0.10.0 // indirect
+require (
+	github.com/go-logfmt/logfmt v0.5.1 // indirect
+	github.com/go-logr/logr v1.2.3 // indirect
+	github.com/godror/knownpb v0.1.0 // indirect
+	golang.org/x/net v0.10.0 // indirect
+	google.golang.org/protobuf v1.28.1 // indirect
+)
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-sql-driver/mysql v1.7.1
+	github.com/godror/godror v0.37.0
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
