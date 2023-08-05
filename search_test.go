@@ -173,8 +173,8 @@ func TestQueryPgFunctions(t *testing.T) {
 	sort.Slice(lenList, func(i, j int) bool {
 		return lenList[i] < lenList[j]
 	})
-	assert.Equal(t, 1689, counter)
-	assert.Equal(t, uint64(2846143299), length)
+	assert.Equal(t, 2222, counter)
+	assert.Equal(t, uint64(0x10023369e), length)
 	assert.NoError(t, err)
 	for i := len(lenList) - 3; i < len(lenList); i++ {
 		fmt.Println(lenList[i])

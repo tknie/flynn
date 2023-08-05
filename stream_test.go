@@ -261,8 +261,8 @@ func TestStreamAdabasTest(t *testing.T) {
 	}
 	defer Unregister(x)
 
-	md5Query := "AB88C24B1B88A936DA8F8D8289B5A6FA"
-	chksum := "B0DC5D4538E7C000F2269D2D046CB5C6"
+	md5Query := "A9E64EE699065A32AE3A09E5AADC1D51"
+	chksum := "941E37A328B337F6ADC64FC953938549"
 	fmt.Println("Checking read of chksum=", chksum, "... length=", 111)
 	q := &common.Query{TableName: "PictureData",
 		Search:     "Md5='" + md5Query + "'",
@@ -284,7 +284,7 @@ func TestStreamAdabasTest(t *testing.T) {
 	assert.Equal(t, strings.Trim(chksum, " "), chkMd5)
 
 	assert.NoError(t, err)
-	assert.Equal(t, 17, count)
-	assert.Equal(t, 1050752, len(data))
+	assert.Equal(t, 35, count)
+	assert.Equal(t, 2261407, len(data))
 
 }
