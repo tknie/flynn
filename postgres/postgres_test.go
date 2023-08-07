@@ -12,15 +12,19 @@
 package postgres
 
 import (
+	"crypto/md5"
+	"database/sql"
 	"fmt"
 	"os"
 	"sort"
 	"strconv"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
+	"github.com/tknie/flynn/common"
 	"github.com/tknie/log"
 )
 
@@ -112,4 +116,117 @@ func TestPostgresTableColumns(t *testing.T) {
 		"option", "published", "thumbnail", "title",
 		"updated_at"}, m)
 
+}
+
+func TestPostgresBatchSelect(t *testing.T) {
+	InitLog(t)
+
+	url := PostgresTable(t)
+	pg, err := New(1, url)
+	assert.NoError(t, err)
+	if !assert.NotNil(t, pg) {
+		return
+	}
+
+	result, err := pg.BatchSelect("select * from Albums where Title = 'Weihnachtsgruß2021'")
+
+	assert.NoError(t, err)
+	assert.Equal(t, [][]interface{}{{int32(42), sql.NullString{String: "", Valid: true}, sql.NullString{String: "C603FEF5DFF8AED9CFF3C182AB3F54EE", Valid: true},
+		sql.NullString{String: "Weihnachtsgruß2021", Valid: true}, sql.NullString{String: "Weihnachtsgruß2021", Valid: true},
+		sql.NullString{String: "", Valid: true}, sql.NullString{String: "", Valid: true}, sql.NullString{String: "B1543D579D15650CAE108E5657AC769C", Valid: true},
+		time.Date(2021, time.December, 19, 9, 45, 7, 0, time.UTC), time.Date(2023, time.March, 15, 14, 54, 54, 46871000, time.UTC),
+		time.Date(2023, time.March, 15, 14, 54, 54, 46871000, time.UTC)}}, result)
+
+	result, err = pg.BatchSelect("select id,thumbnail,media,checksumpicture from Pictures where md5 = '6C377DCDBD4DF3B1B64FFF74C78A9A08'")
+
+	assert.NoError(t, err)
+	assert.Equal(t, int32(3), result[0][0])
+	md5Hash := fmt.Sprintf("%X", md5.Sum(result[0][1].([]byte)))
+	assert.Equal(t, "B885CA8F7EB9364557C0CA12283C7823", md5Hash)
+	media := result[0][2].([]byte)
+	md5Hash = fmt.Sprintf("%X", md5.Sum(media))
+	assert.Equal(t, "B64F1DDF5683608579998E618545E497", md5Hash)
+	assert.Equal(t, 1073835, len(media))
+	assert.Equal(t, "B64F1DDF5683608579998E618545E497", result[0][3].(sql.NullString).String)
+
+	result, err = pg.BatchSelect("select * from Pictures where md5 = '6C377DCDBD4DF3B1B64FFF74C78A9A08'")
+
+	assert.NoError(t, err)
+	assert.Equal(t, 1, len(result))
+	assert.Equal(t, 24, len(result[0]))
+
+	result, err = pg.BatchSelect("select * from Pictures where md5 = 'E87BCC9195520D129D8F5A3E14CD5604'")
+
+	assert.NoError(t, err)
+	assert.Equal(t, 1, len(result))
+	assert.Equal(t, 24, len(result[0]))
+
+}
+
+func TestPostgresBatchSelectFct(t *testing.T) {
+	InitLog(t)
+
+	url := PostgresTable(t)
+	pg, err := New(1, url)
+	assert.NoError(t, err)
+	if !assert.NotNil(t, pg) {
+		return
+	}
+
+	count := 0
+	err = pg.BatchSelectFct("select * from Pictures where md5 = '3C57AAD81E3121C48ED3FC752C1DC2BC'",
+		func(index uint64, header []*common.Column, result []interface{}) error {
+			if count == 0 {
+				for _, h := range header {
+					fmt.Printf("%s,\t", h.Name)
+				}
+				fmt.Println()
+			}
+			assert.Equal(t, 24, len(header))
+			assert.Equal(t, 24, len(result))
+			for i := range header {
+				//fmt.Printf(" %T->", result[i])
+				switch s := result[i].(type) {
+				case sql.NullString:
+					fmt.Print(s.String)
+				case int32:
+					fmt.Print(s)
+				case string:
+					fmt.Print(s)
+				case []byte:
+					fmt.Print("[", len(s), "]")
+				default:
+					fmt.Print(s)
+				}
+				fmt.Print(",\t")
+			}
+			fmt.Println()
+			return nil
+		})
+	assert.NoError(t, err)
+
+	count = 0
+	err = pg.BatchSelectFct("select title,albumkey,directory,published from Albums where directory = 'Herbst2020'",
+		func(index uint64, header []*common.Column, result []interface{}) error {
+			if count == 0 {
+				fmt.Printf("%03d\t", index)
+				for _, h := range header {
+					fmt.Printf("%s,\t", h.Name)
+				}
+				fmt.Println()
+			}
+			fmt.Printf("%03d\t", index)
+			for _, r := range result {
+				switch v := r.(type) {
+				case sql.NullString:
+					fmt.Printf("%s,\t", v.String)
+				default:
+					fmt.Printf("%v,\t", r)
+				}
+			}
+			fmt.Println()
+
+			return nil
+		})
+	assert.NoError(t, err)
 }

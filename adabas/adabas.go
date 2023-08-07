@@ -385,6 +385,16 @@ func (ada *Adabas) Batch(batch string) error {
 	return errorrepo.NewError("DB065535")
 }
 
+// BatchSelect batch SQL query in table with values returned
+func (ada *Adabas) BatchSelect(batch string) ([][]interface{}, error) {
+	return nil, errorrepo.NewError("DB065535")
+}
+
+// BatchSelectFct batch SQL query in table with fct called
+func (ada *Adabas) BatchSelectFct(string, common.ResultDataFunction) error {
+	return errorrepo.NewError("DB065535")
+}
+
 func (ada *Adabas) BeginTransaction() error {
 	return errorrepo.NewError("DB065535")
 }

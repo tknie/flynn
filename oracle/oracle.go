@@ -306,6 +306,16 @@ func (oracle *Oracle) Batch(batch string) error {
 	return dbsql.Batch(oracle, batch)
 }
 
+// BatchSelect batch SQL query in table with values returned
+func (oracle *Oracle) BatchSelect(batch string) ([][]interface{}, error) {
+	return nil, errorrepo.NewError("DB065535")
+}
+
+// BatchSelectFct batch SQL query in table with fct called
+func (oracle *Oracle) BatchSelectFct(string, common.ResultDataFunction) error {
+	return errorrepo.NewError("DB065535")
+}
+
 // StartTransaction start transaction
 func (oracle *Oracle) StartTransaction() (*sql.Tx, context.Context, error) {
 	_, err := oracle.open()

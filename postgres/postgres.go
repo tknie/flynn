@@ -609,6 +609,79 @@ func (pg *PostGres) Batch(batch string) error {
 	return nil
 }
 
+// BatchSelect batch SQL query in table with values returned
+func (pg *PostGres) BatchSelect(batch string) ([][]interface{}, error) {
+	layer, url := pg.Reference()
+	db, err := sql.Open(layer, url)
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+	// Query batch SQL
+	rows, err := db.Query(batch)
+	if err != nil {
+		return nil, err
+	}
+	ct, err := rows.ColumnTypes()
+	if err != nil {
+		return nil, err
+	}
+	result := make([][]interface{}, 0)
+	for rows.Next() {
+		if rows.Err() != nil {
+			fmt.Println("Batch SQL error:", rows.Err())
+			return nil, rows.Err()
+		}
+		data := common.CreateTypeData(ct)
+		err := rows.Scan(data...)
+		if err != nil {
+			return nil, err
+		}
+		data = common.Unpointer(data)
+		result = append(result, data)
+	}
+	return result, nil
+}
+
+// BatchSelectFct batch SQL query in table with fct called
+func (pg *PostGres) BatchSelectFct(batch string, fct common.ResultDataFunction) error {
+	layer, url := pg.Reference()
+	db, err := sql.Open(layer, url)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	// Query batch SQL
+	rows, err := db.Query(batch)
+	if err != nil {
+		return err
+	}
+	ct, err := rows.ColumnTypes()
+	if err != nil {
+		return err
+	}
+	var header []*common.Column
+	count := uint64(0)
+	for rows.Next() {
+		if rows.Err() != nil {
+			fmt.Println("Batch SQL error:", rows.Err())
+			return rows.Err()
+		}
+		if header == nil {
+			header = common.CreateHeader(ct)
+		}
+		data := common.CreateTypeData(ct)
+		err := rows.Scan(data...)
+		if err != nil {
+			return err
+		}
+		data = common.Unpointer(data)
+		count++
+		fct(count, header, data)
+	}
+	return nil
+}
+
 // StartTransaction start transaction
 func (pg *PostGres) StartTransaction() (pgx.Tx, context.Context, error) {
 	var err error

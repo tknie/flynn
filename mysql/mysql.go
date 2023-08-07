@@ -291,6 +291,16 @@ func (mysql *Mysql) Batch(batch string) error {
 	return dbsql.Batch(mysql, batch)
 }
 
+// BatchSelect batch SQL query in table with values returned
+func (mysql *Mysql) BatchSelect(batch string) ([][]interface{}, error) {
+	return dbsql.BatchSelect(mysql, batch)
+}
+
+// BatchSelectFct batch SQL query in table with fct called
+func (mysql *Mysql) BatchSelectFct(batch string, fct common.ResultDataFunction) error {
+	return dbsql.BatchSelectFct(mysql, batch, fct)
+}
+
 // StartTransaction start transaction
 func (mysql *Mysql) StartTransaction() (*sql.Tx, context.Context, error) {
 	_, err := mysql.open()

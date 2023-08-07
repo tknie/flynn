@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/tknie/flynn/common"
 )
 
 func mysqlTarget(t *testing.T) (string, error) {
@@ -52,4 +53,19 @@ func TestMysqlInit(t *testing.T) {
 	assert.Equal(t, []string{"AlbumPictures", "Albums", "PictureLocations", "PictureTag",
 		"PictureTags", "Pictures", "Tags",
 		"TestStructTableData", "TestTableData"}, m)
+}
+
+func TestMysqlCall(t *testing.T) {
+	url, err := mysqlTarget(t)
+	assert.NoError(t, err)
+	mSql, err := New(1, url)
+	assert.NoError(t, err)
+	if !assert.NotNil(t, mSql) {
+		return
+	}
+	err = mSql.BatchSelectFct("select * from Albums", func(index uint64, header []*common.Column, result []interface{}) error {
+		fmt.Println("H", len(header))
+		return nil
+	})
+	assert.NoError(t, err)
 }

@@ -50,6 +50,8 @@ type Database interface {
 	Update(name string, insert *Entries) (int64, error)
 	Delete(name string, remove *Entries) (int64, error)
 	Batch(batch string) error
+	BatchSelect(batch string) ([][]interface{}, error)
+	BatchSelectFct(batch string, f ResultDataFunction) error
 	Query(search *Query, f ResultFunction) (*Result, error)
 	BeginTransaction() error
 	Commit() error
@@ -66,6 +68,7 @@ type Column struct {
 }
 
 type ResultFunction func(search *Query, result *Result) error
+type ResultDataFunction func(index uint64, header []*Column, result []interface{}) error
 type StreamFunction func(search *Query, stream *Stream) error
 
 type CommonDatabase struct {
