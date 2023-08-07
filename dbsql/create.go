@@ -169,6 +169,7 @@ func BatchSelect(dbsql DBsql, batch string) ([][]interface{}, error) {
 // BatchSelectFct batch SQL query in table with fct called
 func BatchSelectFct(dbsql DBsql, batch string, fct common.ResultDataFunction) error {
 	layer, url := dbsql.Reference()
+	log.Log.Debugf("Connect url: %s", url)
 	db, err := sql.Open(layer, url)
 	if err != nil {
 		return err

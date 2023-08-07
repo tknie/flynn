@@ -16,11 +16,56 @@ import (
 	"os"
 	"sort"
 	"strconv"
+	"sync"
 	"testing"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/tknie/flynn/common"
+	"github.com/tknie/log"
 )
+
+var logRus = logrus.StandardLogger()
+var once = new(sync.Once)
+
+func InitLog(t *testing.T) {
+	once.Do(startLog)
+	log.Log.Debugf("TEST: %s", t.Name())
+}
+
+func startLog() {
+	fmt.Println("Init logging")
+	fileName := "db.trace.log"
+	level := os.Getenv("ENABLE_DB_DEBUG")
+	logLevel := logrus.WarnLevel
+	switch level {
+	case "debug", "1":
+		log.SetDebugLevel(true)
+		logLevel = logrus.DebugLevel
+	case "info", "2":
+		log.SetDebugLevel(false)
+		logLevel = logrus.InfoLevel
+	default:
+	}
+	logRus.SetFormatter(&logrus.TextFormatter{
+		FullTimestamp:   true,
+		TimestampFormat: "2006-01-02T15:04:05",
+	})
+	logRus.SetLevel(logLevel)
+	p := os.Getenv("LOGPATH")
+	if p == "" {
+		p = os.TempDir()
+	}
+	f, err := os.OpenFile(p+"/"+fileName, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
+	if err != nil {
+		fmt.Println("Error opening log:", err)
+		return
+	}
+	logRus.SetOutput(f)
+	logRus.Infof("Init logrus")
+	log.Log = logRus
+	fmt.Println("Logging running")
+}
 
 func mysqlTarget(t *testing.T) (string, error) {
 	mysqlHost := os.Getenv("MYSQL_HOST")
@@ -56,9 +101,10 @@ func TestMysqlInit(t *testing.T) {
 }
 
 func TestMysqlCall(t *testing.T) {
+	InitLog(t)
 	url, err := mysqlTarget(t)
 	assert.NoError(t, err)
-	mSql, err := New(1, url)
+	mSql, err := New(1, url+"?parseTime=true")
 	assert.NoError(t, err)
 	if !assert.NotNil(t, mSql) {
 		return
