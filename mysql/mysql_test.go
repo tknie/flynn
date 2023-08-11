@@ -110,7 +110,8 @@ func TestMysqlCall(t *testing.T) {
 		return
 	}
 	err = mSql.BatchSelectFct("select * from Albums", func(index uint64, header []*common.Column, result []interface{}) error {
-		fmt.Println("H", len(header))
+		assert.Equal(t, 10, len(header))
+		assert.Equal(t, 10, len(result))
 		return nil
 	})
 	assert.NoError(t, err)

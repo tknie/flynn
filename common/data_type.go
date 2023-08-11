@@ -72,6 +72,12 @@ func Unpointer(data []interface{}) []interface{} {
 		switch v := d.(type) {
 		case *int32:
 			data[i] = *v
+		case *int64:
+			data[i] = *v
+		case *uint32:
+			data[i] = *v
+		case *uint64:
+			data[i] = *v
 		case *string:
 			data[i] = *v
 		case *[]byte:
