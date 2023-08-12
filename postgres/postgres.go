@@ -232,7 +232,7 @@ func (pg *PostGres) Ping() error {
 
 	pg.dbTableNames = make([]string, 0)
 
-	rows, err := db.Query(context.Background(), "SELECT * FROM information_schema.tables WHERE table_schema='public' and (table_type = 'BASE TABLE' or table_type = 'VIEW')")
+	rows, err := db.Query(context.Background(), "SELECT table_name FROM information_schema.tables WHERE table_schema='public' and (table_type = 'BASE TABLE' or table_type = 'VIEW')")
 	if err != nil {
 		log.Log.Debugf("Error pinging database ...%v", err)
 		return err
