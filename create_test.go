@@ -166,6 +166,12 @@ func createStruct(t *testing.T, target *target) error {
 	}
 	defer unregisterDatabase(t, id)
 
+	x, err := id.CreateTableIfNotExists(testCreationTableStruct, columns)
+	if !assert.NoError(t, err, "create fail using "+target.layer) {
+		return err
+	}
+	assert.True(t, x == def.CreateCreated || x == def.CreateExists)
+
 	log.Log.Debugf("Delete table: {}", testCreationTableStruct)
 	err = id.DeleteTable(testCreationTableStruct)
 	log.Log.Debugf("Delete table: %s returns with %v", testCreationTableStruct, err)

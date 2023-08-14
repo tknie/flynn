@@ -12,7 +12,16 @@
 package common
 
 import (
+	"github.com/tknie/flynn"
 	"github.com/tknie/log"
+)
+
+type CreateStatus byte
+
+const (
+	CreateError CreateStatus = iota
+	CreateExists
+	CreateCreated
 )
 
 type RegDbID uint64
@@ -107,6 +116,23 @@ func (id RegDbID) CreateTable(tableName string, columns any) error {
 		return err
 	}
 	return driver.CreateTable(tableName, columns)
+}
+
+// CreateTable create a new table
+func (id RegDbID) CreateTableIfNotExists(tableName string, columns any) (CreateStatus, error) {
+	dbTables := flynn.Maps()
+	for _, d := range dbTables {
+		if d == tableName {
+			// services.ServerMessage("Database log found")
+			return CreateExists, nil
+		}
+	}
+
+	err := id.CreateTable(tableName, columns)
+	if err != nil {
+		return CreateError, err
+	}
+	return CreateCreated, nil
 }
 
 // DeleteTable delete a table
