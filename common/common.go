@@ -12,7 +12,6 @@
 package common
 
 import (
-	"github.com/tknie/flynn"
 	"github.com/tknie/log"
 )
 
@@ -120,15 +119,21 @@ func (id RegDbID) CreateTable(tableName string, columns any) error {
 
 // CreateTable create a new table
 func (id RegDbID) CreateTableIfNotExists(tableName string, columns any) (CreateStatus, error) {
-	dbTables := flynn.Maps()
+	driver, err := searchDataDriver(id)
+	if err != nil {
+		return CreateError, err
+	}
+	dbTables, err := driver.Maps()
+	if err != nil {
+		return CreateError, err
+	}
 	for _, d := range dbTables {
 		if d == tableName {
-			// services.ServerMessage("Database log found")
 			return CreateExists, nil
 		}
 	}
 
-	err := id.CreateTable(tableName, columns)
+	err = driver.CreateTable(tableName, columns)
 	if err != nil {
 		return CreateError, err
 	}
