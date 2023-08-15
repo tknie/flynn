@@ -12,6 +12,8 @@
 package common
 
 import (
+	"strings"
+
 	"github.com/tknie/log"
 )
 
@@ -135,6 +137,9 @@ func (id RegDbID) CreateTableIfNotExists(tableName string, columns any) (CreateS
 
 	err = driver.CreateTable(tableName, columns)
 	if err != nil {
+		if strings.Contains(err.Error(), "already exists") {
+			return CreateExists, nil
+		}
 		return CreateError, err
 	}
 	return CreateCreated, nil
@@ -149,13 +154,31 @@ func (id RegDbID) DeleteTable(tableName string) error {
 	return driver.DeleteTable(tableName)
 }
 
-// Batch batch SQL query in table
+// Batch batch SQL with no return data in table
 func (id RegDbID) Batch(batch string) error {
 	driver, err := searchDataDriver(id)
 	if err != nil {
 		return err
 	}
 	return driver.Batch(batch)
+}
+
+// BatchSelect batch SQL query in table
+func (id RegDbID) BatchSelect(batch string) ([][]interface{}, error) {
+	driver, err := searchDataDriver(id)
+	if err != nil {
+		return nil, err
+	}
+	return driver.BatchSelect(batch)
+}
+
+// BatchSelect batch SQL query in table calling function
+func (id RegDbID) BatchSelectFct(batch string, f ResultDataFunction) error {
+	driver, err := searchDataDriver(id)
+	if err != nil {
+		return err
+	}
+	return driver.BatchSelectFct(batch, f)
 }
 
 // Open open the database connection

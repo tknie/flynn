@@ -29,6 +29,7 @@ func Insert(dbsql DBsql, name string, insert *common.Entries) error {
 	if err != nil {
 		return err
 	}
+	log.Log.Debugf("Transaction %p", tx)
 	if !dbsql.IsTransaction() {
 		log.Log.Debugf("Init defer close ... in inserting")
 		defer dbsql.Close()
@@ -40,7 +41,20 @@ func Insert(dbsql DBsql, name string, insert *common.Entries) error {
 	values := "("
 
 	indexNeed := dbsql.IndexNeeded()
-	for i, field := range insert.Fields {
+	var insertValues [][]any
+	var insertFields []string
+	if insert.DataStruct != nil {
+		dynamic := common.CreateInterface(insert.DataStruct, insert.Fields)
+		insertFields = dynamic.RowFields
+		v := dynamic.CreateInsertValues()
+		insertValues = [][]any{v}
+		log.Log.Debugf("Row   fields: %#v", insertFields)
+		log.Log.Debugf("Value fields: %#v", insertValues)
+	} else {
+		insertFields = insert.Fields
+		insertValues = insert.Values
+	}
+	for i, field := range insertFields {
 		if i > 0 {
 			insertCmd += ","
 			values += ","
@@ -56,7 +70,7 @@ func Insert(dbsql DBsql, name string, insert *common.Entries) error {
 	values += ")"
 	insertCmd += ") VALUES " + values
 	log.Log.Debugf("Insert pre-CMD: %s", insertCmd)
-	for _, v := range insert.Values {
+	for _, v := range insertValues {
 		av := v
 		log.Log.Debugf("Insert values: %d -> %#v", len(av), av)
 		res, err := tx.ExecContext(ctx, insertCmd, av...)
@@ -95,7 +109,15 @@ func GenerateUpdate(indexNeeded bool, name string, updateInfo *common.Entries) (
 
 	whereFields := make([]int, 0)
 	indexNeed := indexNeeded
-	for i, field := range updateInfo.Fields {
+	var insertFields []string
+	if updateInfo.DataStruct != nil {
+		dynamic := common.CreateInterface(updateInfo.DataStruct, updateInfo.Fields)
+		insertFields = dynamic.RowFields
+	} else {
+		insertFields = updateInfo.Fields
+	}
+
+	for i, field := range insertFields {
 		if i > 0 {
 			insertCmd += ","
 		}
@@ -144,14 +166,27 @@ func Update(dbsql DBsql, name string, updateInfo *common.Entries) (rowsAffected 
 	if err != nil {
 		return -1, err
 	}
+	log.Log.Debugf("Transaction %p", tx)
 	if !dbsql.IsTransaction() {
+		log.Log.Debugf("Is no transaction closing after update")
 		defer dbsql.Close()
 	}
 	insertCmd, whereFields := GenerateUpdate(dbsql.IndexNeeded(), name, updateInfo)
-	for i, v := range updateInfo.Values {
+	log.Log.Debugf("CMD: %s - %s", insertCmd, whereFields)
+	var insertValues [][]any
+	if updateInfo.DataStruct != nil {
+		dynamic := common.CreateInterface(updateInfo.DataStruct, updateInfo.Fields)
+		v := dynamic.CreateInsertValues()
+		insertValues = [][]any{v}
+		log.Log.Debugf("Value fields: %#v", insertValues)
+	} else {
+		insertValues = updateInfo.Values
+	}
+	for i, v := range insertValues {
 		whereClause := CreateWhere(i, updateInfo, whereFields)
 		ic := insertCmd + whereClause
-		log.Log.Debugf("Update values: %d -> %#v tx=%v %v", len(v), v, tx, ctx)
+		log.Log.Debugf("Update CMD: %s", ic)
+		log.Log.Debugf("Update values: %d -> %#v", len(v), v)
 		res, err := tx.ExecContext(ctx, ic, v...)
 		if err != nil {
 			log.Log.Debugf("Update error: %s -> %v", ic, err)
@@ -163,10 +198,21 @@ func Update(dbsql DBsql, name string, updateInfo *common.Entries) (rowsAffected 
 	}
 	log.Log.Debugf("Update done")
 
-	err = dbsql.EndTransaction(true)
-	if err != nil {
-		return -1, err
+	log.Log.Debugf("Transaction: %v", dbsql.IsTransaction())
+	if !dbsql.IsTransaction() {
+		log.Log.Debugf("No transaction, end and close")
+		err = dbsql.EndTransaction(true)
+		if err != nil {
+			log.Log.Debugf("Error transaction %v", err)
+			dbsql.Close()
+			return 0, err
+		}
+		log.Log.Debugf("Close ...")
+		dbsql.Close()
+	} else {
+		log.Log.Debugf("Transaction, NO end and close")
 	}
+
 	return rowsAffected, nil
 }
 

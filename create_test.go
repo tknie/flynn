@@ -12,6 +12,7 @@
 package flynn
 
 import (
+	"database/sql"
 	"fmt"
 	"strconv"
 	"testing"
@@ -154,8 +155,8 @@ func createStruct(t *testing.T, target *target) error {
 		Address   string `dbsql:"Street"`
 		Salary    uint64 `dbsql:"Salary"`
 		Bonus     int64
-	}{Name: "Gellanger",
-		FirstName: "Bob"}
+	}{XY: 200, Name: "Gellanger",
+		FirstName: "Bob", Salary: 10000}
 	log.Log.Debugf("Working on creating with target " + target.layer)
 	if target.layer == "adabas" {
 		return nil
@@ -166,19 +167,17 @@ func createStruct(t *testing.T, target *target) error {
 	}
 	defer unregisterDatabase(t, id)
 
-	x, err := id.CreateTableIfNotExists(testCreationTableStruct, columns)
-	if !assert.NoError(t, err, "create fail using "+target.layer) {
-		return err
-	}
-	assert.True(t, x == def.CreateCreated || x == def.CreateExists)
-
-	log.Log.Debugf("Delete table: {}", testCreationTableStruct)
+	log.Log.Debugf("Delete table: %s", testCreationTableStruct)
 	err = id.DeleteTable(testCreationTableStruct)
 	log.Log.Debugf("Delete table: %s returns with %v", testCreationTableStruct, err)
 	err = id.CreateTable(testCreationTableStruct, columns)
 	if !assert.NoError(t, err, "create fail using "+target.layer) {
 		return err
 	}
+	x, err := id.CreateTableIfNotExists(testCreationTableStruct, columns)
+	assert.NoError(t, err)
+	assert.Equal(t, def.CreateExists, x)
+
 	list := make([][]any, 0)
 	list = append(list, []any{"Eins", "Ernie"})
 	for i := 1; i < 100; i++ {
@@ -190,10 +189,35 @@ func createStruct(t *testing.T, target *target) error {
 	if !assert.NoError(t, err, "insert fail using "+target.layer) {
 		return err
 	}
+	fmt.Println(columns.FirstName, columns.LastName)
+	err = id.Insert(testCreationTableStruct, &def.Entries{Fields: []string{"*"},
+		DataStruct: &columns})
+	if !assert.NoError(t, err, "insert data struct fail using "+target.layer) {
+		return err
+	}
 	log.Log.Debugf("Inserting into table: %s", testCreationTableStruct)
 	err = id.Batch("SELECT NAME FROM " + testCreationTableStruct)
 	assert.NoError(t, err, "select fail using "+target.layer)
-	log.Log.Debugf("Deleting table: %s", testCreationTableStruct)
-	deleteTable(t, id, testCreationTableStruct, target.layer)
+	err = id.BatchSelectFct("SELECT NAME FROM "+testCreationTableStruct+" WHERE NAME='Gellanger'",
+		func(index uint64, header []*def.Column, result []interface{}) error {
+			fmt.Println(index, result[0].(sql.NullString).String)
+			assert.Equal(t, uint64(1), index)
+			return nil
+		})
+	assert.NoError(t, err)
+	err = id.Commit()
+	assert.NoError(t, err)
+	err = id.BatchSelectFct("SELECT COUNT(*) FROM "+testCreationTableStruct,
+		func(index uint64, header []*def.Column, result []interface{}) error {
+			fmt.Println(index, result[0].(int64))
+			assert.Equal(t, uint64(1), index)
+			if !assert.Equal(t, int64(102), result[0].(int64)) {
+				log.Log.Infof("Error entries missing")
+			}
+			return nil
+		})
+	assert.NoError(t, err)
+	//log.Log.Debugf("Deleting table: %s", testCreationTableStruct)
+	//deleteTable(t, id, testCreationTableStruct, target.layer)
 	return nil
 }

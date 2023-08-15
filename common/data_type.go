@@ -123,6 +123,13 @@ func CreateTypeData(ct []*sql.ColumnType) []interface{} {
 				i := int32(0)
 				scanData = append(scanData, &i)
 			}
+		case "BIGINT", "INT8":
+			if nok, _ := t.Nullable(); nok {
+				scanData = append(scanData, &sql.NullInt64{})
+			} else {
+				i := int64(0)
+				scanData = append(scanData, &i)
+			}
 		case "DECIMAL":
 			if nok, _ := t.Nullable(); nok {
 				scanData = append(scanData, &sql.NullFloat64{})

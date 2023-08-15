@@ -141,14 +141,17 @@ func (mysql *Mysql) EndTransaction(commit bool) (err error) {
 	if mysql.tx == nil && mysql.ctx == nil {
 		return nil
 	}
+	log.Log.Debugf("End transaction %p", mysql.tx)
 	if mysql.IsTransaction() {
 		return nil
 	}
+	log.Log.Debugf("Commit/Rollback transaction %p", mysql.tx)
 	if commit {
 		err = mysql.tx.Commit()
 	} else {
 		err = mysql.tx.Rollback()
 	}
+	log.Log.Debugf("ET: Reset Tx Transction %p", mysql.tx)
 	mysql.tx = nil
 	mysql.ctx = nil
 	return
@@ -163,6 +166,7 @@ func (mysql *Mysql) Close() {
 	if mysql.openDB != nil {
 		mysql.openDB.(*sql.DB).Close()
 		mysql.openDB = nil
+		log.Log.Debugf("Close Tx Transction %p", mysql.tx)
 		mysql.tx = nil
 		mysql.ctx = nil
 	}
@@ -307,6 +311,9 @@ func (mysql *Mysql) StartTransaction() (*sql.Tx, context.Context, error) {
 	if err != nil {
 		return nil, nil, err
 	}
+	if mysql.tx != nil && mysql.IsTransaction() {
+		return mysql.tx, mysql.ctx, nil
+	}
 	mysql.ctx = context.Background()
 	mysql.tx, err = mysql.openDB.(*sql.DB).BeginTx(mysql.ctx, nil)
 	if err != nil {
@@ -314,12 +321,14 @@ func (mysql *Mysql) StartTransaction() (*sql.Tx, context.Context, error) {
 		mysql.tx = nil
 		return nil, nil, err
 	}
+	log.Log.Debugf("Transaction tx=%p", mysql.tx)
 	return mysql.tx, mysql.ctx, nil
 }
 
 // Commit commit the transaction
 func (mysql *Mysql) Commit() error {
 	mysql.Transaction = false
+	log.Log.Debugf("Commit transaction %p", mysql.tx)
 	return mysql.EndTransaction(true)
 }
 

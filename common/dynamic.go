@@ -68,6 +68,9 @@ func CreateInterface(i interface{}, fields []string) *typeInterface {
 }
 
 func (dynamic *typeInterface) CreateQueryFields() string {
+	if dynamic.SetType == EmptySet {
+		return ""
+	}
 	var buffer bytes.Buffer
 	for _, fieldName := range dynamic.RowFields {
 		if buffer.Len() > 0 {
@@ -84,6 +87,7 @@ func (dynamic *typeInterface) CreateQueryValues() (any, []any) {
 		log.Log.Debugf("Empty set defined")
 		return nil, nil
 	}
+	log.Log.Debugf("Create query values")
 	//	fieldType := reflect.TypeOf(dynamic.DataType)
 	value := reflect.ValueOf(dynamic.DataType)
 	if value.Type().Kind() == reflect.Pointer {
@@ -103,11 +107,26 @@ func (dynamic *typeInterface) CreateQueryValues() (any, []any) {
 		log.Log.Debugf("Sub: %T", elemValue.Interface())
 	}
 	log.Log.Debugf("Final: %T", elemValue.Interface())
-	dynamic.generateField(elemValue)
+	dynamic.generateField(elemValue, true)
 	return copyValue.Interface(), dynamic.RowValues
 }
 
-func (dynamic *typeInterface) generateField(elemValue reflect.Value) {
+// CreateQueryValues create query value copy of struct
+func (dynamic *typeInterface) CreateInsertValues() []any {
+	if dynamic.SetType == EmptySet {
+		log.Log.Debugf("Empty set defined")
+		return nil
+	}
+	value := reflect.ValueOf(dynamic.DataType)
+	if value.Type().Kind() == reflect.Pointer {
+		//		fmt.Println(fieldType.Kind(), value.Kind())
+		value = value.Elem()
+	}
+	dynamic.generateField(value, false)
+	return dynamic.RowValues
+}
+
+func (dynamic *typeInterface) generateField(elemValue reflect.Value, scan bool) {
 	log.Log.Debugf("Generate field of Struct: %T %s", elemValue.Interface(), elemValue.Type().Name())
 	for fi := 0; fi < elemValue.NumField(); fi++ {
 		fieldType := elemValue.Type().Field(fi)
@@ -136,23 +155,27 @@ func (dynamic *typeInterface) generateField(elemValue reflect.Value) {
 				}
 				continue
 			default:
-				dynamic.generateField(cv)
+				dynamic.generateField(cv, scan)
 			}
 		} else {
 			log.Log.Debugf("Work on field %s", fieldType.Name)
 			checkField := dynamic.checkFieldSet(fieldType.Name)
 			if checkField {
-				var ptr reflect.Value
-				if cv.CanAddr() {
-					log.Log.Debugf("Use Addr")
-					ptr = cv.Addr()
+				if scan {
+					var ptr reflect.Value
+					if cv.CanAddr() {
+						log.Log.Debugf("Use Addr")
+						ptr = cv.Addr()
+					} else {
+						ptr = reflect.New(cv.Type())
+						log.Log.Debugf("Got Addr pointer %#v", ptr)
+						ptr.Elem().Set(cv)
+					}
+					log.Log.Debugf("Add value %T %s %s", ptr.Interface(), fieldType.Name, elemValue.Type().Name())
+					dynamic.RowValues = append(dynamic.RowValues, ptr.Interface())
 				} else {
-					ptr = reflect.New(cv.Type())
-					log.Log.Debugf("Got Addr pointer %#v", ptr)
-					ptr.Elem().Set(cv)
+					dynamic.RowValues = append(dynamic.RowValues, cv.Interface())
 				}
-				log.Log.Debugf("Add value %T %s %s", ptr.Interface(), fieldType.Name, elemValue.Type().Name())
-				dynamic.RowValues = append(dynamic.RowValues, ptr.Interface())
 			}
 		}
 		log.Log.Debugf("Row values len=%d", len(dynamic.RowNames))
@@ -181,10 +204,11 @@ func (dynamic *typeInterface) generateFieldNames(ri reflect.Type) {
 	for fi := 0; fi < ri.NumField(); fi++ {
 		ct := ri.Field(fi)
 		fieldName := ct.Name
-		tag := ct.Tag.Get("db")
+		tag := ct.Tag.Get("dbsql")
 
 		// If tag is given
 		if tag != "" {
+			log.Log.Debugf("Field tag %s", tag)
 			s := strings.Split(tag, ":")
 
 			if len(s) > 1 {
@@ -198,9 +222,13 @@ func (dynamic *typeInterface) generateFieldNames(ri reflect.Type) {
 					continue
 				case "":
 					// this is if the inmap repository-less map is used
+					log.Log.Debugf("Field name %s", s[0])
+					fieldName = s[0]
 				default:
 					continue
 				}
+			} else {
+				fieldName = s[0]
 			}
 		}
 		st := ct.Type

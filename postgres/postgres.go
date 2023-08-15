@@ -500,29 +500,37 @@ func (pg *PostGres) Insert(name string, insert *common.Entries) (err error) {
 	values := "("
 
 	indexNeed := pg.IndexNeeded()
+	var insertValues [][]any
+	var insertFields []string
 	if insert.DataStruct != nil {
 		dynamic := common.CreateInterface(insert.DataStruct, insert.Fields)
-		log.Log.Debugf("Row fields: %#v", dynamic.RowFields)
-		log.Log.Fatal("Errrrrr")
+		insertFields = dynamic.RowFields
+		v := dynamic.CreateInsertValues()
+		insertValues = [][]any{v}
+		log.Log.Debugf("Row   fields: %#v", insertFields)
+		log.Log.Debugf("Value fields: %#v", insertValues)
 	} else {
-		for i, field := range insert.Fields {
-			if i > 0 {
-				insertCmd += ","
-				values += ","
-			}
-			if indexNeed {
-				insertCmd += `"` + strings.ToLower(field) + `"`
-				values += "$" + strconv.Itoa(i+1)
-			} else {
-				insertCmd += "`" + strings.ToLower(field) + "`"
-				values += "?"
-			}
+		insertFields = insert.Fields
+		insertValues = insert.Values
+	}
+	for i, field := range insertFields {
+		if i > 0 {
+			insertCmd += ","
+			values += ","
+		}
+		if indexNeed {
+			insertCmd += `"` + strings.ToLower(field) + `"`
+			values += "$" + strconv.Itoa(i+1)
+		} else {
+			insertCmd += "`" + strings.ToLower(field) + "`"
+			values += "?"
 		}
 	}
+
 	values += ")"
 	insertCmd += ") VALUES " + values
 	log.Log.Debugf("Insert pre-CMD: %s", insertCmd)
-	for _, v := range insert.Values {
+	for _, v := range insertValues {
 		av := v
 		log.Log.Debugf("Insert values: %d -> %#v", len(av), av)
 		res, err := tx.Exec(ctx, insertCmd, av...)
@@ -564,9 +572,19 @@ func (pg *PostGres) Update(name string, updateInfo *common.Entries) (rowsAffecte
 		ctx = pg.ctx
 	}
 	insertCmd, whereFields := dbsql.GenerateUpdate(pg.IndexNeeded(), name, updateInfo)
-	for i, v := range updateInfo.Values {
+	var updateValues [][]any
+	if updateInfo.DataStruct != nil {
+		dynamic := common.CreateInterface(updateInfo.DataStruct, updateInfo.Fields)
+		v := dynamic.CreateInsertValues()
+		updateValues = [][]any{v}
+	} else {
+		updateValues = updateInfo.Values
+	}
+
+	for i, v := range updateValues {
 		whereClause := dbsql.CreateWhere(i, updateInfo, whereFields)
 		ic := insertCmd + whereClause
+		log.Log.Debugf("Update call: %s", ic)
 		log.Log.Debugf("Update values: %d -> %#v tx=%v %v", len(v), v, tx, ctx)
 		res, err := tx.Exec(ctx, ic, v...)
 		if err != nil {
@@ -575,6 +593,7 @@ func (pg *PostGres) Update(name string, updateInfo *common.Entries) (rowsAffecte
 			return 0, err
 		}
 		rowsAffected += res.RowsAffected()
+		log.Log.Debugf("Rows affected %d", rowsAffected)
 	}
 	log.Log.Debugf("Update done")
 
