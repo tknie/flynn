@@ -328,7 +328,7 @@ func evaluateName(sf reflect.StructField, tsf reflect.Type) (string, string, str
 	name := sf.Name
 	additional := ""
 	log.Log.Debugf("Found name " + name)
-	if tagName, ok := sf.Tag.Lookup("dbsql"); ok {
+	if tagName, ok := sf.Tag.Lookup(common.TagName); ok {
 		tagField := strings.Split(tagName, ":")
 		if tagField[0] != "" {
 			name = tagField[0]

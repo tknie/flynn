@@ -25,35 +25,35 @@ const testTable = "TestTableData"
 const testStructTable = "TestStructTableData"
 
 type TestData struct {
-	ID          string    `dbsql:"::10"`
-	Name        string    `dbsql:"::200"`
-	MiddleName  string    `dbsql:"::50"`
-	FirstName   string    `dbsql:"::50"`
-	PersonnelNo uint64    `dbsql:"::4"`
-	CardNo      [8]byte   `dbsql:"::8"`
-	Signature   string    `dbsql:"::20"`
-	Sex         string    `dbsql:"::1"`
-	MarrieState string    `dbsql:"::1"`
-	Street      string    `dbsql:"::200"`
-	Address     string    `dbsql:"::200"`
-	City        string    `dbsql:"::200"`
-	PostCode    string    `dbsql:"::10"`
-	Birth       time.Time `dbsql:"::10"`
-	Account     float64   `dbsql:"::10, Digits: 2"`
-	Description string    `dbsql:"::0"`
-	Flags       byte      `dbsql:"::8"`
-	AreaCode    int       `dbsql:"::8"`
-	Phone       int       `dbsql:"::8"`
-	Department  string    `dbsql:"::6"`
-	JobTitle    string    `dbsql:"::20"`
-	Currency    string    `dbsql:"::2"`
-	Salary      uint64    `dbsql:"::8"`
-	Bonus       uint64    `dbsql:"::8"`
-	LeaveDue    uint64    `dbsql:"::2"`
-	LeaveTaken  uint64    `dbsql:"::2"`
+	ID          string    `flynn:"::10"`
+	Name        string    `flynn:"::200"`
+	MiddleName  string    `flynn:"::50"`
+	FirstName   string    `flynn:"::50"`
+	PersonnelNo uint64    `flynn:"::4"`
+	CardNo      [8]byte   `flynn:"::8"`
+	Signature   string    `flynn:"::20"`
+	Sex         string    `flynn:"::1"`
+	MarrieState string    `flynn:"::1"`
+	Street      string    `flynn:"::200"`
+	Address     string    `flynn:"::200"`
+	City        string    `flynn:"::200"`
+	PostCode    string    `flynn:"::10"`
+	Birth       time.Time `flynn:"::10"`
+	Account     float64   `flynn:"::10, Digits: 2"`
+	Description string    `flynn:"::0"`
+	Flags       byte      `flynn:"::8"`
+	AreaCode    int       `flynn:"::8"`
+	Phone       int       `flynn:"::8"`
+	Department  string    `flynn:"::6"`
+	JobTitle    string    `flynn:"::20"`
+	Currency    string    `flynn:"::2"`
+	Salary      uint64    `flynn:"::8"`
+	Bonus       uint64    `flynn:"::8"`
+	LeaveDue    uint64    `flynn:"::2"`
+	LeaveTaken  uint64    `flynn:"::2"`
 	LeaveStart  time.Time
 	LeaveEnd    time.Time
-	Language    uint64 `dbsql:"::8"`
+	Language    uint64 `flynn:"::8"`
 }
 
 func TestInsertInitTestTable(t *testing.T) {

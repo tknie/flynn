@@ -148,12 +148,12 @@ func TestCreateStruct(t *testing.T) {
 
 func createStruct(t *testing.T, target *target) error {
 	columns := struct {
-		XY        uint64 `dbsql:"ID::SERIAL"`
+		XY        uint64 `flynn:"ID::SERIAL"`
 		Name      string
 		FirstName string
 		LastName  string
-		Address   string `dbsql:"Street"`
-		Salary    uint64 `dbsql:"Salary"`
+		Address   string `flynn:"Street"`
+		Salary    uint64 `flynn:"Salary"`
 		Bonus     int64
 	}{XY: 200, Name: "Gellanger",
 		FirstName: "Bob", Salary: 10000}

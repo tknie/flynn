@@ -30,9 +30,9 @@ type SubStruct struct {
 }
 
 type SubStruct3 struct {
-	ABC   string `dbsql:"XYZ"`
-	DEF   string `dbsql:"UUU"`
-	Nr    uint64 `dbsql:"ID:IDENTITY(1, 1)"`
+	ABC   string `flynn:"XYZ"`
+	DEF   string `flynn:"UUU"`
+	Nr    uint64 `flynn:"ID:IDENTITY(1, 1)"`
 	Value int64
 	Doub  float64
 	//	AA    complex128

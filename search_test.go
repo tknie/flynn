@@ -222,7 +222,7 @@ func TestSearchPgCriteriaRows(t *testing.T) {
 type TestString struct {
 	Title     string
 	Published time.Time
-	Ignore    string `db:":ignore"`
+	Ignore    string `flynn:":ignore"`
 }
 
 type TestDeepString struct {
@@ -232,7 +232,7 @@ type TestDeepString struct {
 		Directory string
 		Thumbnail string
 	}
-	Ignore string `db:":ignore"`
+	Ignore string `flynn:":ignore"`
 }
 
 type SubPtr struct {
@@ -244,7 +244,7 @@ type TestDeepPtrString struct {
 	Title     string
 	Published time.Time
 	SubPtr    *SubPtr
-	Ignore    string `db:":ignore"`
+	Ignore    string `flynn:":ignore"`
 }
 
 func TestSearchPgStruct(t *testing.T) {

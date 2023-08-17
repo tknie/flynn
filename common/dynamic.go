@@ -22,6 +22,9 @@ import (
 
 type SetType byte
 
+// TagName name to be used for tagging structure field
+const TagName = "flynn"
+
 const (
 	EmptySet SetType = iota
 	AllSet
@@ -204,7 +207,8 @@ func (dynamic *typeInterface) generateFieldNames(ri reflect.Type) {
 	for fi := 0; fi < ri.NumField(); fi++ {
 		ct := ri.Field(fi)
 		fieldName := ct.Name
-		tag := ct.Tag.Get("dbsql")
+		log.Log.Debugf("Work on fieldname %s", fieldName)
+		tag := ct.Tag.Get(TagName)
 
 		// If tag is given
 		if tag != "" {
@@ -212,6 +216,7 @@ func (dynamic *typeInterface) generateFieldNames(ri reflect.Type) {
 			s := strings.Split(tag, ":")
 
 			if len(s) > 1 {
+				log.Log.Debugf("Field tag option %s", s[1])
 				switch s[1] {
 				case "key":
 					dynamic.RowNames["#key"] = []string{fieldName}
@@ -231,6 +236,7 @@ func (dynamic *typeInterface) generateFieldNames(ri reflect.Type) {
 				fieldName = s[0]
 			}
 		}
+		log.Log.Debugf("Add field %s", ct.Name)
 		st := ct.Type
 		if st.Kind() == reflect.Pointer {
 			log.Log.Debugf("Pointer-Kind of %s", st.Name())
