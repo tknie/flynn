@@ -135,7 +135,8 @@ func (dynamic *typeInterface) generateField(elemValue reflect.Value, scan bool) 
 		fieldType := elemValue.Type().Field(fi)
 		tag := fieldType.Tag
 		cv := elemValue.Field(fi)
-		d := tag.Get("db")
+		d := tag.Get(TagName)
+		log.Log.Debugf("Tag for %s = %s", fieldType.Name, tag)
 		if d == ":ignore" {
 			continue
 		}

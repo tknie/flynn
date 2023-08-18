@@ -390,6 +390,7 @@ func (pg *PostGres) ParseStruct(search *common.Query, rows pgx.Rows, f common.Re
 	log.Log.Debugf("Parse columns rows -> flen=%d vlen=%d %T",
 		len(result.Fields), len(values), copy)
 	for rows.Next() {
+		log.Log.Debugf("Row found and scanning")
 		if len(result.Fields) == 0 {
 			for _, f := range rows.FieldDescriptions() {
 				result.Fields = append(result.Fields, f.Name)

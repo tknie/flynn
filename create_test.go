@@ -161,11 +161,13 @@ func createStruct(t *testing.T, target *target) error {
 	if target.layer == "adabas" {
 		return nil
 	}
+	fmt.Println("Work on layer", target.layer)
 	id, err := Register(target.layer, target.url)
 	if !assert.NoError(t, err, "register fail using "+target.layer) {
 		return err
 	}
 	defer unregisterDatabase(t, id)
+	defer id.DeleteTable(testCreationTableStruct)
 
 	log.Log.Debugf("Delete table: %s", testCreationTableStruct)
 	err = id.DeleteTable(testCreationTableStruct)
