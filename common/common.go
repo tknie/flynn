@@ -23,6 +23,8 @@ const (
 	CreateError CreateStatus = iota
 	CreateExists
 	CreateCreated
+	CreateDriver
+	CreateConnError
 )
 
 type RegDbID uint64
@@ -123,10 +125,13 @@ func (id RegDbID) CreateTable(tableName string, columns any) error {
 func (id RegDbID) CreateTableIfNotExists(tableName string, columns any) (CreateStatus, error) {
 	driver, err := searchDataDriver(id)
 	if err != nil {
-		return CreateError, err
+		return CreateDriver, err
 	}
 	dbTables, err := driver.Maps()
 	if err != nil {
+		if dbTables == nil {
+			return CreateConnError, err
+		}
 		return CreateError, err
 	}
 	for _, d := range dbTables {

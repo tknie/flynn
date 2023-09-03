@@ -92,11 +92,11 @@ fmt: ; $(info $(M) running fmt…) @ ## Run go fmt on all source files
 test-build: prepare ; $(info $(M) building $(NAME:%=% )tests…) @ ## Build tests
 	$(GO) test -c -o $(BINTESTS)/db.test$(GOEXE) -tags $(GO_TAGS) .
 	$Q cd $(CURDIR) && for pkg in $(TESTPKGSDIR); do echo "Build $$pkg in $(CURDIR)"; \
-	LD_LIBRARY_PATH="$(LD_LIBRARY_PATH):$(ACLDIR)/lib" \
-		DYLD_LIBRARY_PATH="$(DYLD_LIBRARY_PATH):$(ACLDIR)/lib" \
-	    CGO_CFLAGS="$(CGO_CFLAGS)" CGO_LDFLAGS="$(CGO_LDFLAGS) $(CGO_EXT_LDFLAGS)" \
-	    TESTFILES=$(TESTFILES) GO_ADA_MESSAGES=$(MESSAGES) LOGPATH=$(LOGPATH) REFERENCES=$(REFERENCES) \
-	    $(GO) test -c -o $(BINTESTS)/$$pkg.test$(GOEXE) -tags $(GO_TAGS) ./$$pkg; done
+	 LD_LIBRARY_PATH="$(LD_LIBRARY_PATH):$(ACLDIR)/lib" \
+	 DYLD_LIBRARY_PATH="$(DYLD_LIBRARY_PATH):$(ACLDIR)/lib" \
+	 CGO_CFLAGS="$(CGO_CFLAGS)" CGO_LDFLAGS="$(CGO_LDFLAGS) $(CGO_EXT_LDFLAGS)" \
+	 TESTFILES=$(TESTFILES) GO_ADA_MESSAGES=$(MESSAGES) LOGPATH=$(LOGPATH) REFERENCES=$(REFERENCES) \
+	 $(GO) test -c -o $(BINTESTS)/$$pkg.test$(GOEXE) -tags $(GO_TAGS) ./$$pkg; done
 
 TEST_TARGETS := test-default test-bench test-short test-verbose test-json test-race test-sanitizer
 .PHONY: $(TEST_TARGETS) check test tests

@@ -223,6 +223,7 @@ func (pg *PostGres) Close() {
 // Ping create short test database connection
 func (pg *PostGres) Ping() error {
 	log.Log.Debugf("Ping database ... by receiving table names")
+	pg.dbTableNames = nil
 	dbOpen, err := pg.Open()
 	if err != nil {
 		return err
