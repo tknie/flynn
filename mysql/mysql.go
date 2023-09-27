@@ -1,3 +1,6 @@
+//go:build !flynn_nomysql
+// +build !flynn_nomysql
+
 /*
 * Copyright 2022-2023 Thorsten A. Knieling
 *

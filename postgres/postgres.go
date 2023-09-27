@@ -1,3 +1,6 @@
+//go:build !flynn_nopostgres
+// +build !flynn_nopostgres
+
 /*
 * Copyright 2022-2023 Thorsten A. Knieling
 *

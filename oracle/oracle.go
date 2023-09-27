@@ -1,3 +1,6 @@
+//go:build !flynn_nooracle
+// +build !flynn_nooracle
+
 /*
 * Copyright 2022-2023 Thorsten A. Knieling
 *

@@ -10,7 +10,7 @@
 #       http://www.apache.org/licenses/LICENSE-2.0
 #
 
-GO_TAGS     = db
+GO_TAGS     = $(if $(TAGS),$(TAGS),db)
 
 TEST_RUN    = $(if $(TEST),-test.run $(TEST),)
 TIMEOUT     = 2000

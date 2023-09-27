@@ -1,3 +1,6 @@
+//go:build !flynn_noadabas
+// +build !flynn_noadabas
+
 /*
 * Copyright 2022-2023 Thorsten A. Knieling
 *
