@@ -130,7 +130,8 @@ func (dynamic *typeInterface) CreateInsertValues() []any {
 }
 
 func (dynamic *typeInterface) generateField(elemValue reflect.Value, scan bool) {
-	log.Log.Debugf("Generate field of Struct: %T %s", elemValue.Interface(), elemValue.Type().Name())
+	log.Log.Debugf("Generate field of Struct: %T %s -> %v",
+		elemValue.Interface(), elemValue.Type().Name(), scan)
 	for fi := 0; fi < elemValue.NumField(); fi++ {
 		fieldType := elemValue.Type().Field(fi)
 		tag := fieldType.Tag
@@ -162,7 +163,7 @@ func (dynamic *typeInterface) generateField(elemValue reflect.Value, scan bool) 
 				dynamic.generateField(cv, scan)
 			}
 		} else {
-			log.Log.Debugf("Work on field %s", fieldType.Name)
+			log.Log.Debugf("Work on field %s -> %v", fieldType.Name, scan)
 			checkField := dynamic.checkFieldSet(fieldType.Name)
 			if checkField {
 				if scan {
@@ -178,6 +179,7 @@ func (dynamic *typeInterface) generateField(elemValue reflect.Value, scan bool) 
 					log.Log.Debugf("Add value %T %s %s", ptr.Interface(), fieldType.Name, elemValue.Type().Name())
 					dynamic.RowValues = append(dynamic.RowValues, ptr.Interface())
 				} else {
+					log.Log.Debugf("Add no-scan value %T %s %s", cv.Interface(), fieldType.Name, elemValue.Type().Name())
 					dynamic.RowValues = append(dynamic.RowValues, cv.Interface())
 				}
 			}
