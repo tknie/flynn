@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/jackc/pgx/v5 v5.4.3
-	github.com/tknie/log v0.0.0-20230709123301-620bb99e7bd6
+	github.com/tknie/log v0.0.0-20231006083545-fabe25f4fb0e
 )
 
 require github.com/rogpeppe/go-internal v1.9.0 // indirect
@@ -27,7 +27,7 @@ require (
 	github.com/tknie/adabas-go-api v1.7.11-0.20230927173718-c1f8db24a2a8
 	github.com/tknie/errorrepo v0.0.0-20230429175850-6f60500223d5
 	golang.org/x/crypto v0.14.0 // indirect
-	golang.org/x/exp v0.0.0-20230905200255-921286631fa9
+	golang.org/x/exp v0.0.0-20231006140011-7918f672742d
 	golang.org/x/sys v0.13.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
