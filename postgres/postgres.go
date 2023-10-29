@@ -686,7 +686,6 @@ func (pg *PostGres) BatchSelectFct(batch *common.Query, fct common.ResultFunctio
 	}
 	result := &common.Result{}
 	query := &common.Query{Search: batch.Search}
-	count := uint64(0)
 	for rows.Next() {
 		if rows.Err() != nil {
 			fmt.Println("Batch SQL error:", rows.Err())
@@ -700,8 +699,8 @@ func (pg *PostGres) BatchSelectFct(batch *common.Query, fct common.ResultFunctio
 		if err != nil {
 			return err
 		}
-		result.Data = common.Unpointer(data)
-		count++
+		result.Rows = common.Unpointer(data)
+		result.Counter++
 		fct(query, result)
 	}
 	return nil

@@ -184,6 +184,9 @@ func TestPostgresBatchSelectFct(t *testing.T) {
 			}
 			assert.Equal(t, 24, len(result.Header))
 			assert.Equal(t, 24, len(result.Rows))
+			if !assert.NotNil(t, result.Rows) {
+				return fmt.Errorf("Rows empty")
+			}
 			for i := range result.Header {
 				//fmt.Printf(" %T->", result[i])
 				switch s := result.Rows[i].(type) {
@@ -215,6 +218,9 @@ func TestPostgresBatchSelectFct(t *testing.T) {
 				}
 				fmt.Println()
 			}
+			if !assert.NotNil(t, result.Rows) {
+				return fmt.Errorf("Rows empty")
+			}
 			fmt.Printf("%03d\t", result.Counter)
 			for _, r := range result.Rows {
 				switch v := r.(type) {
@@ -225,8 +231,34 @@ func TestPostgresBatchSelectFct(t *testing.T) {
 				}
 			}
 			fmt.Println()
-
+			count++
 			return nil
 		})
 	assert.NoError(t, err)
+
+	complexSelect := `with albumSelect as (select id,title,albumkey,directory,published from Albums where directory = 'Herbst2020')
+	select index,description,md5,mimetype from albumpictures, albumSelect where albumid = albumSelect.id`
+	err = pg.BatchSelectFct(&common.Query{Search: complexSelect},
+		func(q *common.Query, result *common.Result) error {
+			if !assert.NotNil(t, result.Rows) {
+				return fmt.Errorf("Rows empty")
+			}
+			assert.Equal(t, "index", result.Header[0].Name)
+			assert.Equal(t, "description", result.Header[1].Name)
+			assert.Equal(t, "md5", result.Header[2].Name)
+			assert.Equal(t, int64(result.Counter), result.Rows[0])
+			switch result.Counter {
+			case 1:
+				assert.Equal(t, "Hallo Familie und Freunde, ...", result.Rows[1].(sql.NullString).String)
+			case 14:
+				assert.Equal(t, "... und bleiben eher daheim. Mama hat Papa auch die ...", result.Rows[1].(sql.NullString).String)
+			case 25:
+				assert.Equal(t, "Bis zum nächsten Mal. Tschhhuuueeesss", result.Rows[1].(sql.NullString).String)
+			default:
+				assert.Equal(t, "image/jpeg", result.Rows[3].(sql.NullString).String)
+			}
+			return nil
+		})
+	assert.NoError(t, err)
+
 }
