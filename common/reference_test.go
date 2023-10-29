@@ -1,3 +1,14 @@
+/*
+* Copyright 2022-2023 Thorsten A. Knieling
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*    http://www.apache.org/licenses/LICENSE-2.0
+*
+ */
+
 package common
 
 import (
@@ -58,6 +69,16 @@ func TestReferenceURL(t *testing.T) {
 	assert.Equal(t, &Reference{Driver: PostgresType, Host: "localhost", Port: 5432, Database: "bitgarten",
 		User: "admin", Options: []string{"sslmode=require"}}, ref)
 	assert.Equal(t, "axx", p)
+	ref, p, err = NewReference("postgres://localhost:5432/bitgarten?sslmode=require")
+	assert.NoError(t, err)
+	assert.Equal(t, &Reference{Driver: PostgresType, Host: "localhost", Port: 5432, Database: "bitgarten",
+		User: "", Options: []string{"sslmode=require"}}, ref)
+	assert.Equal(t, "", p)
+	ref, p, err = NewReference("postgres://admin@localhost:5432/bitgarten?sslmode=require")
+	assert.NoError(t, err)
+	assert.Equal(t, &Reference{Driver: PostgresType, Host: "localhost", Port: 5432, Database: "bitgarten",
+		User: "admin", Options: []string{"sslmode=require"}}, ref)
+	assert.Equal(t, "", p)
 	ref, p, err = NewReference("oracle://<user>:<password>@xaaaa:99989/schema")
 	assert.NoError(t, err)
 	assert.Equal(t, &Reference{Driver: OracleType, Host: "xaaaa", Port: 99989, Database: "schema",

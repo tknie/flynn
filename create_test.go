@@ -17,6 +17,7 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/tknie/flynn/common"
 	def "github.com/tknie/flynn/common"
 	"github.com/tknie/log"
 
@@ -200,20 +201,20 @@ func createStruct(t *testing.T, target *target) error {
 	log.Log.Debugf("Inserting into table: %s", testCreationTableStruct)
 	err = id.Batch("SELECT NAME FROM " + testCreationTableStruct)
 	assert.NoError(t, err, "select fail using "+target.layer)
-	err = id.BatchSelectFct("SELECT NAME FROM "+testCreationTableStruct+" WHERE NAME='Gellanger'",
-		func(index uint64, header []*def.Column, result []interface{}) error {
-			fmt.Println(index, result[0].(sql.NullString).String)
-			assert.Equal(t, uint64(1), index)
+	err = id.BatchSelectFct(&common.Query{Search: "SELECT NAME FROM " + testCreationTableStruct + " WHERE NAME='Gellanger'"},
+		func(search *def.Query, result *def.Result) error {
+			fmt.Println(result.Counter, result.Rows[0].(sql.NullString).String)
+			assert.Equal(t, uint64(1), result.Counter)
 			return nil
 		})
 	assert.NoError(t, err)
 	err = id.Commit()
 	assert.NoError(t, err)
-	err = id.BatchSelectFct("SELECT COUNT(*) FROM "+testCreationTableStruct,
-		func(index uint64, header []*def.Column, result []interface{}) error {
-			fmt.Println(index, result[0].(int64))
-			assert.Equal(t, uint64(1), index)
-			if !assert.Equal(t, int64(102), result[0].(int64)) {
+	err = id.BatchSelectFct(&common.Query{Search: "SELECT COUNT(*) FROM " + testCreationTableStruct},
+		func(search *def.Query, result *def.Result) error {
+			fmt.Println(result.Counter, result.Rows[0].(int64))
+			assert.Equal(t, uint64(1), result.Counter)
+			if !assert.Equal(t, int64(102), result.Rows[0].(int64)) {
 				log.Log.Infof("Error entries missing")
 			}
 			return nil

@@ -167,7 +167,7 @@ func BatchSelect(dbsql DBsql, batch string) ([][]interface{}, error) {
 }
 
 // BatchSelectFct batch SQL query in table with fct called
-func BatchSelectFct(dbsql DBsql, batch string, fct common.ResultDataFunction) error {
+func BatchSelectFct(dbsql DBsql, batch *common.Query, fct common.ResultFunction) error {
 	layer, url := dbsql.Reference()
 	log.Log.Debugf("Connect url: %s", url)
 	db, err := sql.Open(layer, url)
@@ -176,7 +176,7 @@ func BatchSelectFct(dbsql DBsql, batch string, fct common.ResultDataFunction) er
 	}
 	defer db.Close()
 	// Query batch SQL
-	rows, err := db.Query(batch)
+	rows, err := db.Query(batch.Search)
 	if err != nil {
 		return err
 	}
@@ -184,24 +184,24 @@ func BatchSelectFct(dbsql DBsql, batch string, fct common.ResultDataFunction) er
 	if err != nil {
 		return err
 	}
-	var header []*common.Column
 	count := uint64(0)
+	result := &common.Result{}
 	for rows.Next() {
 		if rows.Err() != nil {
 			fmt.Println("Batch SQL error:", rows.Err())
 			return rows.Err()
 		}
-		if header == nil {
-			header = common.CreateHeader(ct)
+		if result.Header == nil {
+			result.Header = common.CreateHeader(ct)
 		}
 		data := common.CreateTypeData(ct)
 		err := rows.Scan(data...)
 		if err != nil {
 			return err
 		}
-		data = common.Unpointer(data)
+		result.Data = common.Unpointer(data)
 		count++
-		fct(count, header, data)
+		fct(nil, result)
 	}
 	return nil
 }

@@ -114,7 +114,7 @@ func (ada *postgres) BatchSelect(batch string) ([][]interface{}, error) {
 }
 
 // BatchSelectFct batch SQL query in table with fct called
-func (ada *postgres) BatchSelectFct(string, common.ResultDataFunction) error {
+func (ada *postgres) BatchSelectFct(*common.Query, common.ResultFunction) error {
 	return errorrepo.NewError("DB065535")
 }
 

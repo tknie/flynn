@@ -114,7 +114,7 @@ func (ada *Adabas) BatchSelect(batch string) ([][]interface{}, error) {
 }
 
 // BatchSelectFct batch SQL query in table with fct called
-func (ada *Adabas) BatchSelectFct(string, common.ResultDataFunction) error {
+func (ada *Adabas) BatchSelectFct(*common.Query, common.ResultFunction) error {
 	return errorrepo.NewError("DB065535")
 }
 

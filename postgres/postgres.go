@@ -668,7 +668,7 @@ func (pg *PostGres) BatchSelect(batch string) ([][]interface{}, error) {
 }
 
 // BatchSelectFct batch SQL query in table with fct called
-func (pg *PostGres) BatchSelectFct(batch string, fct common.ResultDataFunction) error {
+func (pg *PostGres) BatchSelectFct(batch *common.Query, fct common.ResultFunction) error {
 	layer, url := pg.Reference()
 	db, err := sql.Open(layer, url)
 	if err != nil {
@@ -676,7 +676,7 @@ func (pg *PostGres) BatchSelectFct(batch string, fct common.ResultDataFunction) 
 	}
 	defer db.Close()
 	// Query batch SQL
-	rows, err := db.Query(batch)
+	rows, err := db.Query(batch.Search)
 	if err != nil {
 		return err
 	}
@@ -684,24 +684,25 @@ func (pg *PostGres) BatchSelectFct(batch string, fct common.ResultDataFunction) 
 	if err != nil {
 		return err
 	}
-	var header []*common.Column
+	result := &common.Result{}
+	query := &common.Query{Search: batch.Search}
 	count := uint64(0)
 	for rows.Next() {
 		if rows.Err() != nil {
 			fmt.Println("Batch SQL error:", rows.Err())
 			return rows.Err()
 		}
-		if header == nil {
-			header = common.CreateHeader(ct)
+		if result.Header == nil {
+			result.Header = common.CreateHeader(ct)
 		}
 		data := common.CreateTypeData(ct)
 		err := rows.Scan(data...)
 		if err != nil {
 			return err
 		}
-		data = common.Unpointer(data)
+		result.Data = common.Unpointer(data)
 		count++
-		fct(count, header, data)
+		fct(query, result)
 	}
 	return nil
 }

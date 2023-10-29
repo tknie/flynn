@@ -304,7 +304,7 @@ func (mysql *Mysql) BatchSelect(batch string) ([][]interface{}, error) {
 }
 
 // BatchSelectFct batch SQL query in table with fct called
-func (mysql *Mysql) BatchSelectFct(batch string, fct common.ResultDataFunction) error {
+func (mysql *Mysql) BatchSelectFct(batch *common.Query, fct common.ResultFunction) error {
 	return dbsql.BatchSelectFct(mysql, batch, fct)
 }
 

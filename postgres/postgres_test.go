@@ -174,19 +174,19 @@ func TestPostgresBatchSelectFct(t *testing.T) {
 	}
 
 	count := 0
-	err = pg.BatchSelectFct("select * from Pictures where md5 = '3C57AAD81E3121C48ED3FC752C1DC2BC'",
-		func(index uint64, header []*common.Column, result []interface{}) error {
+	err = pg.BatchSelectFct(&common.Query{Search: "select * from Pictures where md5 = '3C57AAD81E3121C48ED3FC752C1DC2BC'"},
+		func(q *common.Query, result *common.Result) error {
 			if count == 0 {
-				for _, h := range header {
+				for _, h := range result.Header {
 					fmt.Printf("%s,\t", h.Name)
 				}
 				fmt.Println()
 			}
-			assert.Equal(t, 24, len(header))
-			assert.Equal(t, 24, len(result))
-			for i := range header {
+			assert.Equal(t, 24, len(result.Header))
+			assert.Equal(t, 24, len(result.Rows))
+			for i := range result.Header {
 				//fmt.Printf(" %T->", result[i])
-				switch s := result[i].(type) {
+				switch s := result.Rows[i].(type) {
 				case sql.NullString:
 					fmt.Print(s.String)
 				case int32:
@@ -206,17 +206,17 @@ func TestPostgresBatchSelectFct(t *testing.T) {
 	assert.NoError(t, err)
 
 	count = 0
-	err = pg.BatchSelectFct("select title,albumkey,directory,published from Albums where directory = 'Herbst2020'",
-		func(index uint64, header []*common.Column, result []interface{}) error {
+	err = pg.BatchSelectFct(&common.Query{Search: "select title,albumkey,directory,published from Albums where directory = 'Herbst2020'"},
+		func(q *common.Query, result *common.Result) error {
 			if count == 0 {
-				fmt.Printf("%03d\t", index)
-				for _, h := range header {
+				fmt.Printf("%03d\t", result.Counter)
+				for _, h := range result.Header {
 					fmt.Printf("%s,\t", h.Name)
 				}
 				fmt.Println()
 			}
-			fmt.Printf("%03d\t", index)
-			for _, r := range result {
+			fmt.Printf("%03d\t", result.Counter)
+			for _, r := range result.Rows {
 				switch v := r.(type) {
 				case sql.NullString:
 					fmt.Printf("%s,\t", v.String)

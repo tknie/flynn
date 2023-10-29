@@ -30,9 +30,11 @@ const (
 type RegDbID uint64
 
 type Result struct {
-	Fields []string
-	Rows   []any
-	Data   any
+	Counter uint64
+	Fields  []string
+	Header  []*Column
+	Rows    []any
+	Data    any
 }
 
 type Stream struct {
@@ -63,7 +65,7 @@ type Database interface {
 	Delete(name string, remove *Entries) (int64, error)
 	Batch(batch string) error
 	BatchSelect(batch string) ([][]interface{}, error)
-	BatchSelectFct(batch string, f ResultDataFunction) error
+	BatchSelectFct(search *Query, f ResultFunction) error
 	Query(search *Query, f ResultFunction) (*Result, error)
 	BeginTransaction() error
 	Commit() error
@@ -80,7 +82,8 @@ type Column struct {
 }
 
 type ResultFunction func(search *Query, result *Result) error
-type ResultDataFunction func(index uint64, header []*Column, result []interface{}) error
+
+// type ResultDataFunction func(index uint64, header []*Column, result []interface{}) error
 type StreamFunction func(search *Query, stream *Stream) error
 
 type CommonDatabase struct {
@@ -178,7 +181,7 @@ func (id RegDbID) BatchSelect(batch string) ([][]interface{}, error) {
 }
 
 // BatchSelect batch SQL query in table calling function
-func (id RegDbID) BatchSelectFct(batch string, f ResultDataFunction) error {
+func (id RegDbID) BatchSelectFct(batch *Query, f ResultFunction) error {
 	driver, err := searchDataDriver(id)
 	if err != nil {
 		return err

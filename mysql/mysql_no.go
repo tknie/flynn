@@ -114,7 +114,7 @@ func (ada *mysql) BatchSelect(batch string) ([][]interface{}, error) {
 }
 
 // BatchSelectFct batch SQL query in table with fct called
-func (ada *mysql) BatchSelectFct(string, common.ResultDataFunction) error {
+func (ada *mysql) BatchSelectFct(*common.Query, common.ResultFunction) error {
 	return errorrepo.NewError("DB065535")
 }
 

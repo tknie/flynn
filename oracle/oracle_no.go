@@ -114,7 +114,7 @@ func (ada *oracle) BatchSelect(batch string) ([][]interface{}, error) {
 }
 
 // BatchSelectFct batch SQL query in table with fct called
-func (ada *oracle) BatchSelectFct(string, common.ResultDataFunction) error {
+func (ada *oracle) BatchSelectFct(*common.Query, common.ResultFunction) error {
 	return errorrepo.NewError("DB065535")
 }
 
