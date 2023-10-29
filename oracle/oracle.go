@@ -315,8 +315,27 @@ func (oracle *Oracle) BatchSelect(batch string) ([][]interface{}, error) {
 }
 
 // BatchSelectFct batch SQL query in table with fct called
-func (oracle *Oracle) BatchSelectFct(batch *common.Query, fct common.ResultFunction) error {
-	return dbsql.BatchSelectFct(oracle, batch, fct)
+func (oracle *Oracle) BatchSelectFct(search *common.Query, fct common.ResultFunction) error {
+	dbOpen, err := oracle.Open()
+	if err != nil {
+		return err
+	}
+	defer oracle.Close()
+
+	db := dbOpen.(*sql.DB)
+	selectCmd := search.Search
+	log.Log.Debugf("Query: %s", selectCmd)
+	rows, err := db.Query(selectCmd)
+	if err != nil {
+		return err
+	}
+	if search.DataStruct == nil {
+		_, err = search.ParseRows(rows, fct)
+	} else {
+		_, err = search.ParseStruct(rows, fct)
+	}
+	return err
+	// return dbsql.BatchSelectFct(mysql, batch, fct)	return dbsql.BatchSelectFct(oracle, batch, fct)
 }
 
 // StartTransaction start transaction

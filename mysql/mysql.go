@@ -304,8 +304,27 @@ func (mysql *Mysql) BatchSelect(batch string) ([][]interface{}, error) {
 }
 
 // BatchSelectFct batch SQL query in table with fct called
-func (mysql *Mysql) BatchSelectFct(batch *common.Query, fct common.ResultFunction) error {
-	return dbsql.BatchSelectFct(mysql, batch, fct)
+func (mysql *Mysql) BatchSelectFct(search *common.Query, fct common.ResultFunction) error {
+	dbOpen, err := mysql.Open()
+	if err != nil {
+		return err
+	}
+	defer mysql.Close()
+
+	db := dbOpen.(*sql.DB)
+	selectCmd := search.Search
+	log.Log.Debugf("Query: %s", selectCmd)
+	rows, err := db.Query(selectCmd)
+	if err != nil {
+		return err
+	}
+	if search.DataStruct == nil {
+		_, err = search.ParseRows(rows, fct)
+	} else {
+		_, err = search.ParseStruct(rows, fct)
+	}
+	return err
+	// return dbsql.BatchSelectFct(mysql, batch, fct)
 }
 
 // StartTransaction start transaction
