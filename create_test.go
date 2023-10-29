@@ -12,7 +12,6 @@
 package flynn
 
 import (
-	"database/sql"
 	"fmt"
 	"strconv"
 	"testing"
@@ -162,7 +161,7 @@ func createStruct(t *testing.T, target *target) error {
 	if target.layer == "adabas" {
 		return nil
 	}
-	fmt.Println("Work on layer", target.layer)
+	// fmt.Println("Work on layer", target.layer)
 	id, err := Register(target.layer, target.url)
 	if !assert.NoError(t, err, "register fail using "+target.layer) {
 		return err
@@ -192,7 +191,7 @@ func createStruct(t *testing.T, target *target) error {
 	if !assert.NoError(t, err, "insert fail using "+target.layer) {
 		return err
 	}
-	fmt.Println(columns.FirstName, columns.LastName)
+	// Insert data (all fields)
 	err = id.Insert(testCreationTableStruct, &def.Entries{Fields: []string{"*"},
 		DataStruct: &columns})
 	if !assert.NoError(t, err, "insert data struct fail using "+target.layer) {
@@ -203,8 +202,8 @@ func createStruct(t *testing.T, target *target) error {
 	assert.NoError(t, err, "select fail using "+target.layer)
 	err = id.BatchSelectFct(&common.Query{Search: "SELECT NAME FROM " + testCreationTableStruct + " WHERE NAME='Gellanger'"},
 		func(search *def.Query, result *def.Result) error {
-			fmt.Println(result.Counter, result.Rows[0].(sql.NullString).String)
 			assert.Equal(t, uint64(1), result.Counter)
+			assert.Equal(t, "Gellanger", result.Rows[0].(string))
 			return nil
 		})
 	assert.NoError(t, err)
@@ -212,9 +211,20 @@ func createStruct(t *testing.T, target *target) error {
 	assert.NoError(t, err)
 	err = id.BatchSelectFct(&common.Query{Search: "SELECT COUNT(*) FROM " + testCreationTableStruct},
 		func(search *def.Query, result *def.Result) error {
-			fmt.Println(result.Counter, result.Rows[0].(int64))
+			count := uint64(0)
+			switch c := result.Rows[0].(type) {
+			case int64:
+				count = uint64(c)
+			case string:
+				ct, err := strconv.ParseUint(c, 10, 0)
+				assert.NoError(t, err)
+				count = ct
+			default:
+				fmt.Printf("Unknown TYPE %T\n", result.Rows[0])
+			}
+			// fmt.Println("COUNTER", result.Counter)
 			assert.Equal(t, uint64(1), result.Counter)
-			if !assert.Equal(t, int64(102), result.Rows[0].(int64)) {
+			if !assert.Equal(t, uint64(102), count) {
 				log.Log.Infof("Error entries missing")
 			}
 			return nil

@@ -104,6 +104,13 @@ func (search *Query) ParseRows(rows *sql.Rows, f ResultFunction) (result *Result
 	result = &Result{}
 
 	result.Data = search.DataStruct
+	ct, err := rows.ColumnTypes()
+	if err != nil {
+		log.Log.Debugf("Error generating column header: %v", err)
+		return nil, err
+	}
+	result.Header = CreateHeader(ct)
+
 	// rows := make([]any, len(result.Rows))
 	var scanRows []any
 	if search.DataStruct == nil {
@@ -123,6 +130,7 @@ func (search *Query) ParseRows(rows *sql.Rows, f ResultFunction) (result *Result
 	}
 	log.Log.Debugf("Parse columns rows: %d fields: %v", len(scanRows), result.Fields)
 	for rows.Next() {
+		result.Counter++
 		log.Log.Debugf("Found record")
 		err := rows.Scan(scanRows...)
 		if err != nil {
@@ -132,6 +140,7 @@ func (search *Query) ParseRows(rows *sql.Rows, f ResultFunction) (result *Result
 		}
 		result.Rows = make([]any, len(scanRows))
 		for i, r := range scanRows {
+			log.Log.Debugf("Parse Rows %T", r)
 			switch n := r.(type) {
 			case *sql.NullByte:
 				if n.Valid {
