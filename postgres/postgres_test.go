@@ -31,6 +31,13 @@ import (
 var logRus = logrus.StandardLogger()
 var once = new(sync.Once)
 
+type Picture struct {
+	Index       int
+	Description string
+	Md5         string
+	Mimetype    string
+}
+
 func InitLog(t *testing.T) {
 	once.Do(startLog)
 	log.Log.Debugf("TEST: %s", t.Name())
@@ -249,16 +256,45 @@ func TestPostgresBatchSelectFct(t *testing.T) {
 			assert.Equal(t, int64(result.Counter), result.Rows[0])
 			switch result.Counter {
 			case 1:
-				assert.Equal(t, "Hallo Familie und Freunde, ...", result.Rows[1].(sql.NullString).String)
+				assert.Equal(t, "Hallo Familie und Freunde, ...", result.Rows[1].(string))
 			case 14:
-				assert.Equal(t, "... und bleiben eher daheim. Mama hat Papa auch die ...", result.Rows[1].(sql.NullString).String)
+				assert.Equal(t, "... und bleiben eher daheim. Mama hat Papa auch die ...", result.Rows[1].(string))
 			case 25:
-				assert.Equal(t, "Bis zum nächsten Mal. Tschhhuuueeesss", result.Rows[1].(sql.NullString).String)
+				assert.Equal(t, "Bis zum nächsten Mal. Tschhhuuueeesss", result.Rows[1].(string))
 			default:
-				assert.Equal(t, "image/jpeg", result.Rows[3].(sql.NullString).String)
+				assert.Equal(t, "image/jpeg", result.Rows[3].(string))
 			}
 			return nil
 		})
 	assert.NoError(t, err)
 
+	complexSelect = `with albumSelect as (select id,title,albumkey,directory,published from Albums where directory = 'Herbst2020')
+	select index,description,md5,mimetype from albumpictures, albumSelect where albumid = albumSelect.id`
+	count = 0
+	err = pg.BatchSelectFct(&common.Query{Search: complexSelect, DataStruct: &Picture{}},
+		func(q *common.Query, result *common.Result) error {
+			count++
+			if !assert.NotNil(t, result.Data) {
+				return fmt.Errorf("Data empty")
+			}
+			d := result.Data.(*Picture)
+			assert.Equal(t, count, d.Index)
+			assert.Equal(t, uint64(count), result.Counter)
+			switch result.Counter {
+			case 1:
+				assert.Equal(t, "Hallo Familie und Freunde, ...", d.Description)
+				assert.Equal(t, "CA1A0AF7675121560DC8B0F124146922", d.Md5)
+			case 14:
+				assert.Equal(t, "... und bleiben eher daheim. Mama hat Papa auch die ...", d.Description)
+				assert.Equal(t, "97003231153D0C1C149B78F7B24356FF", d.Md5)
+			case 25:
+				assert.Equal(t, "Bis zum nächsten Mal. Tschhhuuueeesss", d.Description)
+				assert.Equal(t, "5A41D2ACFBAF023A467D07FCADC10783", d.Md5)
+			default:
+				assert.Equal(t, "image/jpeg", d.Mimetype)
+			}
+			return nil
+		})
+	assert.Equal(t, 25, count)
+	assert.NoError(t, err)
 }

@@ -358,8 +358,13 @@ func (pg *PostGres) ParseRows(search *common.Query, rows pgx.Rows, f common.Resu
 	result.Fields = make([]string, 0)
 	for _, f := range rows.FieldDescriptions() {
 		result.Fields = append(result.Fields, f.Name)
+		result.Header = append(result.Header, &common.Column{Name: f.Name,
+			Length: uint16(f.DataTypeSize)})
 	}
+	currentCounter := uint64(0)
 	for rows.Next() {
+		currentCounter++
+		result.Counter = currentCounter
 		log.Log.Debugf("Checking row...")
 
 		result.Rows, err = rows.Values()
@@ -384,7 +389,6 @@ func (pg *PostGres) ParseStruct(search *common.Query, rows pgx.Rows, f common.Re
 		return pg.ParseRows(search, rows, f)
 	}
 	result = &common.Result{}
-
 	result.Data = search.DataStruct
 	copy, values, err := result.GenerateColumnByStruct(search)
 	if err != nil {
@@ -394,6 +398,7 @@ func (pg *PostGres) ParseStruct(search *common.Query, rows pgx.Rows, f common.Re
 	log.Log.Debugf("Parse columns rows -> flen=%d vlen=%d %T",
 		len(result.Fields), len(values), copy)
 	for rows.Next() {
+		result.Counter++
 		log.Log.Debugf("Row found and scanning")
 		if len(result.Fields) == 0 {
 			for _, f := range rows.FieldDescriptions() {
@@ -668,42 +673,68 @@ func (pg *PostGres) BatchSelect(batch string) ([][]interface{}, error) {
 }
 
 // BatchSelectFct batch SQL query in table with fct called
-func (pg *PostGres) BatchSelectFct(batch *common.Query, fct common.ResultFunction) error {
-	layer, url := pg.Reference()
-	db, err := sql.Open(layer, url)
+func (pg *PostGres) BatchSelectFct(search *common.Query, fct common.ResultFunction) error {
+	log.Log.Debugf("Query postgres database")
+	dbOpen, err := pg.Open()
 	if err != nil {
 		return err
 	}
-	defer db.Close()
-	// Query batch SQL
-	rows, err := db.Query(batch.Search)
+
+	db := dbOpen.(*pgx.Conn)
+	ctx := context.Background()
+	defer db.Close(ctx)
+	selectCmd := search.Search
 	if err != nil {
 		return err
 	}
-	ct, err := rows.ColumnTypes()
+	log.Log.Debugf("Query: %s", selectCmd)
+	rows, err := db.Query(ctx, selectCmd)
 	if err != nil {
+		log.Log.Debugf("Query error: %v", err)
 		return err
 	}
-	result := &common.Result{}
-	query := &common.Query{Search: batch.Search}
-	for rows.Next() {
-		if rows.Err() != nil {
-			fmt.Println("Batch SQL error:", rows.Err())
-			return rows.Err()
-		}
-		if result.Header == nil {
-			result.Header = common.CreateHeader(ct)
-		}
-		data := common.CreateTypeData(ct)
-		err := rows.Scan(data...)
-		if err != nil {
-			return err
-		}
-		result.Rows = common.Unpointer(data)
-		result.Counter++
-		fct(query, result)
+	if search.DataStruct == nil {
+		_, err = pg.ParseRows(search, rows, fct)
+	} else {
+		search.TypeInfo = common.CreateInterface(search.DataStruct, search.Fields)
+		_, err = pg.ParseStruct(search, rows, fct)
 	}
-	return nil
+	return err
+	// layer, url := pg.Reference()
+	// db, err := sql.Open(layer, url)
+	// if err != nil {
+	// 	return err
+	// }
+	// defer db.Close()
+	// // Query batch SQL
+	// rows, err := db.Query(batch.Search)
+	// if err != nil {
+	// 	return err
+	// }
+	// ct, err := rows.ColumnTypes()
+	// if err != nil {
+	// 	return err
+	// }
+	// result := &common.Result{}
+	// query := &common.Query{Search: batch.Search}
+	// for rows.Next() {
+	// 	if rows.Err() != nil {
+	// 		fmt.Println("Batch SQL error:", rows.Err())
+	// 		return rows.Err()
+	// 	}
+	// 	if result.Header == nil {
+	// 		result.Header = common.CreateHeader(ct)
+	// 	}
+	// 	data := common.CreateTypeData(ct)
+	// 	err := rows.Scan(data...)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// 	result.Rows = common.Unpointer(data)
+	// 	result.Counter++
+	// 	fct(query, result)
+	// }
+	// return nil
 }
 
 // StartTransaction start transaction

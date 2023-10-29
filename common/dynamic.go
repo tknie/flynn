@@ -44,7 +44,11 @@ type typeInterface struct {
 	RowValues []any
 }
 
-func CreateInterface(i interface{}, fields []string) *typeInterface {
+func CreateInterface(i interface{}, createFields []string) *typeInterface {
+	fields := createFields
+	if fields == nil {
+		fields = []string{"*"}
+	}
 	ri := reflect.TypeOf(i)
 	if ri.Kind() == reflect.Ptr {
 		ri = ri.Elem()
