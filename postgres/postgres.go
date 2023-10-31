@@ -159,6 +159,7 @@ func (pg *PostGres) Open() (dbOpen any, err error) {
 		return nil, err
 	}
 	dbOpen = db
+	pg.openDB = db
 
 	if pg.IsTransaction() {
 		pg.tx, err = db.Begin(context.Background())
