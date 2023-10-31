@@ -40,7 +40,8 @@ const (
 // PostGres instane for PostgresSQL
 type PostGres struct {
 	common.CommonDatabase
-	openDB       *pgxpool.Pool
+	openDB       *pgxpool.Conn
+	pool         *pgxpool.Pool
 	dbURL        string
 	dbTableNames []string
 	user         string
@@ -54,7 +55,7 @@ func NewInstance(id common.RegDbID, reference *common.Reference, password string
 
 	url := fmt.Sprintf("postgres://%s:"+passwdPlaceholder+"@%s:%d/%s%s", reference.User,
 		reference.Host, reference.Port, reference.Database, reference.OptionString())
-	pg := &PostGres{common.CommonDatabase{RegDbID: id}, nil,
+	pg := &PostGres{common.CommonDatabase{RegDbID: id}, nil, nil,
 		url, nil, "", password, nil, nil}
 
 	return pg, nil
@@ -62,7 +63,7 @@ func NewInstance(id common.RegDbID, reference *common.Reference, password string
 
 // New create new postgres reference instance
 func New(id common.RegDbID, url string) (common.Database, error) {
-	pg := &PostGres{common.CommonDatabase{RegDbID: id}, nil,
+	pg := &PostGres{common.CommonDatabase{RegDbID: id}, nil, nil,
 		url, nil, "", "", nil, nil}
 	// err := pg.check()
 	// if err != nil {
@@ -127,16 +128,21 @@ func (pg *PostGres) Maps() ([]string, error) {
 	return pg.dbTableNames, nil
 }
 
-func (pg *PostGres) open() (dbOpen *pgxpool.Pool, err error) {
+func (pg *PostGres) open() (dbOpen *pgxpool.Conn, err error) {
 	if pg.IsTransaction() && pg.openDB != nil {
 		return pg.openDB, nil
 	}
 	pg.ctx = context.Background()
 	log.Log.Debugf("Open Postgres database to %s", pg.dbURL)
 	log.Log.Debugf("Postgres database URL to %s", pg.generateURL())
-	dbOpen, err = pgxpool.New(pg.ctx, pg.generateURL())
+	pool, err := pgxpool.New(pg.ctx, pg.generateURL())
 	if err != nil {
 		log.Log.Debugf("Postgres driver connect error: %v", err)
+		return nil, err
+	}
+	pg.pool = pool
+	dbOpen, err = pg.pool.Acquire(pg.ctx)
+	if err != nil {
 		return nil, err
 	}
 	log.Log.Debugf("Opened postgres database")
@@ -214,7 +220,7 @@ func (pg *PostGres) Close() {
 		pg.EndTransaction(false)
 	}
 	if pg.openDB != nil {
-		pg.openDB.Close()
+		pg.openDB.Release()
 		pg.openDB = nil
 		pg.tx = nil
 		pg.ctx = nil
@@ -222,6 +228,16 @@ func (pg *PostGres) Close() {
 		return
 	}
 	log.Log.Debugf("Close not opened database")
+}
+
+// Unregister don't use the driver anymore
+func (pg *PostGres) Unregister() {
+	if pg.openDB != nil {
+		pg.openDB.Release()
+	}
+	if pg.pool != nil {
+		pg.pool.Close()
+	}
 }
 
 // Ping create short test database connection
@@ -232,8 +248,8 @@ func (pg *PostGres) Ping() error {
 	if err != nil {
 		return err
 	}
-	db := dbOpen.(*pgxpool.Pool)
-	defer db.Close()
+	db := dbOpen.(*pgxpool.Conn)
+	defer db.Release()
 
 	pg.dbTableNames = make([]string, 0)
 
@@ -304,7 +320,7 @@ func (pg *PostGres) GetTableColumn(tableName string) ([]string, error) {
 	}
 	defer pg.Close()
 
-	db := dbOpen.(*pgxpool.Pool)
+	db := dbOpen.(*pgxpool.Conn)
 	// rows, err := db.Query(`SELECT table_schema, table_name, column_name, data_type
 	// FROM INFORMATION_SCHEMA.COLUMNS
 	rows, err := db.Query(context.Background(), `SELECT column_name FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = '`+strings.ToLower(tableName)+`'`)
@@ -333,9 +349,9 @@ func (pg *PostGres) Query(search *common.Query, f common.ResultFunction) (*commo
 		return nil, err
 	}
 
-	db := dbOpen.(*pgxpool.Pool)
+	db := dbOpen.(*pgxpool.Conn)
 	ctx := context.Background()
-	defer db.Close()
+	defer db.Release()
 	selectCmd, err := search.Select()
 	if err != nil {
 		return nil, err
@@ -681,9 +697,9 @@ func (pg *PostGres) BatchSelectFct(search *common.Query, fct common.ResultFuncti
 		return err
 	}
 
-	db := dbOpen.(*pgxpool.Pool)
+	db := dbOpen.(*pgxpool.Conn)
 	ctx := context.Background()
-	defer db.Close()
+	defer db.Release()
 	selectCmd := search.Search
 	if err != nil {
 		return err
@@ -781,8 +797,8 @@ func (pg *PostGres) Stream(search *common.Query, sf common.StreamFunction) error
 	}
 
 	ctx := pg.ctx
-	conn := dbOpen.(*pgxpool.Pool)
-	defer conn.Close()
+	conn := dbOpen.(*pgxpool.Conn)
+	defer conn.Release()
 
 	blocksize := search.Blocksize
 	if blocksize == 0 {

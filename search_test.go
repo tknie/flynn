@@ -79,7 +79,7 @@ func TestSearchQuery(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
-	defer Unregister(x)
+	defer x.Unregister()
 
 	columns, err := x.GetTableColumn("Albums")
 	if !assert.NoError(t, err) {
@@ -99,7 +99,7 @@ func TestSearchPgRows(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
-	defer Unregister(x)
+	defer x.Unregister()
 
 	q := &common.Query{TableName: "Albums",
 		Search: "",
@@ -145,7 +145,7 @@ func TestQueryPgFunctions(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
-	defer Unregister(x)
+	defer x.Unregister()
 
 	q := &common.Query{TableName: "Pictures",
 		Search: "",
@@ -192,7 +192,7 @@ func TestSearchPgCriteriaRows(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
-	defer Unregister(x)
+	defer x.Unregister()
 
 	q := &common.Query{TableName: "Albums",
 		Search: "id=1",
@@ -258,7 +258,7 @@ func TestSearchPgStruct(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
-	defer Unregister(x)
+	defer x.Unregister()
 
 	q := &common.Query{TableName: "Albums",
 		Search:     "",
@@ -301,7 +301,7 @@ func TestSearchPgPtrStruct(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
-	defer Unregister(x)
+	defer x.Unregister()
 
 	q := &common.Query{TableName: "Albums",
 		Search:     "",
@@ -348,7 +348,7 @@ func TestSearchPgPtrStructDeep(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
-	defer Unregister(x)
+	defer x.Unregister()
 
 	q := &common.Query{TableName: "Albums",
 		Search:     "",
@@ -391,7 +391,7 @@ func TestSearchPgPtrStructAll(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
-	defer Unregister(x)
+	defer x.Unregister()
 
 	q := &common.Query{TableName: "Albums",
 		Search:     "",
@@ -437,7 +437,7 @@ func TestSearchPgPtrPtrStructAll(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
-	defer Unregister(x)
+	defer x.Unregister()
 
 	q := &common.Query{TableName: "Albums",
 		Search:     "",
@@ -485,7 +485,7 @@ func TestSearchAdaStruct(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
-	defer Unregister(x)
+	defer x.Unregister()
 
 	q := &common.Query{TableName: "Albums",
 		Search: "",
@@ -528,7 +528,7 @@ func TestSearchAdaPtrStruct(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
-	defer Unregister(x)
+	defer x.Unregister()
 
 	q := &common.Query{TableName: "Albums",
 		Search:     "",
@@ -569,7 +569,7 @@ func TestSearchMariaDBRows(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
-	defer Unregister(x)
+	defer x.Unregister()
 
 	q := &common.Query{TableName: "Albums",
 		Search: "",
@@ -612,7 +612,7 @@ func TestSearchPgRowsOrdered(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
-	defer Unregister(x)
+	defer x.Unregister()
 
 	pwd := os.Getenv("POSTGRES_PWD")
 	if !assert.NotEmpty(t, pwd) {
@@ -664,7 +664,7 @@ func TestSearchMySQLRowsOrdered(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
-	defer Unregister(x)
+	defer x.Unregister()
 
 	mysqlPassword := os.Getenv("MYSQL_PWD")
 	x.SetCredentials("admin", mysqlPassword)
@@ -715,7 +715,7 @@ func TestSearchPgRowsDistinct(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
-	defer Unregister(x)
+	defer x.Unregister()
 
 	q := &common.Query{TableName: "Pictures",
 		Search:     "",

@@ -31,7 +31,7 @@ For details have a look at the API documentation. It can be referenced here: <ht
  if err!=nil {
   return
  }
- defer Unregister(x)
+ defer x.Unregister()
 
  q := &common.Query{TableName: "Albums",
   Search: "id=23",
@@ -55,7 +55,7 @@ For details have a look at the API documentation. It can be referenced here: <ht
  if err!=nil {
   return
  }
- defer Unregister(x)
+ defer x.Unregister()
 
  list := [][]any{{"ABC","AAA",1,2,3}}
  err = x.Update(testStructTable, 

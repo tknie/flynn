@@ -32,7 +32,7 @@ func TestSearchSecPgRows(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
-	defer Unregister(x)
+	defer x.Unregister()
 
 	q := &common.Query{TableName: "Albums",
 		Search: "",

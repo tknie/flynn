@@ -36,7 +36,7 @@ func TestBinarySearchPgRows(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
-	defer Unregister(x)
+	defer x.Unregister()
 
 	q := &common.Query{TableName: "Pictures",
 		Search: "ChecksumPicture='B64F1DDF5683608579998E618545E497        '",
@@ -76,7 +76,7 @@ func TestBinarySearchMariaRows(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
-	defer Unregister(x)
+	defer x.Unregister()
 
 	q := &common.Query{TableName: "Pictures",
 		Search: "ChecksumPicture='B64F1DDF5683608579998E618545E497        '",

@@ -14,6 +14,7 @@ package common
 import (
 	"strings"
 
+	"github.com/tknie/errorrepo"
 	"github.com/tknie/log"
 )
 
@@ -60,6 +61,7 @@ type Database interface {
 	DeleteTable(string) error
 	Open() (any, error)
 	Close()
+	Unregister()
 	Insert(name string, insert *Entries) error
 	Update(name string, insert *Entries) (int64, error)
 	Delete(name string, remove *Entries) (int64, error)
@@ -305,4 +307,24 @@ func (id RegDbID) Stream(search *Query, sf StreamFunction) error {
 	}
 	return driver.Stream(search, sf)
 
+}
+
+// Unregister unregister registry id for the driver
+func (id RegDbID) Unregister() error {
+	for i, d := range Databases {
+		if d.ID() == id {
+			log.Log.Debugf("Unregister db %d", d.ID())
+			d.Unregister()
+			newDatabases := make([]Database, 0)
+			if i > 0 {
+				newDatabases = append(newDatabases, Databases[0:i-1]...)
+			}
+			if len(Databases)-1 > i {
+				newDatabases = append(newDatabases, Databases[i+1:]...)
+			}
+			Databases = newDatabases
+			return nil
+		}
+	}
+	return errorrepo.NewError("DB000001")
 }

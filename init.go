@@ -89,23 +89,3 @@ func Maps() []string {
 	}
 	return databaseMaps
 }
-
-// Unregister unregister registry id for the driver
-func Unregister(id common.RegDbID) error {
-	for i, d := range common.Databases {
-		if d.ID() == id {
-			log.Log.Debugf("Unregister db %d", d.ID())
-			id.Close()
-			newDatabases := make([]common.Database, 0)
-			if i > 0 {
-				newDatabases = append(newDatabases, common.Databases[0:i-1]...)
-			}
-			if len(common.Databases)-1 > i {
-				newDatabases = append(newDatabases, common.Databases[i+1:]...)
-			}
-			common.Databases = newDatabases
-			return nil
-		}
-	}
-	return errorrepo.NewError("DB000001")
-}

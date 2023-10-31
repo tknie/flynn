@@ -75,7 +75,7 @@ func checkTableAvailablefunc(t *testing.T, target *target) error {
 	if !assert.NoError(t, err) {
 		return err
 	}
-	defer Unregister(x)
+	defer x.Unregister()
 
 	q := &common.Query{TableName: testTable,
 		Search: "",
@@ -149,7 +149,7 @@ func checkStructTableAvailablefunc(t *testing.T, target *target) error {
 	if !assert.NoError(t, err) {
 		return err
 	}
-	defer Unregister(x)
+	defer x.Unregister()
 
 	q := &common.Query{TableName: testStructTable,
 		Search: "",
@@ -194,7 +194,7 @@ func TestInsertStruct(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
-	defer Unregister(x)
+	defer x.Unregister()
 	nameValue := time.Now().Format("20060102150405")
 	vId1 := nameValue + "-1"
 	vId2 := nameValue + "-2"

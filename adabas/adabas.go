@@ -129,6 +129,10 @@ func (ada *Adabas) Close() {
 	}
 }
 
+// Unregister don't use the driver anymore
+func (ada *Adabas) Unregister() {
+}
+
 // Insert insert record into table
 func (ada *Adabas) Insert(name string, insert *common.Entries) error {
 	con, err := ada.Open()

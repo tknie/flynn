@@ -125,7 +125,7 @@ func TestCreateStringArray(t *testing.T) {
 
 func unregisterDatabase(t *testing.T, id def.RegDbID) {
 	log.Log.Debugf("Unregister id=%d", id)
-	err := Unregister(id)
+	err := id.Unregister()
 	assert.NoError(t, err)
 }
 

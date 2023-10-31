@@ -145,7 +145,7 @@ func TestInitDatabases(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, x > 0)
 	assert.Len(t, common.Databases, 1)
-	err = Unregister(x)
+	err = x.Unregister()
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -160,10 +160,10 @@ func TestInitDatabases(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, x2 > 0)
 	assert.Len(t, common.Databases, 2)
-	err = Unregister(x)
+	err = x.Unregister()
 	assert.NoError(t, err)
 	assert.Len(t, common.Databases, 1)
-	err = Unregister(x2)
+	err = x2.Unregister()
 	assert.NoError(t, err)
 	assert.Len(t, common.Databases, 0)
 }

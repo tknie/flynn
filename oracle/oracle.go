@@ -134,6 +134,10 @@ func (oracle *Oracle) Open() (dbOpen any, err error) {
 	return db, nil
 }
 
+// Unregister don't use the driver anymore
+func (oracle *Oracle) Unregister() {
+}
+
 // StartTransaction start transaction the database connection
 func (oracle *Oracle) BeginTransaction() error {
 	if oracle.tx != nil && oracle.ctx != nil {
