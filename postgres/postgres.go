@@ -232,8 +232,8 @@ func (pg *PostGres) Ping() error {
 	if err != nil {
 		return err
 	}
-	db := dbOpen.(*pgx.Conn)
-	defer db.Close(pg.ctx)
+	db := dbOpen.(*pgxpool.Pool)
+	defer db.Close()
 
 	pg.dbTableNames = make([]string, 0)
 
@@ -304,7 +304,7 @@ func (pg *PostGres) GetTableColumn(tableName string) ([]string, error) {
 	}
 	defer pg.Close()
 
-	db := dbOpen.(*pgx.Conn)
+	db := dbOpen.(*pgxpool.Pool)
 	// rows, err := db.Query(`SELECT table_schema, table_name, column_name, data_type
 	// FROM INFORMATION_SCHEMA.COLUMNS
 	rows, err := db.Query(context.Background(), `SELECT column_name FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = '`+strings.ToLower(tableName)+`'`)
@@ -333,9 +333,9 @@ func (pg *PostGres) Query(search *common.Query, f common.ResultFunction) (*commo
 		return nil, err
 	}
 
-	db := dbOpen.(*pgx.Conn)
+	db := dbOpen.(*pgxpool.Pool)
 	ctx := context.Background()
-	defer db.Close(ctx)
+	defer db.Close()
 	selectCmd, err := search.Select()
 	if err != nil {
 		return nil, err
@@ -681,9 +681,9 @@ func (pg *PostGres) BatchSelectFct(search *common.Query, fct common.ResultFuncti
 		return err
 	}
 
-	db := dbOpen.(*pgx.Conn)
+	db := dbOpen.(*pgxpool.Pool)
 	ctx := context.Background()
-	defer db.Close(ctx)
+	defer db.Close()
 	selectCmd := search.Search
 	if err != nil {
 		return err
@@ -781,8 +781,8 @@ func (pg *PostGres) Stream(search *common.Query, sf common.StreamFunction) error
 	}
 
 	ctx := pg.ctx
-	conn := dbOpen.(*pgx.Conn)
-	defer conn.Close(ctx)
+	conn := dbOpen.(*pgxpool.Pool)
+	defer conn.Close()
 
 	blocksize := search.Blocksize
 	if blocksize == 0 {
