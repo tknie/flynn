@@ -23,6 +23,7 @@ import (
 	"strings"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/tknie/flynn/common"
 	"github.com/tknie/flynn/dbsql"
@@ -39,7 +40,7 @@ const (
 // PostGres instane for PostgresSQL
 type PostGres struct {
 	common.CommonDatabase
-	openDB       *pgx.Conn
+	openDB       *pgxpool.Pool
 	dbURL        string
 	dbTableNames []string
 	user         string
@@ -126,14 +127,14 @@ func (pg *PostGres) Maps() ([]string, error) {
 	return pg.dbTableNames, nil
 }
 
-func (pg *PostGres) open() (dbOpen *pgx.Conn, err error) {
+func (pg *PostGres) open() (dbOpen *pgxpool.Pool, err error) {
 	if pg.IsTransaction() && pg.openDB != nil {
 		return pg.openDB, nil
 	}
 	pg.ctx = context.Background()
 	log.Log.Debugf("Open Postgres database to %s", pg.dbURL)
 	log.Log.Debugf("Postgres database URL to %s", pg.generateURL())
-	dbOpen, err = pgx.Connect(pg.ctx, pg.generateURL())
+	dbOpen, err = pgxpool.New(pg.ctx, pg.generateURL())
 	if err != nil {
 		log.Log.Debugf("Postgres driver connect error: %v", err)
 		return nil, err
@@ -213,7 +214,7 @@ func (pg *PostGres) Close() {
 		pg.EndTransaction(false)
 	}
 	if pg.openDB != nil {
-		pg.openDB.Close(pg.ctx)
+		pg.openDB.Close()
 		pg.openDB = nil
 		pg.tx = nil
 		pg.ctx = nil
