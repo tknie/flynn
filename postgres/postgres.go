@@ -133,14 +133,17 @@ func (pg *PostGres) open() (dbOpen *pgxpool.Conn, err error) {
 		return pg.openDB, nil
 	}
 	pg.ctx = context.Background()
-	log.Log.Debugf("Open Postgres database to %s", pg.dbURL)
 	log.Log.Debugf("Postgres database URL to %s", pg.generateURL())
-	pool, err := pgxpool.New(pg.ctx, pg.generateURL())
-	if err != nil {
-		log.Log.Debugf("Postgres driver connect error: %v", err)
-		return nil, err
+	if pg.pool == nil {
+		log.Log.Debugf("Create pool for Postgres database to %s", pg.dbURL)
+		pool, err := pgxpool.New(pg.ctx, pg.generateURL())
+		if err != nil {
+			log.Log.Debugf("Postgres driver connect error: %v", err)
+			return nil, err
+		}
+		pg.pool = pool
 	}
-	pg.pool = pool
+	log.Log.Debugf("Acquire Postgres database to %s", pg.dbURL)
 	dbOpen, err = pg.pool.Acquire(pg.ctx)
 	if err != nil {
 		return nil, err
@@ -221,6 +224,7 @@ func (pg *PostGres) Close() {
 		pg.EndTransaction(false)
 	}
 	if pg.openDB != nil {
+		log.Log.Debugf("Release database pool entry")
 		pg.openDB.Release()
 		pg.openDB = nil
 		pg.tx = nil
@@ -235,9 +239,13 @@ func (pg *PostGres) Close() {
 func (pg *PostGres) Unregister() {
 	if pg.openDB != nil {
 		pg.openDB.Release()
+		pg.openDB = nil
+		log.Log.Debugf("Release database pool entry")
 	}
 	if pg.pool != nil {
+		log.Log.Debugf("Release database pool")
 		pg.pool.Close()
+		pg.pool = nil
 	}
 }
 
@@ -250,7 +258,7 @@ func (pg *PostGres) Ping() error {
 		return err
 	}
 	db := dbOpen.(*pgxpool.Conn)
-	defer db.Release()
+	defer pg.Close()
 
 	pg.dbTableNames = make([]string, 0)
 
@@ -269,6 +277,7 @@ func (pg *PostGres) Ping() error {
 		pg.dbTableNames = append(pg.dbTableNames, tableName)
 	}
 	log.Log.Debugf("Pinging and scanning database ended")
+	log.Log.Debugf("Release database pool entry")
 
 	return nil
 }
@@ -352,7 +361,7 @@ func (pg *PostGres) Query(search *common.Query, f common.ResultFunction) (*commo
 
 	db := dbOpen.(*pgxpool.Conn)
 	ctx := context.Background()
-	defer db.Release()
+	defer pg.Close()
 	selectCmd, err := search.Select()
 	if err != nil {
 		return nil, err
@@ -366,6 +375,7 @@ func (pg *PostGres) Query(search *common.Query, f common.ResultFunction) (*commo
 	if search.DataStruct == nil {
 		return pg.ParseRows(search, rows, f)
 	}
+	log.Log.Debugf("Release database pool entry")
 	return pg.ParseStruct(search, rows, f)
 }
 
@@ -700,7 +710,7 @@ func (pg *PostGres) BatchSelectFct(search *common.Query, fct common.ResultFuncti
 
 	db := dbOpen.(*pgxpool.Conn)
 	ctx := context.Background()
-	defer db.Release()
+	defer pg.Close()
 	selectCmd := search.Search
 	if err != nil {
 		return err
@@ -717,6 +727,7 @@ func (pg *PostGres) BatchSelectFct(search *common.Query, fct common.ResultFuncti
 		search.TypeInfo = common.CreateInterface(search.DataStruct, search.Fields)
 		_, err = pg.ParseStruct(search, rows, fct)
 	}
+	log.Log.Debugf("Release database pool entry")
 	return err
 	// layer, url := pg.Reference()
 	// db, err := sql.Open(layer, url)
@@ -768,6 +779,9 @@ func (pg *PostGres) StartTransaction() (pgx.Tx, context.Context, error) {
 	}
 	log.Log.Debugf("Start transaction opened")
 	pg.ctx = context.Background()
+	if pg.openDB == nil || pg == nil || pg.ctx == nil {
+		log.Log.Fatalf("Error invalid openDB handle")
+	}
 	pg.tx, err = pg.openDB.Begin(pg.ctx)
 	if err != nil {
 		pg.ctx = nil
@@ -799,7 +813,7 @@ func (pg *PostGres) Stream(search *common.Query, sf common.StreamFunction) error
 
 	ctx := pg.ctx
 	conn := dbOpen.(*pgxpool.Conn)
-	defer conn.Release()
+	defer pg.Close()
 
 	blocksize := search.Blocksize
 	if blocksize == 0 {
@@ -852,5 +866,6 @@ func (pg *PostGres) Stream(search *common.Query, sf common.StreamFunction) error
 		log.Log.Debugf("Stream offset = %d,%d\n", offset, blocksize)
 	}
 	log.Log.Debugf("Stream finished")
+	log.Log.Debugf("Release database pool entry")
 	return nil
 }
