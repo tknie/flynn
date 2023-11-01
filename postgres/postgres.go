@@ -143,11 +143,11 @@ func (pg *PostGres) open() (dbOpen *pgxpool.Conn, err error) {
 		}
 		pg.pool = pool
 	}
-	log.Log.Debugf("Acquire Postgres database to %s", pg.dbURL)
 	dbOpen, err = pg.pool.Acquire(pg.ctx)
 	if err != nil {
 		return nil, err
 	}
+	log.Log.Debugf("Acquire Postgres database to %s: %p", pg.dbURL, dbOpen)
 	log.Log.Debugf("Opened postgres database")
 	if dbOpen == nil {
 		return nil, fmt.Errorf("error open handle and err nil")
@@ -157,6 +157,9 @@ func (pg *PostGres) open() (dbOpen *pgxpool.Conn, err error) {
 
 // Open open the database connection
 func (pg *PostGres) Open() (dbOpen any, err error) {
+	if pg.openDB != nil {
+		return pg.openDB, nil
+	}
 	db, err := pg.open()
 	if err != nil {
 		return nil, err
@@ -176,7 +179,7 @@ func (pg *PostGres) Open() (dbOpen any, err error) {
 	return db, nil
 }
 
-// StartTransaction start transaction the database connection
+// BeginTransaction begin transaction the database connection
 func (pg *PostGres) BeginTransaction() error {
 	if pg.tx != nil && pg.ctx != nil {
 		return nil
@@ -224,7 +227,7 @@ func (pg *PostGres) Close() {
 		pg.EndTransaction(false)
 	}
 	if pg.openDB != nil {
-		log.Log.Debugf("Release database pool entry")
+		log.Log.Debugf("Release database pool entry %p", pg.openDB)
 		pg.openDB.Release()
 		pg.openDB = nil
 		pg.tx = nil
@@ -238,9 +241,9 @@ func (pg *PostGres) Close() {
 // Unregister don't use the driver anymore
 func (pg *PostGres) Unregister() {
 	if pg.openDB != nil {
+		log.Log.Debugf("Release database pool entry %p", pg.openDB)
 		pg.openDB.Release()
 		pg.openDB = nil
-		log.Log.Debugf("Release database pool entry")
 	}
 	if pg.pool != nil {
 		log.Log.Debugf("Release database pool")
@@ -770,7 +773,7 @@ func (pg *PostGres) BatchSelectFct(search *common.Query, fct common.ResultFuncti
 func (pg *PostGres) StartTransaction() (pgx.Tx, context.Context, error) {
 	var err error
 	if pg.openDB == nil {
-		pg.Transaction = true
+		log.Log.Debugf("Open with transaction enabled")
 		pg.openDB, err = pg.open()
 		if err != nil {
 			log.Log.Debugf("Error opening connection for transaction")
@@ -790,6 +793,7 @@ func (pg *PostGres) StartTransaction() (pgx.Tx, context.Context, error) {
 		return nil, nil, err
 	}
 	log.Log.Debugf("Start transaction begin")
+	pg.Transaction = true
 	return pg.tx, pg.ctx, nil
 }
 
