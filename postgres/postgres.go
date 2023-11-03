@@ -207,17 +207,20 @@ func (pg *PostGres) EndTransaction(commit bool) (err error) {
 		pg.Transaction = false
 		return fmt.Errorf("error transaction not started")
 	}
-	log.Log.Debugf("End transaction ...%v", pg.IsTransaction())
 	if commit {
+		log.Log.Debugf("End transaction commiting ...%v", pg.IsTransaction())
 		err = pg.tx.Commit(pg.ctx)
 	} else {
+		log.Log.Debugf("End transaction rollback ...%v", pg.IsTransaction())
 		err = pg.tx.Rollback(pg.ctx)
 	}
 	pg.tx = nil
 	log.Log.Debugf("End transaction done")
 	pg.Transaction = false
-
-	return
+	if err != nil {
+		log.Log.Errorf("Error end transaction commit=%v: %v", commit, err)
+	}
+	return err
 }
 
 // Close close the database connection
