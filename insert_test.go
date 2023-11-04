@@ -196,8 +196,8 @@ func TestInsertStruct(t *testing.T) {
 	}
 	defer x.Unregister()
 	nameValue := time.Now().Format("20060102150405")
-	vId1 := nameValue + "-1"
-	vId2 := nameValue + "-2"
+	vId1 := "i-" + nameValue + "-1"
+	vId2 := "i-" + nameValue + "-2"
 	list := [][]any{{vId1, "aaadasfdsnaflksdnf", 1}, {vId2, "dmfklsfgmskdlmgsmgls", 2}}
 	input := &common.Entries{Fields: []string{"ID", "Name", "account"},
 		Update: []string{"ID"},
