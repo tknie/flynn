@@ -59,7 +59,9 @@ func updateTest(t *testing.T, target *target) error {
 	}
 	// 'mysql' does not provide affected rows
 	if target.layer != "mysql" {
-		assert.Equal(t, int64(2), ra)
+		if !assert.Equal(t, int64(2), ra) {
+			return fmt.Errorf("error updating...")
+		}
 	}
 
 	list = [][]any{{vId1}, {vId2}}
