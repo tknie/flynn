@@ -12,11 +12,14 @@
 package common
 
 import (
+	"sync"
+
 	"github.com/tknie/errorrepo"
 	"github.com/tknie/log"
 )
 
 var Databases = make([]Database, 0)
+var Lock sync.Mutex
 
 func searchDataDriver(id RegDbID) (Database, error) {
 	if id == 0 {

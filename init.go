@@ -13,6 +13,7 @@ package flynn
 
 import (
 	"fmt"
+	"os"
 	"sync/atomic"
 
 	"github.com/tknie/errorrepo"
@@ -33,7 +34,7 @@ func Register(p ...string) (common.RegDbID, error) {
 	if l < 0 {
 		return 0, fmt.Errorf("API error parameter missing")
 	}
-	log.Log.Debugf("Register %#v", p)
+	log.Log.Debugf("Register %v", p[0])
 	r, passwd, err := common.NewReference(p[l])
 	if err != nil {
 		return 0, err
@@ -50,9 +51,17 @@ func Register(p ...string) (common.RegDbID, error) {
 // RegisterDatabase Register database driver with a database URL returning a
 // reference id for the driver path to database
 func RegisterDatabase(dbref *common.Reference, password string) (common.RegDbID, error) {
+	common.Lock.Lock()
+	defer common.Lock.Unlock()
 	id := common.RegDbID(atomic.AddUint64((*uint64)(&globalRegID), 1))
 
-	log.Log.Debugf("Register database with password %s", password)
+	if log.IsDebugLevel() {
+		p := "*******"
+		if os.Getenv("FLYNN_TRACE_PASSWORD") == "TRUE" {
+			p = password
+		}
+		log.Log.Debugf("Register database with passwordx %s", p)
+	}
 	var db common.Database
 	var err error
 	switch dbref.Driver {
@@ -71,7 +80,7 @@ func RegisterDatabase(dbref *common.Reference, password string) (common.RegDbID,
 		return 0, err
 	}
 	common.Databases = append(common.Databases, db)
-	log.Log.Debugf("Register db type %s on %d", dbref.Driver, db.ID())
+	log.Log.Debugf("Register db type %s on id %s(%d): %v", dbref.Driver, db.ID(), len(common.Databases), common.DBHelper())
 	return db.ID(), nil
 }
 

@@ -133,7 +133,6 @@ func (pg *PostGres) open() (dbOpen *pgxpool.Conn, err error) {
 		return pg.openDB, nil
 	}
 	pg.ctx = context.Background()
-	log.Log.Debugf("Postgres database URL to %s", pg.generateURL())
 	if pg.pool == nil {
 		log.Log.Debugf("Create pool for Postgres database to %s", pg.dbURL)
 		pool, err := pgxpool.New(pg.ctx, pg.generateURL())
@@ -658,6 +657,9 @@ func (pg *PostGres) Batch(batch string) error {
 		return err
 	}
 	defer db.Close()
+
+	log.Log.Debugf("Calling batch " + batch)
+
 	// Query batch SQL
 	rows, err := db.Query(batch)
 	if err != nil {

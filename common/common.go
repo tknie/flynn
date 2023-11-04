@@ -12,6 +12,8 @@
 package common
 
 import (
+	"fmt"
+	"os"
 	"strings"
 
 	"github.com/tknie/errorrepo"
@@ -95,6 +97,10 @@ type CommonDatabase struct {
 
 func (cd *CommonDatabase) IsTransaction() bool {
 	return cd.Transaction
+}
+
+func (id RegDbID) String() string {
+	return fmt.Sprintf("ID:%04d", id)
 }
 
 // SetCredentials set credentials to connect to database
@@ -311,20 +317,37 @@ func (id RegDbID) Stream(search *Query, sf StreamFunction) error {
 
 // Unregister unregister registry id for the driver
 func (id RegDbID) Unregister() error {
+	Lock.Lock()
+	defer Lock.Unlock()
+	log.Log.Debugf("Unregister db before state of %s(%d): %v", id, len(Databases), DBHelper())
 	for i, d := range Databases {
 		if d.ID() == id {
 			log.Log.Debugf("Unregister db %d", d.ID())
 			d.Unregister()
 			newDatabases := make([]Database, 0)
 			if i > 0 {
-				newDatabases = append(newDatabases, Databases[0:i-1]...)
+				newDatabases = append(newDatabases, Databases[0:i]...)
 			}
 			if len(Databases)-1 > i {
 				newDatabases = append(newDatabases, Databases[i+1:]...)
 			}
 			Databases = newDatabases
+			log.Log.Debugf("Unregister db of %s(%d): %v", id, len(Databases), DBHelper())
 			return nil
 		}
 	}
+	log.Log.Debugf("Unregister db error of %s(%d): %v", id, len(Databases), DBHelper())
 	return errorrepo.NewError("DB000001")
+}
+
+func DBHelper() string {
+	if os.Getenv("FLYNN_TRACE_PASSWORD") == "TRUE" {
+
+		dbs := make([]RegDbID, 0)
+		for _, d := range Databases {
+			dbs = append(dbs, d.ID())
+		}
+		return fmt.Sprintf("%v", dbs)
+	}
+	return "-"
 }
