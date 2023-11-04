@@ -111,7 +111,7 @@ func TestCreateStringArray(t *testing.T) {
 		if !assert.NoError(t, err, "insert fail using "+target.layer) {
 			return
 		}
-		assert.Equal(t, int64(101), dr)
+		assert.Equal(t, int64(1001), dr)
 		count++
 		log.Log.Debugf("Delete of records done")
 		tId := "TEST" + strconv.Itoa(count)
@@ -177,7 +177,7 @@ func createStruct(t *testing.T, target *target) error {
 		return err
 	}
 	defer unregisterDatabase(t, id)
-	// defer id.DeleteTable(testCreationTableStruct)
+	defer id.DeleteTable(testCreationTableStruct)
 
 	log.Log.Debugf("Delete table: %s", testCreationTableStruct)
 	err = id.DeleteTable(testCreationTableStruct)
