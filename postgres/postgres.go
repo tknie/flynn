@@ -169,10 +169,11 @@ func (pg *PostGres) Open() (dbOpen any, err error) {
 	pg.openDB = db
 
 	if pg.IsTransaction() {
+		log.Log.Debugf("Lock open")
 		pg.txLock.Lock()
 		defer pg.txLock.Unlock()
+		defer log.Log.Debugf("Unlock open")
 		pg.tx, err = db.Begin(context.Background())
-		//db.BeginTx(pg.ctx, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -206,8 +207,10 @@ func (pg *PostGres) EndTransaction(commit bool) (err error) {
 	if pg == nil || !pg.IsTransaction() {
 		return nil
 	}
+	log.Log.Debugf("Lock end transaction")
 	pg.txLock.Lock()
 	defer pg.txLock.Unlock()
+	defer log.Log.Debugf("Unlock end transaction")
 	if pg.ctx == nil {
 		return fmt.Errorf("error context not valid")
 	}
@@ -233,8 +236,10 @@ func (pg *PostGres) EndTransaction(commit bool) (err error) {
 
 // Close close the database connection
 func (pg *PostGres) Close() {
+	log.Log.Debugf("Lock close")
 	pg.txLock.Lock()
 	defer pg.txLock.Unlock()
+	defer log.Log.Debugf("Unlock close")
 	if pg.ctx != nil {
 		log.Log.Debugf("Rollback transaction during close")
 		pg.EndTransaction(false)
@@ -796,9 +801,10 @@ func (pg *PostGres) StartTransaction() (pgx.Tx, context.Context, error) {
 			return nil, nil, err
 		}
 	}
-	log.Log.Debugf("Start transaction opened")
+	log.Log.Debugf("Lock Start transaction opened")
 	pg.txLock.Lock()
 	defer pg.txLock.Unlock()
+	defer log.Log.Debugf("Unlock Start transaction opened")
 	pg.ctx = context.Background()
 	if pg.openDB == nil || pg == nil || pg.ctx == nil {
 		log.Log.Fatalf("Error invalid openDB handle")
