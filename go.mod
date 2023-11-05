@@ -3,7 +3,7 @@ module github.com/tknie/flynn
 go 1.20
 
 require (
-	github.com/jackc/pgx/v5 v5.4.3
+	github.com/jackc/pgx/v5 v5.5.0
 	github.com/tknie/log v0.0.0-20231006083545-fabe25f4fb0e
 )
 
@@ -13,7 +13,7 @@ require (
 	github.com/go-logfmt/logfmt v0.6.0 // indirect
 	github.com/godror/knownpb v0.1.1 // indirect
 	github.com/jackc/puddle/v2 v2.2.1 // indirect
-	golang.org/x/sync v0.4.0 // indirect
+	golang.org/x/sync v0.5.0 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
 )
 
@@ -31,6 +31,6 @@ require (
 	golang.org/x/crypto v0.14.0 // indirect
 	golang.org/x/exp v0.0.0-20231006140011-7918f672742d
 	golang.org/x/sys v0.13.0 // indirect
-	golang.org/x/text v0.13.0 // indirect
+	golang.org/x/text v0.14.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
