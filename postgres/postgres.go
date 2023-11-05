@@ -21,6 +21,7 @@ import (
 	"math"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -48,6 +49,7 @@ type PostGres struct {
 	password     string
 	tx           pgx.Tx
 	ctx          context.Context
+	txLock       sync.Mutex
 }
 
 // New create new postgres reference instance
@@ -56,7 +58,7 @@ func NewInstance(id common.RegDbID, reference *common.Reference, password string
 	url := fmt.Sprintf("postgres://%s:"+passwdPlaceholder+"@%s:%d/%s%s", reference.User,
 		reference.Host, reference.Port, reference.Database, reference.OptionString())
 	pg := &PostGres{common.CommonDatabase{RegDbID: id}, nil, nil,
-		url, nil, "", password, nil, nil}
+		url, nil, "", password, nil, nil, sync.Mutex{}}
 
 	return pg, nil
 }
@@ -64,7 +66,7 @@ func NewInstance(id common.RegDbID, reference *common.Reference, password string
 // New create new postgres reference instance
 func New(id common.RegDbID, url string) (common.Database, error) {
 	pg := &PostGres{common.CommonDatabase{RegDbID: id}, nil, nil,
-		url, nil, "", "", nil, nil}
+		url, nil, "", "", nil, nil, sync.Mutex{}}
 	// err := pg.check()
 	// if err != nil {
 	// 	return nil, err
@@ -167,6 +169,8 @@ func (pg *PostGres) Open() (dbOpen any, err error) {
 	pg.openDB = db
 
 	if pg.IsTransaction() {
+		pg.txLock.Lock()
+		defer pg.txLock.Unlock()
 		pg.tx, err = db.Begin(context.Background())
 		//db.BeginTx(pg.ctx, nil)
 		if err != nil {
@@ -199,8 +203,13 @@ func (pg *PostGres) BeginTransaction() error {
 }
 
 func (pg *PostGres) EndTransaction(commit bool) (err error) {
-	if !pg.IsTransaction() {
+	if pg == nil || !pg.IsTransaction() {
 		return nil
+	}
+	pg.txLock.Lock()
+	defer pg.txLock.Unlock()
+	if pg.ctx == nil {
+		return fmt.Errorf("error context not valid")
 	}
 	if pg.tx == nil {
 		pg.Transaction = false
@@ -224,6 +233,8 @@ func (pg *PostGres) EndTransaction(commit bool) (err error) {
 
 // Close close the database connection
 func (pg *PostGres) Close() {
+	pg.txLock.Lock()
+	defer pg.txLock.Unlock()
 	if pg.ctx != nil {
 		log.Log.Debugf("Rollback transaction during close")
 		pg.EndTransaction(false)
@@ -786,6 +797,8 @@ func (pg *PostGres) StartTransaction() (pgx.Tx, context.Context, error) {
 		}
 	}
 	log.Log.Debugf("Start transaction opened")
+	pg.txLock.Lock()
+	defer pg.txLock.Unlock()
 	pg.ctx = context.Background()
 	if pg.openDB == nil || pg == nil || pg.ctx == nil {
 		log.Log.Fatalf("Error invalid openDB handle")
