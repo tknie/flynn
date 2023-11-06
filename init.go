@@ -51,8 +51,6 @@ func Register(p ...string) (common.RegDbID, error) {
 // RegisterDatabase Register database driver with a database URL returning a
 // reference id for the driver path to database
 func RegisterDatabase(dbref *common.Reference, password string) (common.RegDbID, error) {
-	common.Lock.Lock()
-	defer common.Lock.Unlock()
 	id := common.RegDbID(atomic.AddUint64((*uint64)(&globalRegID), 1))
 
 	if log.IsDebugLevel() {
@@ -79,7 +77,7 @@ func RegisterDatabase(dbref *common.Reference, password string) (common.RegDbID,
 	if err != nil {
 		return 0, err
 	}
-	common.Databases = append(common.Databases, db)
+	common.RegisterDbClient(db)
 	log.Log.Debugf("Register db type %s on id %s(%d): %v", dbref.Driver, db.ID(), len(common.Databases), common.DBHelper())
 	return db.ID(), nil
 }

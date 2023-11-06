@@ -315,10 +315,22 @@ func (id RegDbID) Stream(search *Query, sf StreamFunction) error {
 
 }
 
+// RegisterDbClient register database
+func RegisterDbClient(db Database) {
+	log.Log.Debugf("Lock common")
+	handlerLock.Lock()
+	defer handlerLock.Unlock()
+	defer log.Log.Debugf("Unlock common")
+
+	Databases = append(Databases, db)
+}
+
 // Unregister unregister registry id for the driver
 func (id RegDbID) Unregister() error {
-	Lock.Lock()
-	defer Lock.Unlock()
+	log.Log.Debugf("Lock common (unregister)")
+	handlerLock.Lock()
+	defer handlerLock.Unlock()
+	defer log.Log.Debugf("Unlock common (unregister)")
 	log.Log.Debugf("Unregister db before state of %s(%d): %v", id, len(Databases), DBHelper())
 	for i, d := range Databases {
 		if d.ID() == id {

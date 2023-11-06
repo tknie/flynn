@@ -19,7 +19,7 @@ import (
 )
 
 var Databases = make([]Database, 0)
-var Lock sync.Mutex
+var handlerLock sync.Mutex
 
 func searchDataDriver(id RegDbID) (Database, error) {
 	if id == 0 {
