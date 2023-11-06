@@ -27,7 +27,7 @@ import (
 
 var globalRegID = common.RegDbID(0)
 
-// RegisterDatabase Register database driver with a database URL returning a
+// Handler Register database driver with a database URL returning a
 // reference id for the driver path to database
 func Register(p ...string) (common.RegDbID, error) {
 	l := len(p) - 1
@@ -45,12 +45,12 @@ func Register(p ...string) (common.RegDbID, error) {
 	if r.Driver == common.NoType {
 		return 0, fmt.Errorf("database type not given in API or URL")
 	}
-	return RegisterDatabase(r, passwd)
+	return Handler(r, passwd)
 }
 
-// RegisterDatabase Register database driver with a database URL returning a
+// Handler Register database driver with a database URL returning a
 // reference id for the driver path to database
-func RegisterDatabase(dbref *common.Reference, password string) (common.RegDbID, error) {
+func Handler(dbref *common.Reference, password string) (common.RegDbID, error) {
 	id := common.RegDbID(atomic.AddUint64((*uint64)(&globalRegID), 1))
 
 	if log.IsDebugLevel() {
