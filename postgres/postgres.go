@@ -71,6 +71,7 @@ func (p *pool) IncUsage() uint64 {
 func (p *pool) DecUsage() uint64 {
 	c := atomic.AddUint64(&p.useCounter, ^uint64(0))
 	if c == 0 {
+		log.Log.Debugf("Pool closing %p", p.pool)
 		p.pool.Close()
 		poolMap.Delete(p.url)
 	}
@@ -205,6 +206,7 @@ func (pg *PostGres) open() (dbOpen *pgxpool.Conn, err error) {
 		Logger:   NewLogger(),
 		LogLevel: tracelog.LogLevelTrace,
 	}*/
+	log.Log.Debugf("Acquire Postgres to pool %p", p.pool)
 	dbOpen, err = p.pool.Acquire(pg.ctx)
 	if err != nil {
 		return nil, err
@@ -240,6 +242,7 @@ func (pg *PostGres) Open() (dbOpen any, err error) {
 		if err != nil {
 			return nil, err
 		}
+		log.Log.Debugf("Tx started %p", pg.tx)
 
 	}
 	log.Log.Debugf("Opened database %s after transaction", pg.dbURL)
@@ -282,12 +285,13 @@ func (pg *PostGres) EndTransaction(commit bool) (err error) {
 		return fmt.Errorf("error transaction not started")
 	}
 	if commit {
-		log.Log.Debugf("End transaction commiting ...(%p/%p) %v", pg, pg.tx, pg.IsTransaction())
+		log.Log.Debugf("End transaction commiting ...(%p/tx=%p) %v", pg, pg.tx, pg.IsTransaction())
 		err = pg.tx.Commit(pg.ctx)
 	} else {
 		log.Log.Debugf("End transaction rollback ...%v", pg.IsTransaction())
 		err = pg.tx.Rollback(pg.ctx)
 	}
+	log.Log.Debugf("Tx ended %p", pg.tx)
 	pg.tx = nil
 	log.Log.Debugf("End transaction done: %v", err)
 	pg.Transaction = false
@@ -308,7 +312,7 @@ func (pg *PostGres) Close() {
 		pg.EndTransaction(false)
 	}
 	if pg.openDB != nil {
-		log.Log.Debugf("Release database pool entry %p(%p/%p)", pg.openDB, pg, pg.tx)
+		log.Log.Debugf("Release database pool entry %p(%p/tx=%p)", pg.openDB, pg, pg.tx)
 		pg.openDB.Release()
 		pg.openDB = nil
 		pg.tx = nil
@@ -322,7 +326,7 @@ func (pg *PostGres) Close() {
 // FreeHandler don't use the driver anymore
 func (pg *PostGres) FreeHandler() {
 	if pg.openDB != nil {
-		log.Log.Debugf("Release database pool entry %p(%p/%p)", pg.openDB, pg, pg.tx)
+		log.Log.Debugf("Release database pool entry %p(%p/tx=%p)", pg.openDB, pg, pg.tx)
 		pg.openDB.Release()
 		pg.openDB = nil
 		pg.tx = nil
@@ -606,6 +610,8 @@ func (pg *PostGres) Insert(name string, insert *common.Entries) (err error) {
 		}
 		defer pg.Close()
 	} else {
+		log.Log.Debugf("Tx ended %p", pg.tx)
+
 		tx = pg.tx
 		ctx = pg.ctx
 	}
@@ -692,6 +698,7 @@ func (pg *PostGres) Update(name string, updateInfo *common.Entries) (rowsAffecte
 		}
 		defer pg.Close()
 	} else {
+		log.Log.Debugf("Tx ended %p", pg.tx)
 		tx = pg.tx
 		ctx = pg.ctx
 	}
@@ -816,7 +823,7 @@ func (pg *PostGres) BatchSelectFct(search *common.Query, fct common.ResultFuncti
 		search.TypeInfo = common.CreateInterface(search.DataStruct, search.Fields)
 		_, err = pg.ParseStruct(search, rows, fct)
 	}
-	log.Log.Debugf("Release database pool entry %p(%p/%p)", pg.openDB, pg, pg.tx)
+	log.Log.Debugf("Release database pool entry %p(%p/tx=%p)", pg.openDB, pg, pg.tx)
 	return err
 	// layer, url := pg.Reference()
 	// db, err := sql.Open(layer, url)
@@ -885,7 +892,7 @@ func (pg *PostGres) StartTransaction() (pgx.Tx, context.Context, error) {
 		log.Log.Debugf("Begin of transaction fails: %v", err)
 		return nil, nil, err
 	}
-	log.Log.Debugf("Start transaction begin (%p/%p)", pg, pg.tx)
+	log.Log.Debugf("Start transaction begin (%p/tx=%p)", pg, pg.tx)
 	pg.Transaction = true
 	return pg.tx, pg.ctx, nil
 }
@@ -963,6 +970,6 @@ func (pg *PostGres) Stream(search *common.Query, sf common.StreamFunction) error
 		log.Log.Debugf("Stream offset = %d,%d\n", offset, blocksize)
 	}
 	log.Log.Debugf("Stream finished")
-	log.Log.Debugf("Release database pool entry %p(%p/%p)", pg.openDB, pg, pg.tx)
+	log.Log.Debugf("Release database pool entry %p(%p/tx=%p)", pg.openDB, pg, pg.tx)
 	return nil
 }
