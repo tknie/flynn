@@ -27,9 +27,9 @@ import (
 
 var globalRegID = common.RegDbID(0)
 
-// Handler Register database driver with a database URL returning a
+// Handler Handle database driver with a database URL returning a
 // reference id for the driver path to database
-func Register(p ...string) (common.RegDbID, error) {
+func Handle(p ...string) (common.RegDbID, error) {
 	l := len(p) - 1
 	if l < 0 {
 		return 0, fmt.Errorf("API error parameter missing")

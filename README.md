@@ -27,11 +27,11 @@ For details have a look at the API documentation. It can be referenced here: <ht
 
 ```go
  pg := "postgres://pguser:<pass>@pghost:5432/pgdatabase"
- x, err := Register("postgres", pg)
+ x, err := Handle("postgres", pg)
  if err!=nil {
   return
  }
- defer x.Unregister()
+ defer x.FreeHandler()
 
  q := &common.Query{TableName: "Albums",
   Search: "id=23",
@@ -51,11 +51,11 @@ For details have a look at the API documentation. It can be referenced here: <ht
   return
  }
 
- x, err := Register("postgres", pg)
+ x, err := Handle("postgres", pg)
  if err!=nil {
   return
  }
- defer x.Unregister()
+ defer x.FreeHandler()
 
  list := [][]any{{"ABC","AAA",1,2,3}}
  err = x.Update(testStructTable, 

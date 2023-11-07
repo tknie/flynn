@@ -141,29 +141,29 @@ func TestInitDatabases(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
-	x, err := Register("postgres", pg)
+	x, err := Handle("postgres", pg)
 	assert.NoError(t, err)
 	assert.True(t, x > 0)
 	assert.Len(t, common.Databases, 1)
-	err = x.Unregister()
+	err = x.FreeHandler()
 	if !assert.NoError(t, err) {
 		return
 	}
-	x, err = Register("postgres", pg)
+	x, err = Handle("postgres", pg)
 	assert.NoError(t, err)
 	assert.True(t, x > 0)
 	pg2, err := postgresTarget(t)
 	if !assert.NoError(t, err) {
 		return
 	}
-	x2, err := Register("postgres", pg2)
+	x2, err := Handle("postgres", pg2)
 	assert.NoError(t, err)
 	assert.True(t, x2 > 0)
 	assert.Len(t, common.Databases, 2)
-	err = x.Unregister()
+	err = x.FreeHandler()
 	assert.NoError(t, err)
 	assert.Len(t, common.Databases, 1)
-	err = x2.Unregister()
+	err = x2.FreeHandler()
 	assert.NoError(t, err)
 	assert.Len(t, common.Databases, 0)
 }
@@ -176,7 +176,7 @@ func TestInitWrongDatabases(t *testing.T) {
 		return
 	}
 	pg := fmt.Sprintf("postgres://%s:%s@%s:%d/%s", "admin", "Test123", "abs", port, "bitgarten")
-	x, err := Register("postgres", pg)
+	x, err := Handle("postgres", pg)
 	assert.NoError(t, err)
 	assert.NotEqual(t, common.RegDbID(0), x)
 	err = x.Ping()

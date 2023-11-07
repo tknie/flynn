@@ -174,8 +174,8 @@ func (mysql *Mysql) Close() {
 	}
 }
 
-// Unregister don't use the driver anymore
-func (mysql *Mysql) Unregister() {
+// FreeHandler don't use the driver anymore
+func (mysql *Mysql) FreeHandler() {
 }
 
 // IndexNeeded index needed for the SELECT statement value reference

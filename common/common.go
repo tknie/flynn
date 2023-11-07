@@ -63,7 +63,7 @@ type Database interface {
 	DeleteTable(string) error
 	Open() (any, error)
 	Close()
-	Unregister()
+	FreeHandler()
 	Insert(name string, insert *Entries) error
 	Update(name string, insert *Entries) (int64, error)
 	Delete(name string, remove *Entries) (int64, error)
@@ -325,17 +325,17 @@ func RegisterDbClient(db Database) {
 	Databases = append(Databases, db)
 }
 
-// Unregister unregister registry id for the driver
-func (id RegDbID) Unregister() error {
+// FreeHandler unregister registry id for the driver
+func (id RegDbID) FreeHandler() error {
 	log.Log.Debugf("Lock common (unregister)")
 	handlerLock.Lock()
 	defer handlerLock.Unlock()
 	defer log.Log.Debugf("Unlock common (unregister)")
-	log.Log.Debugf("Unregister db before state of %s(%d): %v", id, len(Databases), DBHelper())
+	log.Log.Debugf("FreeHandler db before state of %s(%d): %v", id, len(Databases), DBHelper())
 	for i, d := range Databases {
 		if d.ID() == id {
-			log.Log.Debugf("Unregister db %d", d.ID())
-			d.Unregister()
+			log.Log.Debugf("FreeHandler db %d", d.ID())
+			d.FreeHandler()
 			newDatabases := make([]Database, 0)
 			if i > 0 {
 				newDatabases = append(newDatabases, Databases[0:i]...)
@@ -344,11 +344,11 @@ func (id RegDbID) Unregister() error {
 				newDatabases = append(newDatabases, Databases[i+1:]...)
 			}
 			Databases = newDatabases
-			log.Log.Debugf("Unregister db of %s(%d): %v", id, len(Databases), DBHelper())
+			log.Log.Debugf("FreeHandler db of %s(%d): %v", id, len(Databases), DBHelper())
 			return nil
 		}
 	}
-	log.Log.Debugf("Unregister db error of %s(%d): %v", id, len(Databases), DBHelper())
+	log.Log.Debugf("FreeHandler db error of %s(%d): %v", id, len(Databases), DBHelper())
 	return errorrepo.NewError("DB000001")
 }
 

@@ -32,11 +32,11 @@ func TestBinarySearchPgRows(t *testing.T) {
 
 	log.Log.Debugf("Binary test")
 
-	x, err := Register("postgres", pg)
+	x, err := Handle("postgres", pg)
 	if !assert.NoError(t, err) {
 		return
 	}
-	defer x.Unregister()
+	defer x.FreeHandler()
 
 	q := &common.Query{TableName: "Pictures",
 		Search: "ChecksumPicture='B64F1DDF5683608579998E618545E497        '",
@@ -72,11 +72,11 @@ func TestBinarySearchMariaRows(t *testing.T) {
 
 	log.Log.Debugf("Binary test")
 
-	x, err := Register("mysql", mysql)
+	x, err := Handle("mysql", mysql)
 	if !assert.NoError(t, err) {
 		return
 	}
-	defer x.Unregister()
+	defer x.FreeHandler()
 
 	q := &common.Query{TableName: "Pictures",
 		Search: "ChecksumPicture='B64F1DDF5683608579998E618545E497        '",

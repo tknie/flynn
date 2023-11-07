@@ -35,11 +35,11 @@ func TestUpdateInit(t *testing.T) {
 
 func updateTest(t *testing.T, target *target) error {
 	fmt.Println("Start update test for layer", target.layer)
-	x, err := Register(target.layer, target.url)
+	x, err := Handle(target.layer, target.url)
 	if !assert.NoError(t, err) {
 		return err
 	}
-	defer x.Unregister()
+	defer x.FreeHandler()
 	nameValue := time.Now().Format("20060102150405")
 	vId1 := "uT-" + nameValue + "-1"
 	vId2 := "uT-" + nameValue + "-2"
@@ -79,11 +79,11 @@ func TestPostgresUpdateRollbackTransaction(t *testing.T) {
 	InitLog(t)
 	url, _ := postgresTarget(t)
 	fmt.Println("Start postgres transaction update test for layer")
-	x, err := Register("postgres", url)
+	x, err := Handle("postgres", url)
 	if !assert.NoError(t, err) {
 		return
 	}
-	defer x.Unregister()
+	defer x.FreeHandler()
 
 	err = x.Batch("TRUNCATE TABLE " + testStructTable)
 	assert.NoError(t, err)
@@ -130,11 +130,11 @@ func TestPostgresTransaction(t *testing.T) {
 	InitLog(t)
 	url, _ := postgresTarget(t)
 	fmt.Println("Start postgres transaction update test for layer")
-	x, err := Register("postgres", url)
+	x, err := Handle("postgres", url)
 	if !assert.NoError(t, err) {
 		return
 	}
-	defer x.Unregister()
+	defer x.FreeHandler()
 
 	err = x.Batch("TRUNCATE TABLE " + testStructTable)
 	assert.NoError(t, err)
@@ -244,11 +244,11 @@ func TestMySQLUpdateTransaction(t *testing.T) {
 	InitLog(t)
 	url, _ := mysqlTarget(t)
 	fmt.Println("Start mySQL transaction update test for layer")
-	x, err := Register("mysql", url)
+	x, err := Handle("mysql", url)
 	if !assert.NoError(t, err) {
 		return
 	}
-	defer x.Unregister()
+	defer x.FreeHandler()
 
 	err = x.Batch("TRUNCATE TABLE " + testStructTable)
 	assert.NoError(t, err)
@@ -294,11 +294,11 @@ func TestMySQLTransaction(t *testing.T) {
 	InitLog(t)
 	url, _ := mysqlTarget(t)
 	fmt.Println("Start MySQL transaction update test for layer")
-	x, err := Register("mysql", url)
+	x, err := Handle("mysql", url)
 	if !assert.NoError(t, err) {
 		return
 	}
-	defer x.Unregister()
+	defer x.FreeHandler()
 
 	err = x.Batch("TRUNCATE TABLE " + testStructTable)
 	assert.NoError(t, err)

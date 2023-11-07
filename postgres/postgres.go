@@ -319,8 +319,8 @@ func (pg *PostGres) Close() {
 	log.Log.Debugf("Close not opened database")
 }
 
-// Unregister don't use the driver anymore
-func (pg *PostGres) Unregister() {
+// FreeHandler don't use the driver anymore
+func (pg *PostGres) FreeHandler() {
 	if pg.openDB != nil {
 		log.Log.Debugf("Release database pool entry %p", pg.openDB)
 		pg.openDB.Release()

@@ -28,11 +28,11 @@ func TestSearchSecPgRows(t *testing.T) {
 	}
 
 	pg += "?sslmode=require&sslrootcert=files/root.crt"
-	x, err := Register("postgres", pg)
+	x, err := Handle("postgres", pg)
 	if !assert.NoError(t, err) {
 		return
 	}
-	defer x.Unregister()
+	defer x.FreeHandler()
 
 	q := &common.Query{TableName: "Albums",
 		Search: "",

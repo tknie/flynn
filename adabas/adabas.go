@@ -129,8 +129,8 @@ func (ada *Adabas) Close() {
 	}
 }
 
-// Unregister don't use the driver anymore
-func (ada *Adabas) Unregister() {
+// FreeHandler don't use the driver anymore
+func (ada *Adabas) FreeHandler() {
 }
 
 // Insert insert record into table

@@ -71,11 +71,11 @@ func TestInsertInitTestTable(t *testing.T) {
 }
 
 func checkTableAvailablefunc(t *testing.T, target *target) error {
-	x, err := Register(target.layer, target.url)
+	x, err := Handle(target.layer, target.url)
 	if !assert.NoError(t, err) {
 		return err
 	}
-	defer x.Unregister()
+	defer x.FreeHandler()
 
 	q := &common.Query{TableName: testTable,
 		Search: "",
@@ -131,7 +131,7 @@ func createColumnTestTable(t *testing.T, target *target) error {
 
 	fmt.Println("Create database table")
 
-	id, err := Register(target.layer, target.url)
+	id, err := Handle(target.layer, target.url)
 	if !assert.NoError(t, err, "register fail using "+target.layer) {
 		return err
 	}
@@ -145,11 +145,11 @@ func createColumnTestTable(t *testing.T, target *target) error {
 }
 
 func checkStructTableAvailablefunc(t *testing.T, target *target) error {
-	x, err := Register(target.layer, target.url)
+	x, err := Handle(target.layer, target.url)
 	if !assert.NoError(t, err) {
 		return err
 	}
-	defer x.Unregister()
+	defer x.FreeHandler()
 
 	q := &common.Query{TableName: testStructTable,
 		Search: "",
@@ -174,7 +174,7 @@ func checkStructTableAvailablefunc(t *testing.T, target *target) error {
 func createStructTestTable(t *testing.T, target *target) error {
 	log.Log.Debugf("Create database table")
 
-	id, err := Register(target.layer, target.url)
+	id, err := Handle(target.layer, target.url)
 	if !assert.NoError(t, err, "register fail using "+target.layer) {
 		return err
 	}
@@ -190,11 +190,11 @@ func createStructTestTable(t *testing.T, target *target) error {
 func TestInsertStruct(t *testing.T) {
 	url, _ := postgresTarget(t)
 	target := &target{"postgres", url}
-	x, err := Register(target.layer, target.url)
+	x, err := Handle(target.layer, target.url)
 	if !assert.NoError(t, err) {
 		return
 	}
-	defer x.Unregister()
+	defer x.FreeHandler()
 	nameValue := time.Now().Format("20060102150405")
 	vId1 := "i-" + nameValue + "-1"
 	vId2 := "i-" + nameValue + "-2"

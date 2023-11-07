@@ -72,7 +72,7 @@ func TestCreateStringArray(t *testing.T) {
 		fmt.Println("Working at string creation on target " + target.layer)
 		log.Log.Debugf("Working at string creation on target " + target.layer)
 
-		id, err := Register(target.layer, target.url)
+		id, err := Handle(target.layer, target.url)
 		if !assert.NoError(t, err, "register fail using "+target.layer) {
 			return
 		}
@@ -134,8 +134,8 @@ func TestCreateStringArray(t *testing.T) {
 }
 
 func unregisterDatabase(t *testing.T, id def.RegDbID) {
-	log.Log.Debugf("Unregister id=%d", id)
-	err := id.Unregister()
+	log.Log.Debugf("FreeHandler id=%d", id)
+	err := id.FreeHandler()
 	assert.NoError(t, err)
 }
 
@@ -172,7 +172,7 @@ func createStruct(t *testing.T, target *target) error {
 		return nil
 	}
 	// fmt.Println("Work on layer", target.layer)
-	id, err := Register(target.layer, target.url)
+	id, err := Handle(target.layer, target.url)
 	if !assert.NoError(t, err, "register fail using "+target.layer) {
 		return err
 	}
@@ -279,12 +279,12 @@ func initTheadTest(t *testing.T, layer, url string, f func(t *testing.T, layer, 
 func insertThread(t *testing.T, layer, url string) {
 	nr := atomic.AddInt32(&atomicInt, 1)
 	log.Log.Debugf("%02d: Start threads ....", nr)
-	id, err := Register(layer, url)
+	id, err := Handle(layer, url)
 	if !assert.NoError(t, err, "register fail using "+layer) {
 		log.Log.Fatal("Error registrer")
 	}
 	// fmt.Println("Start thread ....", nr)
-	defer id.Unregister()
+	defer id.FreeHandler()
 	wgThread.Add(1)
 	defer wgThread.Done()
 	for {
@@ -320,11 +320,11 @@ func insertAtomarThread(t *testing.T, layer, url string) {
 
 func insertRecordForThread(t *testing.T, layer, url string, nr int32) {
 	for {
-		id, err := Register(layer, url)
+		id, err := Handle(layer, url)
 		if !assert.NoError(t, err, "register fail using "+layer) {
 			log.Log.Fatal("Error registrer")
 		}
-		defer id.Unregister()
+		defer id.FreeHandler()
 		log.Log.Debugf("%02d: Waiting for entry .... ", nr)
 		select {
 		case x := <-dataChan:

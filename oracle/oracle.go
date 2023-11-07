@@ -134,8 +134,8 @@ func (oracle *Oracle) Open() (dbOpen any, err error) {
 	return db, nil
 }
 
-// Unregister don't use the driver anymore
-func (oracle *Oracle) Unregister() {
+// FreeHandler don't use the driver anymore
+func (oracle *Oracle) FreeHandler() {
 }
 
 // StartTransaction start transaction the database connection

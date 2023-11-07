@@ -47,7 +47,7 @@ func TestStreamPgPartial(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
-	defer x.Unregister()
+	defer x.FreeHandler()
 
 	q := &common.Query{TableName: "Pictures",
 		Search:     "checksumpicture='02E88E36FF888D0344B633B329AE8C5E'",
@@ -95,7 +95,7 @@ func TestStreamPgAbort(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
-	defer x.Unregister()
+	defer x.FreeHandler()
 
 	q := &common.Query{TableName: "Pictures",
 		Search:     "checksumpicture='02E88E36FF888D0344B633B329AE8C5E'",
@@ -133,7 +133,7 @@ func TestStreamListPgTest(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
-	defer x.Unregister()
+	defer x.FreeHandler()
 
 	for _, p := range checksumPictureTest {
 		fmt.Println("Checking read of chksum=", p.chksum, "length=", p.length)
@@ -181,11 +181,11 @@ func TestStreamListMySQLTest(t *testing.T) {
 		return
 	}
 
-	x, err := Register("mysql", target)
+	x, err := Handle("mysql", target)
 	if !assert.NoError(t, err) {
 		return
 	}
-	defer x.Unregister()
+	defer x.FreeHandler()
 
 	for _, p := range checksumPictureTestMySQL {
 		fmt.Println("Checking read of chksum=", p.chksum, "... length=", p.length)
@@ -226,7 +226,7 @@ func TestQueryListPgTest(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
-	defer x.Unregister()
+	defer x.FreeHandler()
 
 	for _, p := range checksumPictureTest {
 		q := &common.Query{TableName: "Pictures",
@@ -255,11 +255,11 @@ func TestStreamAdabasTest(t *testing.T) {
 		return
 	}
 
-	x, err := Register("adabas", target)
+	x, err := Handle("adabas", target)
 	if !assert.NoError(t, err) {
 		return
 	}
-	defer x.Unregister()
+	defer x.FreeHandler()
 
 	md5Query := "A9E64EE699065A32AE3A09E5AADC1D51"
 	chksum := "941E37A328B337F6ADC64FC953938549"

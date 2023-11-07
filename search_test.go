@@ -75,11 +75,11 @@ func TestSearchQuery(t *testing.T) {
 	}
 
 	fmt.Println("Register postgres: " + pg)
-	x, err := Register("postgres", pg)
+	x, err := Handle("postgres", pg)
 	if !assert.NoError(t, err) {
 		return
 	}
-	defer x.Unregister()
+	defer x.FreeHandler()
 
 	columns, err := x.GetTableColumn("Albums")
 	if !assert.NoError(t, err) {
@@ -95,11 +95,11 @@ func TestSearchPgRows(t *testing.T) {
 		return
 	}
 
-	x, err := Register("postgres", pg)
+	x, err := Handle("postgres", pg)
 	if !assert.NoError(t, err) {
 		return
 	}
-	defer x.Unregister()
+	defer x.FreeHandler()
 
 	q := &common.Query{TableName: "Albums",
 		Search: "",
@@ -141,11 +141,11 @@ func TestQueryPgFunctions(t *testing.T) {
 		return
 	}
 
-	x, err := Register("postgres", pg)
+	x, err := Handle("postgres", pg)
 	if !assert.NoError(t, err) {
 		return
 	}
-	defer x.Unregister()
+	defer x.FreeHandler()
 
 	q := &common.Query{TableName: "Pictures",
 		Search: "",
@@ -188,11 +188,11 @@ func TestSearchPgCriteriaRows(t *testing.T) {
 		return
 	}
 
-	x, err := Register("postgres", pg)
+	x, err := Handle("postgres", pg)
 	if !assert.NoError(t, err) {
 		return
 	}
-	defer x.Unregister()
+	defer x.FreeHandler()
 
 	q := &common.Query{TableName: "Albums",
 		Search: "id=1",
@@ -254,11 +254,11 @@ func TestSearchPgStruct(t *testing.T) {
 		return
 	}
 
-	x, err := Register("postgres", pg)
+	x, err := Handle("postgres", pg)
 	if !assert.NoError(t, err) {
 		return
 	}
-	defer x.Unregister()
+	defer x.FreeHandler()
 
 	q := &common.Query{TableName: "Albums",
 		Search:     "",
@@ -297,11 +297,11 @@ func TestSearchPgPtrStruct(t *testing.T) {
 		return
 	}
 
-	x, err := Register("postgres", pg)
+	x, err := Handle("postgres", pg)
 	if !assert.NoError(t, err) {
 		return
 	}
-	defer x.Unregister()
+	defer x.FreeHandler()
 
 	q := &common.Query{TableName: "Albums",
 		Search:     "",
@@ -344,11 +344,11 @@ func TestSearchPgPtrStructDeep(t *testing.T) {
 		return
 	}
 
-	x, err := Register("postgres", pg)
+	x, err := Handle("postgres", pg)
 	if !assert.NoError(t, err) {
 		return
 	}
-	defer x.Unregister()
+	defer x.FreeHandler()
 
 	q := &common.Query{TableName: "Albums",
 		Search:     "",
@@ -387,11 +387,11 @@ func TestSearchPgPtrStructAll(t *testing.T) {
 		return
 	}
 
-	x, err := Register("postgres", pg)
+	x, err := Handle("postgres", pg)
 	if !assert.NoError(t, err) {
 		return
 	}
-	defer x.Unregister()
+	defer x.FreeHandler()
 
 	q := &common.Query{TableName: "Albums",
 		Search:     "",
@@ -433,11 +433,11 @@ func TestSearchPgPtrPtrStructAll(t *testing.T) {
 		return
 	}
 
-	x, err := Register("postgres", pg)
+	x, err := Handle("postgres", pg)
 	if !assert.NoError(t, err) {
 		return
 	}
-	defer x.Unregister()
+	defer x.FreeHandler()
 
 	q := &common.Query{TableName: "Albums",
 		Search:     "",
@@ -481,11 +481,11 @@ func TestSearchAdaStruct(t *testing.T) {
 		return
 	}
 
-	x, err := Register("adabas", ada)
+	x, err := Handle("adabas", ada)
 	if !assert.NoError(t, err) {
 		return
 	}
-	defer x.Unregister()
+	defer x.FreeHandler()
 
 	q := &common.Query{TableName: "Albums",
 		Search: "",
@@ -524,11 +524,11 @@ func TestSearchAdaPtrStruct(t *testing.T) {
 		return
 	}
 
-	x, err := Register("adabas", ada)
+	x, err := Handle("adabas", ada)
 	if !assert.NoError(t, err) {
 		return
 	}
-	defer x.Unregister()
+	defer x.FreeHandler()
 
 	q := &common.Query{TableName: "Albums",
 		Search:     "",
@@ -565,11 +565,11 @@ func TestSearchMariaDBRows(t *testing.T) {
 		return
 	}
 
-	x, err := Register("mysql", db)
+	x, err := Handle("mysql", db)
 	if !assert.NoError(t, err) {
 		return
 	}
-	defer x.Unregister()
+	defer x.FreeHandler()
 
 	q := &common.Query{TableName: "Albums",
 		Search: "",
@@ -608,11 +608,11 @@ func TestSearchPgRowsOrdered(t *testing.T) {
 		return
 	}
 
-	x, err := Register("postgres", pg)
+	x, err := Handle("postgres", pg)
 	if !assert.NoError(t, err) {
 		return
 	}
-	defer x.Unregister()
+	defer x.FreeHandler()
 
 	pwd := os.Getenv("POSTGRES_PWD")
 	if !assert.NotEmpty(t, pwd) {
@@ -660,11 +660,11 @@ func TestSearchMySQLRowsOrdered(t *testing.T) {
 		return
 	}
 
-	x, err := Register("mysql", mysql)
+	x, err := Handle("mysql", mysql)
 	if !assert.NoError(t, err) {
 		return
 	}
-	defer x.Unregister()
+	defer x.FreeHandler()
 
 	mysqlPassword := os.Getenv("MYSQL_PWD")
 	x.SetCredentials("admin", mysqlPassword)
@@ -715,7 +715,7 @@ func TestSearchPgRowsDistinct(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
-	defer x.Unregister()
+	defer x.FreeHandler()
 
 	q := &common.Query{TableName: "Pictures",
 		Search:     "",
