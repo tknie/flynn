@@ -312,7 +312,7 @@ func (pg *PostGres) Close() {
 		pg.EndTransaction(false)
 	}
 	if pg.openDB != nil {
-		log.Log.Debugf("Release database pool entry %p(pg=%p/tx=%p)", pg.openDB, pg, pg.tx)
+		log.Log.Debugf("Close/release %p(pg=%p/tx=%p)", pg.openDB, pg, pg.tx)
 		pg.openDB.Release()
 		pg.openDB = nil
 		pg.tx = nil
@@ -326,7 +326,7 @@ func (pg *PostGres) Close() {
 // FreeHandler don't use the driver anymore
 func (pg *PostGres) FreeHandler() {
 	if pg.openDB != nil {
-		log.Log.Debugf("Release database pool entry %p(pg=%p/tx=%p)", pg.openDB, pg, pg.tx)
+		log.Log.Debugf("Free entry %p(pg=%p/tx=%p)", pg.openDB, pg, pg.tx)
 		pg.openDB.Release()
 		pg.openDB = nil
 		pg.tx = nil
@@ -367,8 +367,6 @@ func (pg *PostGres) Ping() error {
 		pg.dbTableNames = append(pg.dbTableNames, tableName)
 	}
 	log.Log.Debugf("Pinging and scanning database ended")
-	log.Log.Debugf("Release database pool entry %p(pg=%p/tx=%p)", pg.openDB, pg, pg.tx)
-
 	return nil
 }
 
@@ -465,7 +463,6 @@ func (pg *PostGres) Query(search *common.Query, f common.ResultFunction) (*commo
 	if search.DataStruct == nil {
 		return pg.ParseRows(search, rows, f)
 	}
-	log.Log.Debugf("Release database pool entry %p(pg=%p/tx=%p)", pg.openDB, pg, pg.tx)
 	return pg.ParseStruct(search, rows, f)
 }
 
@@ -823,7 +820,6 @@ func (pg *PostGres) BatchSelectFct(search *common.Query, fct common.ResultFuncti
 		search.TypeInfo = common.CreateInterface(search.DataStruct, search.Fields)
 		_, err = pg.ParseStruct(search, rows, fct)
 	}
-	log.Log.Debugf("Release database pool entry %p(pg=%p/tx=%p)", pg.openDB, pg, pg.tx)
 	return err
 	// layer, url := pg.Reference()
 	// db, err := sql.Open(layer, url)
@@ -970,6 +966,5 @@ func (pg *PostGres) Stream(search *common.Query, sf common.StreamFunction) error
 		log.Log.Debugf("Stream offset = %d,%d\n", offset, blocksize)
 	}
 	log.Log.Debugf("Stream finished")
-	log.Log.Debugf("Release database pool entry %p(pg=%p/tx=%p)", pg.openDB, pg, pg.tx)
 	return nil
 }
