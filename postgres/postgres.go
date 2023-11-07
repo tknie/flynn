@@ -22,6 +22,8 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -41,15 +43,37 @@ const (
 // PostGres instane for PostgresSQL
 type PostGres struct {
 	common.CommonDatabase
-	openDB       *pgxpool.Conn
-	pool         *pgxpool.Pool
+	openDB *pgxpool.Conn
+	// pool         *pgxpool.Pool
 	dbURL        string
 	dbTableNames []string
 	user         string
 	password     string
 	tx           pgx.Tx
 	ctx          context.Context
+	cancel       context.CancelFunc
 	txLock       sync.Mutex
+}
+
+type pool struct {
+	useCounter uint64
+	pool       *pgxpool.Pool
+	url        string
+}
+
+var poolMap = make(map[string]*pool)
+
+func (p *pool) IncUsage() uint64 {
+	return atomic.AddUint64(&p.useCounter, 1)
+}
+
+func (p *pool) DecUsage() uint64 {
+	c := atomic.AddUint64(&p.useCounter, ^uint64(0))
+	if c == 0 {
+		p.pool.Close()
+		delete(poolMap, p.url)
+	}
+	return c
 }
 
 // New create new postgres reference instance
@@ -57,16 +81,16 @@ func NewInstance(id common.RegDbID, reference *common.Reference, password string
 
 	url := fmt.Sprintf("postgres://%s:"+passwdPlaceholder+"@%s:%d/%s%s", reference.User,
 		reference.Host, reference.Port, reference.Database, reference.OptionString())
-	pg := &PostGres{common.CommonDatabase{RegDbID: id}, nil, nil,
-		url, nil, "", password, nil, nil, sync.Mutex{}}
+	pg := &PostGres{common.CommonDatabase{RegDbID: id}, nil,
+		url, nil, "", password, nil, nil, nil, sync.Mutex{}}
 
 	return pg, nil
 }
 
 // New create new postgres reference instance
 func New(id common.RegDbID, url string) (common.Database, error) {
-	pg := &PostGres{common.CommonDatabase{RegDbID: id}, nil, nil,
-		url, nil, "", "", nil, nil, sync.Mutex{}}
+	pg := &PostGres{common.CommonDatabase{RegDbID: id}, nil,
+		url, nil, "", "", nil, nil, nil, sync.Mutex{}}
 	// err := pg.check()
 	// if err != nil {
 	// 	return nil, err
@@ -130,29 +154,59 @@ func (pg *PostGres) Maps() ([]string, error) {
 	return pg.dbTableNames, nil
 }
 
-func (pg *PostGres) open() (dbOpen *pgxpool.Conn, err error) {
-	if pg.IsTransaction() && pg.openDB != nil {
-		return pg.openDB, nil
-	}
-	pg.ctx = context.Background()
-	if pg.pool == nil {
+func (pg *PostGres) getPool() (*pool, error) {
+	url := pg.generateURL()
+	if p, ok := poolMap[url]; ok {
+		return p, nil
+	} else {
+		pg.ctx, pg.cancel = context.WithTimeout(context.Background(), 120*time.Second)
+
+		//config := &pgx.ConnConfig{Tracer: tracer}
+		config, err := pgxpool.ParseConfig(pg.generateURL())
+		if err != nil {
+			return nil, err
+		}
+		// config.Tracer = tracer
+
+		// pg.ctx = context.Background()
 		log.Log.Debugf("Create pool for Postgres database to %s", pg.dbURL)
-		pool, err := pgxpool.New(pg.ctx, pg.generateURL())
+		p = &pool{url: url}
+		p.pool, err = pgxpool.NewWithConfig(pg.ctx, config)
 		if err != nil {
 			log.Log.Debugf("Postgres driver connect error: %v", err)
 			return nil, err
 		}
-		pg.pool = pool
+
+		poolMap[url] = p
+
+		return p, nil
 	}
-	dbOpen, err = pg.pool.Acquire(pg.ctx)
+}
+
+func (pg *PostGres) open() (dbOpen *pgxpool.Conn, err error) {
+	if pg.IsTransaction() && pg.openDB != nil {
+		return pg.openDB, nil
+	}
+	p, err := pg.getPool()
 	if err != nil {
 		return nil, err
 	}
+
+	/*tracer := &tracelog.TraceLog{
+		Logger:   NewLogger(),
+		LogLevel: tracelog.LogLevelTrace,
+	}*/
+	dbOpen, err = p.pool.Acquire(pg.ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	log.Log.Debugf("Acquire Postgres database to %s: %p", pg.dbURL, dbOpen)
 	log.Log.Debugf("Opened postgres database")
 	if dbOpen == nil {
 		return nil, fmt.Errorf("error open handle and err nil")
 	}
+	p.IncUsage()
 	return dbOpen, nil
 }
 
@@ -263,10 +317,10 @@ func (pg *PostGres) Unregister() {
 		pg.openDB.Release()
 		pg.openDB = nil
 	}
-	if pg.pool != nil {
+
+	if p, err := pg.getPool(); err == nil {
+		p.DecUsage()
 		log.Log.Debugf("Release database pool")
-		pg.pool.Close()
-		pg.pool = nil
 	}
 }
 
