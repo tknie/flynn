@@ -62,7 +62,7 @@ type pool struct {
 	url        string
 }
 
-var poolMap = make(map[string]*pool)
+var poolMap sync.Map
 
 func (p *pool) IncUsage() uint64 {
 	return atomic.AddUint64(&p.useCounter, 1)
@@ -72,7 +72,7 @@ func (p *pool) DecUsage() uint64 {
 	c := atomic.AddUint64(&p.useCounter, ^uint64(0))
 	if c == 0 {
 		p.pool.Close()
-		delete(poolMap, p.url)
+		poolMap.Delete(p.url)
 	}
 	return c
 }
@@ -157,11 +157,11 @@ func (pg *PostGres) Maps() ([]string, error) {
 
 func (pg *PostGres) getPool() (*pool, error) {
 	url := pg.generateURL()
-	if p, ok := poolMap[url]; ok {
-		pg.ctx = p.ctx
-		return p, nil
+	if p, ok := poolMap.Load(url); ok {
+		pg.ctx = p.(*pool).ctx
+		return p.(*pool), nil
 	} else {
-		pg.ctx, pg.cancel = context.WithTimeout(context.Background(), 120*time.Second)
+		pg.defineContext()
 		if pg.ctx == nil {
 			return nil, fmt.Errorf("context error nil")
 		}
@@ -174,14 +174,14 @@ func (pg *PostGres) getPool() (*pool, error) {
 
 		// pg.ctx = context.Background()
 		log.Log.Debugf("Create pool for Postgres database to %s", pg.dbURL)
-		p = &pool{url: url, ctx: pg.ctx}
+		p := &pool{url: url, ctx: pg.ctx}
 		p.pool, err = pgxpool.NewWithConfig(pg.ctx, config)
 		if err != nil {
 			log.Log.Debugf("Postgres driver connect error: %v", err)
 			return nil, err
 		}
 
-		poolMap[url] = p
+		poolMap.Store(url, p)
 
 		return p, nil
 	}
@@ -282,14 +282,14 @@ func (pg *PostGres) EndTransaction(commit bool) (err error) {
 		return fmt.Errorf("error transaction not started")
 	}
 	if commit {
-		log.Log.Debugf("End transaction commiting ...%v", pg.IsTransaction())
+		log.Log.Debugf("End transaction commiting ...(%p/%p) %v", pg, pg.tx, pg.IsTransaction())
 		err = pg.tx.Commit(pg.ctx)
 	} else {
 		log.Log.Debugf("End transaction rollback ...%v", pg.IsTransaction())
 		err = pg.tx.Rollback(pg.ctx)
 	}
 	pg.tx = nil
-	log.Log.Debugf("End transaction done")
+	log.Log.Debugf("End transaction done: %v", err)
 	pg.Transaction = false
 	if err != nil {
 		log.Log.Errorf("Error end transaction commit=%v: %v", commit, err)
@@ -308,7 +308,7 @@ func (pg *PostGres) Close() {
 		pg.EndTransaction(false)
 	}
 	if pg.openDB != nil {
-		log.Log.Debugf("Release database pool entry %p", pg.openDB)
+		log.Log.Debugf("Release database pool entry %p(%p/%p)", pg.openDB, pg, pg.tx)
 		pg.openDB.Release()
 		pg.openDB = nil
 		pg.tx = nil
@@ -322,9 +322,11 @@ func (pg *PostGres) Close() {
 // FreeHandler don't use the driver anymore
 func (pg *PostGres) FreeHandler() {
 	if pg.openDB != nil {
-		log.Log.Debugf("Release database pool entry %p", pg.openDB)
+		log.Log.Debugf("Release database pool entry %p(%p/%p)", pg.openDB, pg, pg.tx)
 		pg.openDB.Release()
 		pg.openDB = nil
+		pg.tx = nil
+		pg.ctx = nil
 	}
 
 	if p, err := pg.getPool(); err == nil {
@@ -853,6 +855,10 @@ func (pg *PostGres) BatchSelectFct(search *common.Query, fct common.ResultFuncti
 	// return nil
 }
 
+func (pg *PostGres) defineContext() {
+	pg.ctx, pg.cancel = context.WithTimeout(context.Background(), 120*time.Second)
+}
+
 // StartTransaction start transaction
 func (pg *PostGres) StartTransaction() (pgx.Tx, context.Context, error) {
 	var err error
@@ -868,7 +874,7 @@ func (pg *PostGres) StartTransaction() (pgx.Tx, context.Context, error) {
 	// pg.txLock.Lock()
 	// defer pg.txLock.Unlock()
 	// defer log.Log.Debugf("Unlock Start transaction opened")
-	pg.ctx = context.Background()
+	pg.defineContext()
 	if pg.openDB == nil || pg == nil || pg.ctx == nil {
 		log.Log.Fatalf("Error invalid openDB handle")
 	}
