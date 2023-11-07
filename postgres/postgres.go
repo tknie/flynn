@@ -363,7 +363,7 @@ func (pg *PostGres) Ping() error {
 		pg.dbTableNames = append(pg.dbTableNames, tableName)
 	}
 	log.Log.Debugf("Pinging and scanning database ended")
-	log.Log.Debugf("Release database pool entry")
+	log.Log.Debugf("Release database pool entry %p(%p/%p)", pg.openDB, pg, pg.tx)
 
 	return nil
 }
@@ -461,7 +461,7 @@ func (pg *PostGres) Query(search *common.Query, f common.ResultFunction) (*commo
 	if search.DataStruct == nil {
 		return pg.ParseRows(search, rows, f)
 	}
-	log.Log.Debugf("Release database pool entry")
+	log.Log.Debugf("Release database pool entry %p(%p/%p)", pg.openDB, pg, pg.tx)
 	return pg.ParseStruct(search, rows, f)
 }
 
@@ -816,7 +816,7 @@ func (pg *PostGres) BatchSelectFct(search *common.Query, fct common.ResultFuncti
 		search.TypeInfo = common.CreateInterface(search.DataStruct, search.Fields)
 		_, err = pg.ParseStruct(search, rows, fct)
 	}
-	log.Log.Debugf("Release database pool entry")
+	log.Log.Debugf("Release database pool entry %p(%p/%p)", pg.openDB, pg, pg.tx)
 	return err
 	// layer, url := pg.Reference()
 	// db, err := sql.Open(layer, url)
@@ -885,7 +885,7 @@ func (pg *PostGres) StartTransaction() (pgx.Tx, context.Context, error) {
 		log.Log.Debugf("Begin of transaction fails: %v", err)
 		return nil, nil, err
 	}
-	log.Log.Debugf("Start transaction begin")
+	log.Log.Debugf("Start transaction begin (%p/%p)", pg, pg.tx)
 	pg.Transaction = true
 	return pg.tx, pg.ctx, nil
 }
@@ -963,6 +963,6 @@ func (pg *PostGres) Stream(search *common.Query, sf common.StreamFunction) error
 		log.Log.Debugf("Stream offset = %d,%d\n", offset, blocksize)
 	}
 	log.Log.Debugf("Stream finished")
-	log.Log.Debugf("Release database pool entry")
+	log.Log.Debugf("Release database pool entry %p(%p/%p)", pg.openDB, pg, pg.tx)
 	return nil
 }
