@@ -58,6 +58,7 @@ type PostGres struct {
 type pool struct {
 	useCounter uint64
 	pool       *pgxpool.Pool
+	ctx        context.Context
 	url        string
 }
 
@@ -157,10 +158,13 @@ func (pg *PostGres) Maps() ([]string, error) {
 func (pg *PostGres) getPool() (*pool, error) {
 	url := pg.generateURL()
 	if p, ok := poolMap[url]; ok {
+		pg.ctx = p.ctx
 		return p, nil
 	} else {
 		pg.ctx, pg.cancel = context.WithTimeout(context.Background(), 120*time.Second)
-
+		if pg.ctx == nil {
+			return nil, fmt.Errorf("context error nil")
+		}
 		//config := &pgx.ConnConfig{Tracer: tracer}
 		config, err := pgxpool.ParseConfig(pg.generateURL())
 		if err != nil {
@@ -170,7 +174,7 @@ func (pg *PostGres) getPool() (*pool, error) {
 
 		// pg.ctx = context.Background()
 		log.Log.Debugf("Create pool for Postgres database to %s", pg.dbURL)
-		p = &pool{url: url}
+		p = &pool{url: url, ctx: pg.ctx}
 		p.pool, err = pgxpool.NewWithConfig(pg.ctx, config)
 		if err != nil {
 			log.Log.Debugf("Postgres driver connect error: %v", err)
@@ -191,7 +195,12 @@ func (pg *PostGres) open() (dbOpen *pgxpool.Conn, err error) {
 	if err != nil {
 		return nil, err
 	}
-
+	if p == nil {
+		log.Log.Fatalf("p=%v defined", (p == nil))
+	}
+	if p.pool == nil {
+		log.Log.Fatalf("p.pool=%v defined", p.pool == nil)
+	}
 	/*tracer := &tracelog.TraceLog{
 		Logger:   NewLogger(),
 		LogLevel: tracelog.LogLevelTrace,
