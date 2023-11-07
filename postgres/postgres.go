@@ -242,7 +242,7 @@ func (pg *PostGres) Open() (dbOpen any, err error) {
 		if err != nil {
 			return nil, err
 		}
-		log.Log.Debugf("Tx started %p", pg.tx)
+		log.Log.Debugf("Tx started pg=%p/tx=%p", pg, pg.tx)
 
 	}
 	log.Log.Debugf("Opened database %s after transaction", pg.dbURL)
@@ -282,16 +282,16 @@ func (pg *PostGres) EndTransaction(commit bool) (err error) {
 	}
 	if pg.tx == nil {
 		pg.Transaction = false
-		return fmt.Errorf("error transaction not started")
+		return fmt.Errorf("error tx empty")
 	}
 	if commit {
-		log.Log.Debugf("End transaction commiting ...(%p/tx=%p) %v", pg, pg.tx, pg.IsTransaction())
+		log.Log.Debugf("End transaction commiting ...(pg=%p/tx=%p) %v", pg, pg.tx, pg.IsTransaction())
 		err = pg.tx.Commit(pg.ctx)
 	} else {
-		log.Log.Debugf("End transaction rollback ...%v", pg.IsTransaction())
+		log.Log.Debugf("End transaction rollback ...(pg=%p/tx=%p) %v", pg, pg.tx, pg.IsTransaction())
 		err = pg.tx.Rollback(pg.ctx)
 	}
-	log.Log.Debugf("Tx ended %p", pg.tx)
+	log.Log.Debugf("Tx cleared pg=%p/tx=%p", pg, pg.tx)
 	pg.tx = nil
 	log.Log.Debugf("End transaction done: %v", err)
 	pg.Transaction = false
@@ -312,7 +312,7 @@ func (pg *PostGres) Close() {
 		pg.EndTransaction(false)
 	}
 	if pg.openDB != nil {
-		log.Log.Debugf("Release database pool entry %p(%p/tx=%p)", pg.openDB, pg, pg.tx)
+		log.Log.Debugf("Release database pool entry %p(pg=%p/tx=%p)", pg.openDB, pg, pg.tx)
 		pg.openDB.Release()
 		pg.openDB = nil
 		pg.tx = nil
@@ -326,7 +326,7 @@ func (pg *PostGres) Close() {
 // FreeHandler don't use the driver anymore
 func (pg *PostGres) FreeHandler() {
 	if pg.openDB != nil {
-		log.Log.Debugf("Release database pool entry %p(%p/tx=%p)", pg.openDB, pg, pg.tx)
+		log.Log.Debugf("Release database pool entry %p(pg=%p/tx=%p)", pg.openDB, pg, pg.tx)
 		pg.openDB.Release()
 		pg.openDB = nil
 		pg.tx = nil
@@ -367,7 +367,7 @@ func (pg *PostGres) Ping() error {
 		pg.dbTableNames = append(pg.dbTableNames, tableName)
 	}
 	log.Log.Debugf("Pinging and scanning database ended")
-	log.Log.Debugf("Release database pool entry %p(%p/%p)", pg.openDB, pg, pg.tx)
+	log.Log.Debugf("Release database pool entry %p(pg=%p/tx=%p)", pg.openDB, pg, pg.tx)
 
 	return nil
 }
@@ -465,7 +465,7 @@ func (pg *PostGres) Query(search *common.Query, f common.ResultFunction) (*commo
 	if search.DataStruct == nil {
 		return pg.ParseRows(search, rows, f)
 	}
-	log.Log.Debugf("Release database pool entry %p(%p/%p)", pg.openDB, pg, pg.tx)
+	log.Log.Debugf("Release database pool entry %p(pg=%p/tx=%p)", pg.openDB, pg, pg.tx)
 	return pg.ParseStruct(search, rows, f)
 }
 
@@ -610,7 +610,7 @@ func (pg *PostGres) Insert(name string, insert *common.Entries) (err error) {
 		}
 		defer pg.Close()
 	} else {
-		log.Log.Debugf("Tx ended %p", pg.tx)
+		log.Log.Debugf("Tx ended pg=%p/tx=%p", pg, pg.tx)
 
 		tx = pg.tx
 		ctx = pg.ctx
@@ -698,7 +698,7 @@ func (pg *PostGres) Update(name string, updateInfo *common.Entries) (rowsAffecte
 		}
 		defer pg.Close()
 	} else {
-		log.Log.Debugf("Tx ended %p", pg.tx)
+		log.Log.Debugf("Tx used pg=%p/tx=%p", pg, pg.tx)
 		tx = pg.tx
 		ctx = pg.ctx
 	}
@@ -823,7 +823,7 @@ func (pg *PostGres) BatchSelectFct(search *common.Query, fct common.ResultFuncti
 		search.TypeInfo = common.CreateInterface(search.DataStruct, search.Fields)
 		_, err = pg.ParseStruct(search, rows, fct)
 	}
-	log.Log.Debugf("Release database pool entry %p(%p/tx=%p)", pg.openDB, pg, pg.tx)
+	log.Log.Debugf("Release database pool entry %p(pg=%p/tx=%p)", pg.openDB, pg, pg.tx)
 	return err
 	// layer, url := pg.Reference()
 	// db, err := sql.Open(layer, url)
@@ -892,7 +892,7 @@ func (pg *PostGres) StartTransaction() (pgx.Tx, context.Context, error) {
 		log.Log.Debugf("Begin of transaction fails: %v", err)
 		return nil, nil, err
 	}
-	log.Log.Debugf("Start transaction begin (%p/tx=%p)", pg, pg.tx)
+	log.Log.Debugf("Start transaction begin (pg=%p/tx=%p)", pg, pg.tx)
 	pg.Transaction = true
 	return pg.tx, pg.ctx, nil
 }
@@ -970,6 +970,6 @@ func (pg *PostGres) Stream(search *common.Query, sf common.StreamFunction) error
 		log.Log.Debugf("Stream offset = %d,%d\n", offset, blocksize)
 	}
 	log.Log.Debugf("Stream finished")
-	log.Log.Debugf("Release database pool entry %p(%p/tx=%p)", pg.openDB, pg, pg.tx)
+	log.Log.Debugf("Release database pool entry %p(pg=%p/tx=%p)", pg.openDB, pg, pg.tx)
 	return nil
 }
