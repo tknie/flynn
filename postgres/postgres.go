@@ -23,7 +23,6 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
-	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -864,8 +863,8 @@ func (pg *PostGres) BatchSelectFct(search *common.Query, fct common.ResultFuncti
 }
 
 func (pg *PostGres) defineContext() {
-	pg.ctx, pg.cancel = context.WithTimeout(context.Background(), 120*time.Second)
-	// pg.ctx = context.Background()
+	// pg.ctx, pg.cancel = context.WithTimeout(context.Background(), 120*time.Second)
+	pg.ctx = context.Background()
 }
 
 // StartTransaction start transaction
