@@ -334,7 +334,7 @@ func (id RegDbID) FreeHandler() error {
 	log.Log.Debugf("FreeHandler db before state of %s(%d): %v", id, len(Databases), DBHelper())
 	for i, d := range Databases {
 		if d.ID() == id {
-			log.Log.Debugf("FreeHandler db %d", d.ID())
+			log.Log.Debugf("FreeHandler db id=%d", d.ID())
 			d.FreeHandler()
 			newDatabases := make([]Database, 0)
 			if i > 0 {
@@ -344,11 +344,11 @@ func (id RegDbID) FreeHandler() error {
 				newDatabases = append(newDatabases, Databases[i+1:]...)
 			}
 			Databases = newDatabases
-			log.Log.Debugf("FreeHandler db of %s(%d): %v", id, len(Databases), DBHelper())
+			log.Log.Debugf("FreeHandler db of id=%d(%d): %v", id, len(Databases), DBHelper())
 			return nil
 		}
 	}
-	log.Log.Debugf("FreeHandler db error of %s(%d): %v", id, len(Databases), DBHelper())
+	log.Log.Debugf("FreeHandler db error of id=%d(%d): %v", id, len(Databases), DBHelper())
 	return errorrepo.NewError("DB000001")
 }
 

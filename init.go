@@ -78,7 +78,7 @@ func Handler(dbref *common.Reference, password string) (common.RegDbID, error) {
 		return 0, err
 	}
 	common.RegisterDbClient(db)
-	log.Log.Debugf("Register db type %s on id %s(%d): %v", dbref.Driver, db.ID(), len(common.Databases), common.DBHelper())
+	log.Log.Debugf("Register db type %s on id=%d,driver=%s: %v", db.ID(), dbref.Driver, len(common.Databases), common.DBHelper())
 	return db.ID(), nil
 }
 
