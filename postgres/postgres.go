@@ -206,9 +206,10 @@ func (pg *PostGres) open() (dbOpen *pgxpool.Conn, err error) {
 		Logger:   NewLogger(),
 		LogLevel: tracelog.LogLevelTrace,
 	}*/
-	log.Log.Debugf("Acquire Postgres to pool %p", p.pool)
+	log.Log.Debugf("Acquire Postgres to pool=%p", p.pool)
 	dbOpen, err = p.pool.Acquire(pg.ctx)
 	if err != nil {
+		log.Log.Debugf("Acquire Postgres err=%v", err)
 		return nil, err
 	}
 
@@ -292,7 +293,11 @@ func (pg *PostGres) EndTransaction(commit bool) (err error) {
 		err = pg.tx.Rollback(pg.ctx)
 	}
 	log.Log.Debugf("Tx cleared pg=%p/tx=%p", pg, pg.tx)
+	if pg.cancel != nil {
+		pg.cancel()
+	}
 	pg.tx = nil
+	pg.cancel = nil
 	log.Log.Debugf("End transaction done: %v", err)
 	pg.Transaction = false
 	if err != nil {
@@ -860,6 +865,7 @@ func (pg *PostGres) BatchSelectFct(search *common.Query, fct common.ResultFuncti
 
 func (pg *PostGres) defineContext() {
 	pg.ctx, pg.cancel = context.WithTimeout(context.Background(), 120*time.Second)
+	// pg.ctx = context.Background()
 }
 
 // StartTransaction start transaction
