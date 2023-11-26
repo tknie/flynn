@@ -271,6 +271,9 @@ func sqlDataTypeStructFieldDataType(baAvailable bool, sf reflect.StructField) (s
 		return info, nil
 	}
 	log.Log.Debugf("dbsql name %s and kind %s (%s)", name, t.Kind(), t.Name())
+	if t.PkgPath() == "time" && t.Name() == "Time" {
+		return name + " TIMESTAMP", nil
+	}
 	switch t.Kind() {
 	case reflect.String:
 		return name + " " + common.Alpha.SqlType(255) + additional, nil

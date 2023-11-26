@@ -26,7 +26,7 @@ const testStructTable = "TestStructTableData"
 
 type TestSub struct {
 	SubName string
-	Create  time.Time
+	XCreate time.Time
 }
 
 type TestData struct {
@@ -63,6 +63,7 @@ type TestData struct {
 }
 
 func TestInsertInitTestTable(t *testing.T) {
+	InitLog(t)
 	for _, target := range getTestTargets(t) {
 		if target.layer == "adabas" {
 			continue
@@ -156,6 +157,8 @@ func checkStructTableAvailablefunc(t *testing.T, target *target) error {
 		return err
 	}
 	defer x.FreeHandler()
+	err = x.DeleteTable(testStructTable)
+	log.Log.Debugf("Deleting table ok: %v", err)
 
 	q := &common.Query{TableName: testStructTable,
 		Search: "",
@@ -166,26 +169,28 @@ func checkStructTableAvailablefunc(t *testing.T, target *target) error {
 		return nil
 	})
 	if err == nil {
+		log.Log.Debugf("Table still available %s", testStructTable)
 		return nil
 	}
-	if counter == 0 {
-		err = createStructTestTable(t, target)
-		if !assert.NoError(t, err) {
-			return err
-		}
+	//	if counter == 0 {
+	err = createStructTestTable(t, target)
+	if !assert.NoError(t, err) {
+		return err
 	}
+	//	}
 	return nil
 }
 
 func createStructTestTable(t *testing.T, target *target) error {
-	log.Log.Debugf("Create database table")
+	log.Log.Debugf("Create database table -> %s", target.layer)
 
 	id, err := Handle(target.layer, target.url)
 	if !assert.NoError(t, err, "register fail using "+target.layer) {
 		return err
 	}
 	defer unregisterDatabase(t, id)
-	id.DeleteTable(testStructTable)
+	err = id.DeleteTable(testStructTable)
+	log.Log.Debugf("DELETE TABLE: %v", err)
 	err = id.CreateTable(testStructTable, &TestData{Sub: &TestSub{}})
 	if !assert.NoError(t, err, "create test table fail using "+target.layer) {
 		return err
