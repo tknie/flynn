@@ -24,6 +24,11 @@ import (
 const testTable = "TestTableData"
 const testStructTable = "TestStructTableData"
 
+type TestSub struct {
+	SubName string
+	Create  time.Time
+}
+
 type TestData struct {
 	ID          string    `flynn:"::10"`
 	Name        string    `flynn:"::200"`
@@ -54,6 +59,7 @@ type TestData struct {
 	LeaveStart  time.Time
 	LeaveEnd    time.Time
 	Language    uint64 `flynn:"::8"`
+	Sub         *TestSub
 }
 
 func TestInsertInitTestTable(t *testing.T) {
@@ -180,7 +186,7 @@ func createStructTestTable(t *testing.T, target *target) error {
 	}
 	defer unregisterDatabase(t, id)
 	id.DeleteTable(testStructTable)
-	err = id.CreateTable(testStructTable, &TestData{})
+	err = id.CreateTable(testStructTable, &TestData{Sub: &TestSub{}})
 	if !assert.NoError(t, err, "create test table fail using "+target.layer) {
 		return err
 	}

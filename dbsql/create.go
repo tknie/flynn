@@ -270,7 +270,7 @@ func sqlDataTypeStructFieldDataType(baAvailable bool, sf reflect.StructField) (s
 	if info != "" {
 		return info, nil
 	}
-	log.Log.Debugf("dbsql name %s and kind %s", name, t.Kind())
+	log.Log.Debugf("dbsql name %s and kind %s (%s)", name, t.Kind(), t.Name())
 	switch t.Kind() {
 	case reflect.String:
 		return name + " " + common.Alpha.SqlType(255) + additional, nil
