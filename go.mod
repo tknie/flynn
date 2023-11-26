@@ -27,10 +27,10 @@ require (
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.1
 	github.com/tknie/adabas-go-api v1.7.11-0.20230927173718-c1f8db24a2a8
-	github.com/tknie/errorrepo v0.0.0-20230429175850-6f60500223d5
-	golang.org/x/crypto v0.14.0 // indirect
-	golang.org/x/exp v0.0.0-20231006140011-7918f672742d
-	golang.org/x/sys v0.13.0 // indirect
+	github.com/tknie/errorrepo v0.0.0-20231119173834-6ad8a3cefbc0
+	golang.org/x/crypto v0.15.0 // indirect
+	golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa
+	golang.org/x/sys v0.14.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
