@@ -192,14 +192,15 @@ func (dynamic *typeInterface) generateField(elemValue reflect.Value, scan bool) 
 					log.Log.Debugf("Add value %T %s %s", ptr.Interface(), fieldName, elemValue.Type().Name())
 					dynamic.RowValues = append(dynamic.RowValues, ptr.Interface())
 				} else {
-					log.Log.Debugf("Add no-scan value %T %s %s", cv.Interface(), fieldName, elemValue.Type().Name())
+					log.Log.Debugf("Add no-scan value type=%T field=%s elemValueName=%s: value=%#v",
+						cv.Interface(), fieldName, elemValue.Type().Name(), cv.Interface())
 					dynamic.RowValues = append(dynamic.RowValues, cv.Interface())
 				}
 			} else {
 				log.Log.Debugf("Skip field not in field set")
 			}
 		}
-		log.Log.Debugf("Row values len=%d", len(dynamic.RowNames))
+		log.Log.Debugf("Row values len=%d", len(dynamic.RowValues))
 	}
 }
 
