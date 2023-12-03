@@ -235,9 +235,11 @@ func (dynamic *typeInterface) generateFieldNames(ri reflect.Type) {
 				case "ignore":
 					continue
 				case "":
-					// this is if the inmap repository-less map is used
-					log.Log.Debugf("Field name %s", s[0])
-					fieldName = s[0]
+					if s[0] != "" {
+						// this is if the inmap repository-less map is used
+						log.Log.Debugf("Field name %s", s[0])
+						fieldName = s[0]
+					}
 				default:
 					continue
 				}
@@ -245,6 +247,7 @@ func (dynamic *typeInterface) generateFieldNames(ri reflect.Type) {
 				fieldName = s[0]
 			}
 		}
+		log.Log.Debugf("Work on final fieldname %s", fieldName)
 		log.Log.Debugf("Add field %s", ct.Name)
 		st := ct.Type
 		if st.Kind() == reflect.Pointer {
@@ -265,13 +268,13 @@ func (dynamic *typeInterface) generateFieldNames(ri reflect.Type) {
 				}
 			}
 		} else {
-			log.Log.Debugf("Kind of %s: %s", ct.Name, ct.Type.Kind())
+			log.Log.Debugf("Kind of %s: %s", fieldName, ct.Type.Kind())
 			// copy of subfields
 			// copy(subFields, fields)
-			ok := dynamic.checkFieldSet(ct.Name)
+			ok := dynamic.checkFieldSet(fieldName)
 			if ok {
-				dynamic.RowFields = append(dynamic.RowFields, ct.Name)
-				log.Log.Debugf("RowFields: Add field name %s", ct.Name)
+				dynamic.RowFields = append(dynamic.RowFields, fieldName)
+				log.Log.Debugf("RowFields: Add field name %s", fieldName)
 			}
 		}
 		// Handle special case for pointer and slices
