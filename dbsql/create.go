@@ -314,7 +314,7 @@ func sqlDataTypeStructFieldDataType(baAvailable bool, sf reflect.StructField) (s
 		}
 		return "", errorrepo.NewError("DB000008", sf.Name)
 	case reflect.Slice:
-		return "", errorrepo.NewError("DB000009", sf.Name)
+		return evaluateSlice(baAvailable, sf, t)
 	default:
 		//		return SqlDataType(t)
 		// + " CONSTRAINT " + t.Name +
@@ -347,4 +347,22 @@ func evaluateName(sf reflect.StructField, tsf reflect.Type) (string, string, str
 		}
 	}
 	return name, additional, ""
+}
+
+func evaluateSlice(baAvailable bool, sf reflect.StructField, t reflect.Type) (string, error) {
+	tt := t.Elem()
+	if tt.Kind() == reflect.Pointer {
+		tt = t.Elem()
+	}
+	switch tt.Kind() {
+	case reflect.Uint8, reflect.Int8:
+		name, additional, info := evaluateName(sf, t)
+		if info != "" {
+			return info, nil
+		}
+		return name + " " + common.Bytes.SqlType(baAvailable, 8) + additional, nil
+	default:
+		log.Log.Debugf("Slice not supported %s (%s)", tt.Kind(), t.Kind())
+	}
+	return "", errorrepo.NewError("DB000009", t.Elem().Kind(), sf.Name)
 }

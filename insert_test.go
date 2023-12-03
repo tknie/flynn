@@ -56,6 +56,7 @@ type TestData struct {
 	Bonus       uint64    `flynn:"::8"`
 	LeaveDue    uint64    `flynn:"::2"`
 	LeaveTaken  uint64    `flynn:"::2"`
+	LobData     []byte
 	LeaveStart  time.Time
 	LeaveEnd    time.Time
 	Language    uint64 `flynn:"::8"`
@@ -72,6 +73,9 @@ func TestInsertInitTestTable(t *testing.T) {
 			return
 		}
 		if checkStructTableAvailablefunc(t, target) != nil {
+			return
+		}
+		if fillStructTestTable(t, target) != nil {
 			return
 		}
 	}
@@ -196,6 +200,25 @@ func createStructTestTable(t *testing.T, target *target) error {
 		return err
 	}
 	return nil
+}
+
+func fillStructTestTable(t *testing.T, target *target) error {
+	log.Log.Debugf("Create database table -> %s", target.layer)
+
+	id, err := Handle(target.layer, target.url)
+	if !assert.NoError(t, err, "register fail using "+target.layer) {
+		return err
+	}
+	defer unregisterDatabase(t, id)
+	data := &TestData{ID: "1", Name: "NAME", LobData: []byte{1, 2, 3, 4, 5},
+		Sub: &TestSub{XCreate: time.Now()}}
+	input := &common.Entries{Fields: []string{"ID", "Name", "LobData", "Created"},
+		DataStruct: data,
+		Update:     []string{"ID", "LobData"},
+		Values:     [][]any{{data}}}
+	err = id.Insert(testStructTable, input)
+	assert.NoError(t, err)
+	return err
 }
 
 func TestInsertStruct(t *testing.T) {

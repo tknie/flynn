@@ -69,6 +69,7 @@ func CreateInterface(i interface{}, createFields []string) *typeInterface {
 			dynamic.FieldSet[strings.ToLower(f)] = member
 		}
 	}
+	log.Log.Debugf("FieldSet defined: %#v", dynamic.FieldSet)
 	dynamic.generateFieldNames(ri)
 	log.Log.Debugf("Final created field list generated %#v", dynamic.RowFields)
 	return dynamic
@@ -194,6 +195,7 @@ func (dynamic *typeInterface) generateField(elemValue reflect.Value, scan bool) 
 
 func (dynamic *typeInterface) checkFieldSet(fieldName string) bool {
 	ok := true
+	log.Log.Debugf("Check %s in %#v", strings.ToLower(fieldName), dynamic.FieldSet)
 	if dynamic.SetType == GivenSet {
 		_, ok = dynamic.FieldSet[strings.ToLower(fieldName)]
 		log.Log.Debugf("Restrict to %v", ok)
@@ -263,13 +265,13 @@ func (dynamic *typeInterface) generateFieldNames(ri reflect.Type) {
 				}
 			}
 		} else {
-			log.Log.Debugf("Kind of %s: %s", fieldName, ct.Type.Kind())
+			log.Log.Debugf("Kind of %s: %s", ct.Name, ct.Type.Kind())
 			// copy of subfields
 			// copy(subFields, fields)
-			ok := dynamic.checkFieldSet(fieldName)
+			ok := dynamic.checkFieldSet(ct.Name)
 			if ok {
-				dynamic.RowFields = append(dynamic.RowFields, fieldName)
-				log.Log.Debugf("RowFields: Add field name %s", fieldName)
+				dynamic.RowFields = append(dynamic.RowFields, ct.Name)
+				log.Log.Debugf("RowFields: Add field name %s", ct.Name)
 			}
 		}
 		// Handle special case for pointer and slices
