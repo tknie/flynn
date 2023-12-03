@@ -136,7 +136,7 @@ func TestDataTypeStruct(t *testing.T) {
 	slice := &SliceStruct{}
 	s, err = SqlDataType(tSQL.ByteArrayAvailable(), slice)
 	assert.Error(t, err)
-	assert.Equal(t, "DB000009: Slice types are not supported used by field Test", err.Error())
+	assert.Equal(t, "DB000009: Slice types string are not supported used by field Test", err.Error())
 	assert.Equal(t, "", s)
 	arr := &ArrayStruct{}
 	s, err = SqlDataType(tSQL.ByteArrayAvailable(), arr)
