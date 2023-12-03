@@ -125,6 +125,7 @@ func (dynamic *typeInterface) CreateInsertValues() []any {
 		log.Log.Debugf("Empty set defined")
 		return nil
 	}
+	log.Log.Debugf("Create insert values")
 	value := reflect.ValueOf(dynamic.DataType)
 	if value.Type().Kind() == reflect.Pointer {
 		//		fmt.Println(fieldType.Kind(), value.Kind())
@@ -142,9 +143,16 @@ func (dynamic *typeInterface) generateField(elemValue reflect.Value, scan bool) 
 		tag := fieldType.Tag
 		cv := elemValue.Field(fi)
 		d := tag.Get(TagName)
-		log.Log.Debugf("Tag for %s = %s", fieldType.Name, tag)
-		if d == ":ignore" {
-			continue
+		fieldName := fieldType.Name
+		if d != "" {
+			log.Log.Debugf("Tag for %s = %s", fieldType.Name, tag)
+			if d == ":ignore" {
+				continue
+			}
+			options := strings.Split(d, ":")
+			if options[0] != "" {
+				fieldName = options[0]
+			}
 		}
 		if cv.Kind() == reflect.Pointer {
 			x := reflect.New(cv.Type().Elem())
@@ -168,8 +176,8 @@ func (dynamic *typeInterface) generateField(elemValue reflect.Value, scan bool) 
 				dynamic.generateField(cv, scan)
 			}
 		} else {
-			log.Log.Debugf("Work on field %s -> %v", fieldType.Name, scan)
-			checkField := dynamic.checkFieldSet(fieldType.Name)
+			log.Log.Debugf("Work on field %s -> %v", fieldName, scan)
+			checkField := dynamic.checkFieldSet(fieldName)
 			if checkField {
 				if scan {
 					var ptr reflect.Value
@@ -181,12 +189,14 @@ func (dynamic *typeInterface) generateField(elemValue reflect.Value, scan bool) 
 						log.Log.Debugf("Got Addr pointer %#v", ptr)
 						ptr.Elem().Set(cv)
 					}
-					log.Log.Debugf("Add value %T %s %s", ptr.Interface(), fieldType.Name, elemValue.Type().Name())
+					log.Log.Debugf("Add value %T %s %s", ptr.Interface(), fieldName, elemValue.Type().Name())
 					dynamic.RowValues = append(dynamic.RowValues, ptr.Interface())
 				} else {
-					log.Log.Debugf("Add no-scan value %T %s %s", cv.Interface(), fieldType.Name, elemValue.Type().Name())
+					log.Log.Debugf("Add no-scan value %T %s %s", cv.Interface(), fieldName, elemValue.Type().Name())
 					dynamic.RowValues = append(dynamic.RowValues, cv.Interface())
 				}
+			} else {
+				log.Log.Debugf("Skip field not in field set")
 			}
 		}
 		log.Log.Debugf("Row values len=%d", len(dynamic.RowNames))
