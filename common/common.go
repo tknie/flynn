@@ -261,12 +261,12 @@ func (id RegDbID) GetTableColumn(tableName string) ([]string, error) {
 	return driver.GetTableColumn(tableName)
 }
 
-func (result *Result) GenerateColumnByStruct(search *Query) (any, []any, error) {
+func (result *Result) GenerateColumnByStruct(search *Query) (any, []any, []any, error) {
 	ti := search.TypeInfo.(*typeInterface)
-	copy, values := ti.CreateQueryValues()
-	result.Rows = ti.RowValues
+	copy, values, scanValues := ti.CreateQueryValues()
+	result.Rows = ti.ValueRefTo
 	result.Data = ti.DataType
-	return copy, values, nil
+	return copy, values, scanValues, nil
 }
 
 // BeginTransaction begin a transaction

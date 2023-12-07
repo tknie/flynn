@@ -509,13 +509,13 @@ func (pg *PostGres) ParseStruct(search *common.Query, rows pgx.Rows, f common.Re
 	}
 	result = &common.Result{}
 	result.Data = search.DataStruct
-	copy, values, err := result.GenerateColumnByStruct(search)
+	copy, values, scanValues, err := result.GenerateColumnByStruct(search)
 	if err != nil {
 		log.Log.Debugf("Error generating column: %v", err)
 		return nil, err
 	}
-	log.Log.Debugf("Parse columns rows -> flen=%d vlen=%d %T",
-		len(result.Fields), len(values), copy)
+	log.Log.Debugf("Parse columns rows -> flen=%d vlen=%d %T scanVal=%d",
+		len(result.Fields), len(values), copy, len(scanValues))
 	for rows.Next() {
 		result.Counter++
 		log.Log.Debugf("Row found and scanning")
@@ -524,10 +524,14 @@ func (pg *PostGres) ParseStruct(search *common.Query, rows pgx.Rows, f common.Re
 				result.Fields = append(result.Fields, f.Name)
 			}
 		}
-		err := rows.Scan(values...)
+		err := rows.Scan(scanValues...)
 		if err != nil {
 			fmt.Println("Error scanning structs", values, err)
 			log.Log.Debugf("Error during scan of struct: %v/%v", err, copy)
+			return nil, err
+		}
+		err = common.ShiftValues(scanValues, values)
+		if err != nil {
 			return nil, err
 		}
 		result.Data = copy

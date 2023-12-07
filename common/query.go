@@ -14,6 +14,7 @@ package common
 import (
 	"bytes"
 	"database/sql"
+	"database/sql/driver"
 	"fmt"
 	"strings"
 	"time"
@@ -33,6 +34,10 @@ type Query struct {
 	DataStruct   any
 	TypeInfo     any
 	FctParameter any
+}
+
+type sqlInterface interface {
+	Value() (driver.Value, error)
 }
 
 func (q *Query) Select() (string, error) {
@@ -118,7 +123,7 @@ func (search *Query) ParseRows(rows *sql.Rows, f ResultFunction) (result *Result
 		scanRows, err = generateColumnByValues(rows)
 	} else {
 		log.Log.Debugf("Generate data values")
-		_, scanRows, err = result.GenerateColumnByStruct(search)
+		_, scanRows, _, err = result.GenerateColumnByStruct(search)
 	}
 	if err != nil {
 		log.Log.Debugf("Error generating column: %v", err)
@@ -204,7 +209,7 @@ func (search *Query) ParseStruct(rows *sql.Rows, f ResultFunction) (result *Resu
 	result = &Result{}
 	log.Log.Debugf("Parse using struct...")
 	result.Data = search.DataStruct
-	copy, values, err := result.GenerateColumnByStruct(search)
+	copy, values, scanValues, err := result.GenerateColumnByStruct(search)
 	if err != nil {
 		log.Log.Debugf("Error generating column: %v", err)
 		return nil, err
@@ -215,12 +220,17 @@ func (search *Query) ParseStruct(rows *sql.Rows, f ResultFunction) (result *Resu
 		return nil, err
 	}
 	for rows.Next() {
-		err := rows.Scan(values...)
+		err := rows.Scan(scanValues...)
 		if err != nil {
 			fmt.Println("Error scanning structs", values, err)
 			log.Log.Debugf("Error during scan of struct: %v/%v", err, copy)
 			return nil, err
 		}
+		err = ShiftValues(scanValues, values)
+		if err != nil {
+			return nil, err
+		}
+
 		result.Data = copy
 		err = f(search, result)
 		if err != nil {
