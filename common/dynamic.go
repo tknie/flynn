@@ -193,8 +193,9 @@ func (dynamic *typeInterface) generateField(elemValue reflect.Value, scan bool) 
 						log.Log.Debugf("Got Addr pointer %#v", ptr)
 						ptr.Elem().Set(cv)
 					}
-					log.Log.Debugf("Add value %T %s %s", ptr.Interface(), fieldName, elemValue.Type().Name())
-					dynamic.ValueRefTo = append(dynamic.ValueRefTo, ptr.Interface())
+					ptrInt := ptr.Interface()
+					log.Log.Debugf("Add value %T pointer=%p %s %s", ptrInt, ptrInt, fieldName, elemValue.Type().Name())
+					dynamic.ValueRefTo = append(dynamic.ValueRefTo, ptrInt)
 					switch cv.Kind() {
 					case reflect.String:
 						dynamic.ScanValues = append(dynamic.ScanValues, &sql.NullString{})
@@ -212,7 +213,7 @@ func (dynamic *typeInterface) generateField(elemValue reflect.Value, scan bool) 
 						dynamic.ScanValues = append(dynamic.ScanValues, &sql.NullFloat64{})
 					default:
 						log.Log.Errorf("%s not defined %s", fieldType.Name, cv.Kind().String())
-						dynamic.ScanValues = append(dynamic.ScanValues, ptr.Interface())
+						dynamic.ScanValues = append(dynamic.ScanValues, ptrInt)
 					}
 				} else {
 					log.Log.Debugf("Add no-scan value type=%T field=%s elemValueName=%s: value=%#v",
@@ -334,15 +335,15 @@ func ShiftValues(scanValues, values []any) (err error) {
 				return err
 			}
 			if vv != nil {
+				log.Log.Debugf("(%d) Found value %T pointer=%p", d, values[d], values[d])
 				switch vt := values[d].(type) {
 				case *int:
 					*vt = vv.(int)
 				case *string:
 					*vt = vv.(string)
 				default:
-					log.Log.Errorf("Unknown type %T -> %T", values[d], vv)
+					log.Log.Errorf("%d: Unknown type %T -> %T", d, values[d], vv)
 				}
-				values[d] = vv
 			}
 		}
 	}
