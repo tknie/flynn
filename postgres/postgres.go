@@ -376,11 +376,20 @@ func (pg *PostGres) Ping() error {
 
 // Delete Delete database records
 func (pg *PostGres) Delete(name string, remove *common.Entries) (rowsAffected int64, err error) {
-	tx, ctx, err := pg.StartTransaction()
-	if err != nil {
-		return -1, err
+	transaction := pg.IsTransaction()
+	var ctx context.Context
+	var tx pgx.Tx
+	if !transaction {
+		tx, ctx, err = pg.StartTransaction()
+		if err != nil {
+			return -1, err
+		}
+		defer pg.Close()
+	} else {
+		log.Log.Debugf("Tx used pg=%p/tx=%p", pg, pg.tx)
+		tx = pg.tx
+		ctx = pg.ctx
 	}
-	defer pg.Close()
 
 	if remove.Criteria != "" {
 		deleteCmd := "DELETE FROM " + name + " WHERE " + remove.Criteria
@@ -405,10 +414,14 @@ func (pg *PostGres) Delete(name string, remove *common.Entries) (rowsAffected in
 			rowsAffected += res.RowsAffected()
 		}
 	}
-	err = pg.EndTransaction(true)
-	if err != nil {
-		return -1, err
+
+	if !transaction {
+		err = pg.EndTransaction(true)
+		if err != nil {
+			return -1, err
+		}
 	}
+
 	log.Log.Debugf("Delete done")
 	return
 }

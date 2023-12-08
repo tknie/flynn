@@ -173,7 +173,7 @@ func (dynamic *typeInterface) generateField(elemValue reflect.Value, scan bool) 
 					t := reflect.TypeOf(cv)
 					log.Log.Debugf("Add Time %T %s %s", ptr.Interface(), cv.Type().Name(), t.Name())
 					dynamic.ValueRefTo = append(dynamic.ValueRefTo, ptr.Interface())
-					dynamic.ScanValues = append(dynamic.ScanValues, ptr.Interface())
+					dynamic.ScanValues = append(dynamic.ScanValues, &sql.NullTime{})
 				}
 				continue
 			default:

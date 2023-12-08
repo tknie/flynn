@@ -118,6 +118,16 @@ func TestInsertUser(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
+
+	user = "testUser3"
+	userInfo = &User{Info: &UserInfo{User: user}}
+	insert = &common.Entries{Fields: []string{"name"}, DataStruct: userInfo}
+	insert.Values = [][]any{{userInfo}}
+	log.Log.Debugf("Insert value %#v", userInfo.Info)
+	err = userStoreID.Insert(userTableName, insert)
+	if !assert.NoError(t, err) {
+		return
+	}
 	log.Log.Errorf("Error storing user: %v", err)
 	err = userStoreID.Commit()
 	if !assert.NoError(t, err) {
@@ -126,13 +136,14 @@ func TestInsertUser(t *testing.T) {
 
 	found := false
 	q := &common.Query{TableName: userTableName,
-		Search:     "name='" + user + "'",
+		Search:     "name IN ('testUser1','testUser2','testUser3')",
 		DataStruct: &User{},
 		Fields:     []string{"*"}}
 	_, err = userStoreID.Query(q, func(search *common.Query, result *common.Result) error {
 		userInfo = result.Data.(*User)
 		fmt.Printf("%s -> %#v\n", userInfo.Info.User, userInfo.Info)
-		assert.True(t, userInfo.Info.User == "testUser1" || userInfo.Info.User == "testUser2")
+		assert.True(t, userInfo.Info.User == "testUser1" || userInfo.Info.User == "testUser2" ||
+			userInfo.Info.User == "testUser3")
 		found = true
 		return nil
 	})
@@ -141,4 +152,9 @@ func TestInsertUser(t *testing.T) {
 		return
 	}
 
+	d, err := userStoreID.Delete(userTableName, &common.Entries{Criteria: q.Search})
+	if !assert.NoError(t, err) {
+		return
+	}
+	assert.Equal(t, int64(3), d)
 }
