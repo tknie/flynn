@@ -558,7 +558,6 @@ func (pg *PostGres) ParseStruct(search *common.Query, rows pgx.Rows, f common.Re
 
 // CreateTable create a new table
 func (pg *PostGres) CreateTable(name string, col any) error {
-	//	columns []*common.Column
 	log.Log.Debugf("Create SQL table")
 	layer, url := pg.Reference()
 	db, err := sql.Open(layer, url)

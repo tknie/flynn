@@ -258,7 +258,9 @@ func (dynamic *typeInterface) generateFieldNames(ri reflect.Type) {
 		if tag != "" {
 			log.Log.Debugf("Field tag %s", tag)
 			s := strings.Split(tag, ":")
-
+			if len(s) > 0 && s[0] != "" {
+				fieldName = s[0]
+			}
 			if len(s) > 1 {
 				log.Log.Debugf("Field tag option %s", s[1])
 				switch s[1] {
@@ -269,17 +271,8 @@ func (dynamic *typeInterface) generateFieldNames(ri reflect.Type) {
 					continue
 				case "ignore":
 					continue
-				case "":
-					if s[0] != "" {
-						// this is if the inmap repository-less map is used
-						log.Log.Debugf("Field name %s", s[0])
-						fieldName = s[0]
-					}
 				default:
-					continue
 				}
-			} else {
-				fieldName = s[0]
 			}
 		}
 		log.Log.Debugf("Work on final fieldname %s", fieldName)
