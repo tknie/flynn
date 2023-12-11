@@ -77,26 +77,24 @@ func (p *pool) DecUsage() uint64 {
 	return c
 }
 
-// New create new postgres reference instance
+// NewInstance create new postgres reference instance using reference structure
 func NewInstance(id common.RegDbID, reference *common.Reference, password string) (common.Database, error) {
 
 	url := fmt.Sprintf("postgres://%s:"+passwdPlaceholder+"@%s:%d/%s%s", reference.User,
 		reference.Host, reference.Port, reference.Database, reference.OptionString())
 	pg := &PostGres{common.CommonDatabase{RegDbID: id}, nil,
 		url, nil, "", password, nil, nil, nil, sync.Mutex{}}
-
+	log.Log.Debugf("PG Password is empty=%v", password == "")
 	return pg, nil
 }
 
 // New create new postgres reference instance
 func New(id common.RegDbID, url string) (common.Database, error) {
-	pg := &PostGres{common.CommonDatabase{RegDbID: id}, nil,
-		url, nil, "", "", nil, nil, nil, sync.Mutex{}}
-	// err := pg.check()
-	// if err != nil {
-	// 	return nil, err
-	// }
-	return pg, nil
+	reference, passwd, err := common.NewReference(url)
+	if err != nil {
+		return nil, err
+	}
+	return NewInstance(id, reference, passwd)
 }
 
 // SetCredentials set credentials to connect to database
@@ -110,10 +108,12 @@ func (pg *PostGres) SetCredentials(user, password string) error {
 func (pg *PostGres) generateURL() string {
 	url := pg.dbURL
 	if pg.user != "" {
+		log.Log.Debugf("Replace URL user")
 		url = strings.Replace(url, userPlaceholder, pg.user, -1)
 
 	}
 	if pg.password != "" {
+		log.Log.Debugf("Replace URL password")
 		url = strings.Replace(url, passwdPlaceholder, pg.password, -1)
 	}
 	return url
