@@ -144,3 +144,21 @@ func TestDataTypeStruct(t *testing.T) {
 	assert.Equal(t, "DB000008: Array types are not supported used by field Test", err.Error())
 	assert.Equal(t, "", s)
 }
+
+func TestDataTypeStructTag(t *testing.T) {
+	InitLog(t)
+	log.Log.Debugf("TEST: %s", t.Name())
+
+	zz := struct {
+		St  string
+		LOB string `flynn:"AA::6"`
+		Int int
+		Ba  []int8
+	}{"bbb", "dfsfspdgjsdpgjspdg",
+		1, []int8{1, 2, 3, 4, 5}}
+
+	s, err := SqlDataType(tSQL.ByteArrayAvailable(), &zz)
+	assert.NoError(t, err)
+	assert.Equal(t, "St VARCHAR(255), AA VARCHAR(6) , Int INTEGER, Ba BYTEA", s)
+
+}

@@ -17,6 +17,7 @@ import (
 	"database/sql"
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/tknie/errorrepo"
@@ -241,9 +242,9 @@ func sqlDataTypeStructField(baAvailable bool, field reflect.StructField) (string
 	log.Log.Debugf("Check kind %s/%s %s", x.Kind(), x.Name(), field.Name)
 	switch x.Kind() {
 	case reflect.Struct:
-		name, additional, _ := evaluateName(field, x)
+		sfi := evaluateName(field, x)
 		if x.Name() == "Time" {
-			return name + " TIMESTAMP " + additional, nil
+			return sfi.name + " TIMESTAMP " + sfi.additional, nil
 		}
 		var buffer bytes.Buffer
 		for i := 0; i < x.NumField(); i++ {
@@ -266,27 +267,36 @@ func sqlDataTypeStructField(baAvailable bool, field reflect.StructField) (string
 
 func sqlDataTypeStructFieldDataType(baAvailable bool, sf reflect.StructField) (string, error) {
 	t := sf.Type
-	name, additional, info := evaluateName(sf, t)
-	if info != "" {
-		return info, nil
+	sfi := evaluateName(sf, t)
+	if sfi.info != "" {
+		return sfi.info, nil
 	}
-	log.Log.Debugf("dbsql name %s and kind %s (%s)", name, t.Kind(), t.Name())
+	log.Log.Debugf("dbsql name %s and kind %s (%s)", sfi.name, t.Kind(), t.Name())
 	if t.PkgPath() == "time" && t.Name() == "Time" {
-		return name + " TIMESTAMP", nil
+		return sfi.name + " TIMESTAMP", nil
 	}
 	switch t.Kind() {
 	case reflect.String:
-		return name + " " + common.Alpha.SqlType(255) + additional, nil
+		if sfi.length == 0 {
+			sfi.length = 255
+		}
+		return sfi.name + " " + common.Alpha.SqlType(sfi.length) + sfi.additional, nil
 	case reflect.Int, reflect.Int8, reflect.Int16,
 		reflect.Int32, reflect.Int64:
-		return name + " " + common.Integer.SqlType() + additional, nil
+		return sfi.name + " " + common.Integer.SqlType() + sfi.additional, nil
 	case reflect.Uint, reflect.Uint8, reflect.Uint16,
 		reflect.Uint32, reflect.Uint64:
-		return name + " " + common.Integer.SqlType() + additional, nil
+		return sfi.name + " " + common.Integer.SqlType() + sfi.additional, nil
 	case reflect.Float32, reflect.Float64:
-		return name + " " + common.Decimal.SqlType(10, 5) + additional, nil
+		if sfi.length == 0 {
+			sfi.length = 10
+		}
+		return sfi.name + " " + common.Decimal.SqlType(sfi.length, 5) + sfi.additional, nil
 	case reflect.Bool:
-		return name + " " + common.Bit.SqlType(1) + additional, nil
+		if sfi.length == 0 {
+			sfi.length = 1
+		}
+		return sfi.name + " " + common.Bit.SqlType(sfi.length) + sfi.additional, nil
 	case reflect.Complex64, reflect.Complex128:
 		return "", errorrepo.NewError("DB000007")
 	case reflect.Struct:
@@ -305,12 +315,12 @@ func sqlDataTypeStructFieldDataType(baAvailable bool, sf reflect.StructField) (s
 
 			buffer.WriteString(s)
 		}
-		buffer.WriteString(additional)
+		buffer.WriteString(sfi.additional)
 		return buffer.String(), nil
 	case reflect.Array:
 		log.Log.Debugf("Arrays %d", t.Len())
 		if t.Elem().Kind() == reflect.Uint8 {
-			return name + " " + common.Bytes.SqlType(baAvailable, 8) + additional, nil
+			return sfi.name + " " + common.Bytes.SqlType(baAvailable, 8) + sfi.additional, nil
 		}
 		return "", errorrepo.NewError("DB000008", sf.Name)
 	case reflect.Slice:
@@ -323,30 +333,41 @@ func sqlDataTypeStructFieldDataType(baAvailable bool, sf reflect.StructField) (s
 	return "", errorrepo.NewError("DB000006", sf.Name, t.Kind())
 }
 
-func evaluateName(sf reflect.StructField, tsf reflect.Type) (string, string, string) {
+type structFieldInfo struct {
+	name       string
+	additional string
+	info       string
+	length     int
+}
+
+func evaluateName(sf reflect.StructField, tsf reflect.Type) *structFieldInfo {
 	// t := tsf
 	// if t.Kind() == reflect.Pointer {
 	// 	t = t.Elem()
 	// }
-	name := sf.Name
-	additional := ""
-	log.Log.Debugf("Found name " + name)
+	sfi := &structFieldInfo{name: sf.Name}
+	log.Log.Debugf("Found name " + sfi.name)
 	if tagName, ok := sf.Tag.Lookup(common.TagName); ok {
 		tagField := strings.Split(tagName, ":")
 		if tagField[0] != "" {
-			name = tagField[0]
+			sfi.name = tagField[0]
 		}
 		if len(tagField) > 1 {
-			additional = " " + tagField[1]
+			sfi.additional = " " + tagField[1]
 		}
-		log.Log.Debugf("Overwrite to name " + name)
+		log.Log.Debugf("Overwrite to name " + sfi.name)
 		if len(tagField) > 2 {
 			if tagField[2] == "SERIAL" {
-				return "", "", name + " SERIAL UNIQUE"
+				sfi.info = sfi.name + " SERIAL UNIQUE"
+				return sfi
+			}
+			x, err := strconv.Atoi(tagField[2])
+			if err == nil {
+				sfi.length = x
 			}
 		}
 	}
-	return name, additional, ""
+	return sfi
 }
 
 func evaluateSlice(baAvailable bool, sf reflect.StructField, t reflect.Type) (string, error) {
@@ -356,11 +377,11 @@ func evaluateSlice(baAvailable bool, sf reflect.StructField, t reflect.Type) (st
 	}
 	switch tt.Kind() {
 	case reflect.Uint8, reflect.Int8:
-		name, additional, info := evaluateName(sf, t)
-		if info != "" {
-			return info, nil
+		sfi := evaluateName(sf, t)
+		if sfi.info != "" {
+			return sfi.info, nil
 		}
-		return name + " " + common.Bytes.SqlType(baAvailable, 8) + additional, nil
+		return sfi.name + " " + common.Bytes.SqlType(baAvailable, 8) + sfi.additional, nil
 	default:
 		log.Log.Debugf("Slice not supported %s (%s)", tt.Kind(), t.Kind())
 	}
