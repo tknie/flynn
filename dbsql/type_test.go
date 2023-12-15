@@ -154,11 +154,12 @@ func TestDataTypeStructTag(t *testing.T) {
 		LOB string `flynn:"AA::6"`
 		Int int
 		Ba  []int8
+		Ca  [4]byte
 	}{"bbb", "dfsfspdgjsdpgjspdg",
-		1, []int8{1, 2, 3, 4, 5}}
+		1, []int8{1, 2, 3, 4, 5}, [4]byte{'a', 'b', 'c', 'd'}}
 
 	s, err := SqlDataType(tSQL.ByteArrayAvailable(), &zz)
 	assert.NoError(t, err)
-	assert.Equal(t, "St VARCHAR(255), AA VARCHAR(6) , Int INTEGER, Ba BYTEA", s)
+	assert.Equal(t, "St VARCHAR(255), AA VARCHAR(6) , Int INTEGER, Ba BYTEA, Ca CHAR(4)", s)
 
 }

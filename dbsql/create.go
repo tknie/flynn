@@ -320,7 +320,7 @@ func sqlDataTypeStructFieldDataType(baAvailable bool, sf reflect.StructField) (s
 	case reflect.Array:
 		log.Log.Debugf("Arrays %d", t.Len())
 		if t.Elem().Kind() == reflect.Uint8 {
-			return sfi.name + " " + common.Bytes.SqlType(baAvailable, 8) + sfi.additional, nil
+			return sfi.name + " " + common.Character.SqlType(t.Len()) + sfi.additional, nil
 		}
 		return "", errorrepo.NewError("DB000008", sf.Name)
 	case reflect.Slice:
