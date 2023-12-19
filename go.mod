@@ -31,7 +31,7 @@ require (
 	github.com/tknie/adabas-go-api v1.7.11-0.20230927173718-c1f8db24a2a8
 	github.com/tknie/errorrepo v0.0.0-20231119173834-6ad8a3cefbc0
 	golang.org/x/crypto v0.17.0 // indirect
-	golang.org/x/exp v0.0.0-20231206192017-f3f8817b8deb
+	golang.org/x/exp v0.0.0-20231214170342-aacd6d4b4611
 	golang.org/x/sys v0.15.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
