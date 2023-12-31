@@ -30,7 +30,7 @@ type TestSub struct {
 }
 
 type TestData struct {
-	ID          string    `flynn:"::10"`
+	ID          string    `flynn:"::25"`
 	Name        string    `flynn:"::200"`
 	MiddleName  string    `flynn:"::50"`
 	FirstName   string    `flynn:"::50"`
