@@ -246,6 +246,19 @@ func sqlDataTypeStructField(baAvailable bool, field reflect.StructField) (string
 		if x.Name() == "Time" {
 			return sfi.name + " TIMESTAMP " + sfi.additional, nil
 		}
+		if tagName, ok := field.Tag.Lookup(common.TagName); ok {
+			tagField := strings.Split(tagName, ":")
+			if len(tagField) > 2 {
+				fieldName := x.Name()
+				if tagField[0] != "" {
+					fieldName = tagField[0]
+				}
+				switch tagField[2] {
+				case "YAML", "XML", "JSON":
+					return fieldName + " ABYTE", nil
+				}
+			}
+		}
 		var buffer bytes.Buffer
 		for i := 0; i < x.NumField(); i++ {
 			if i > 0 {

@@ -14,11 +14,14 @@ package common
 import (
 	"bytes"
 	"database/sql"
+	"encoding/json"
+	"encoding/xml"
 	"reflect"
 	"strings"
 	"time"
 
 	"github.com/tknie/log"
+	"gopkg.in/yaml.v3"
 )
 
 type SetType byte
@@ -142,18 +145,36 @@ func (dynamic *typeInterface) generateField(elemValue reflect.Value, scan bool) 
 		tag := fieldType.Tag
 		cv := elemValue.Field(fi)
 		d := tag.Get(TagName)
+		tags := strings.Split(d, ":")
 		fieldName := fieldType.Name
-		if d != "" {
+		log.Log.Debugf("%s: kind %v", fieldName, cv.Kind())
+		if len(tags) > 1 {
 			log.Log.Debugf("Tag for %s = %s", fieldType.Name, tag)
-			if d == ":ignore" {
+			if tags[1] == "ignore" {
 				continue
 			}
-			options := strings.Split(d, ":")
-			if options[0] != "" {
-				fieldName = options[0]
+			if tags[0] != "" {
+				fieldName = tags[0]
 			}
 		}
 		if cv.Kind() == reflect.Pointer {
+			if cv.IsNil() {
+				log.Log.Debugf("IsNil pointer = %v -> %s", cv.IsNil(), cv.Type().String())
+				if len(tags) > 2 {
+					switch tags[2] {
+					case "YAML", "XML", "JSON":
+						dynamic.ValueRefTo = append(dynamic.ValueRefTo, "")
+						continue
+					}
+				}
+
+				// x := reflect.New(cv.Type().Elem())
+				x := reflect.Indirect(reflect.New(cv.Type().Elem()))
+
+				dynamic.generateField(x, scan)
+				// dynamic.ValueRefTo = append(dynamic.ValueRefTo, nil)
+				continue
+			}
 			if scan {
 				x := reflect.New(cv.Type().Elem())
 				log.Log.Debugf("Work on pointer %v %s", x, cv.Type().String())
@@ -161,6 +182,7 @@ func (dynamic *typeInterface) generateField(elemValue reflect.Value, scan bool) 
 				cv = x.Elem()
 			} else {
 				cv = cv.Elem()
+				log.Log.Debugf("Go on pointer %s: kind %v", fieldName, cv.Kind())
 			}
 		}
 		if cv.Kind() == reflect.Struct {
@@ -177,6 +199,34 @@ func (dynamic *typeInterface) generateField(elemValue reflect.Value, scan bool) 
 				}
 				continue
 			default:
+				if len(tags) > 2 {
+					switch tags[2] {
+					case "YAML":
+						out, err := yaml.Marshal(cv.Interface())
+						if err != nil {
+							return
+						}
+						dynamic.ValueRefTo = append(dynamic.ValueRefTo, string(out))
+						continue
+					case "XML":
+						out, err := xml.Marshal(cv.Interface())
+						if err != nil {
+							return
+						}
+						dynamic.ValueRefTo = append(dynamic.ValueRefTo, string(out))
+						continue
+					case "JSON":
+						out, err := json.Marshal(cv.Interface())
+						if err != nil {
+							return
+						}
+						dynamic.ValueRefTo = append(dynamic.ValueRefTo, string(out))
+						continue
+					default:
+						dynamic.ValueRefTo = append(dynamic.ValueRefTo, "")
+						continue
+					}
+				}
 				dynamic.generateField(cv, scan)
 			}
 		} else {
@@ -216,9 +266,21 @@ func (dynamic *typeInterface) generateField(elemValue reflect.Value, scan bool) 
 						dynamic.ScanValues = append(dynamic.ScanValues, ptrInt)
 					}
 				} else {
-					log.Log.Debugf("Add no-scan value type=%T field=%s elemValueName=%s: value=%#v",
-						cv.Interface(), fieldName, elemValue.Type().Name(), cv.Interface())
-					dynamic.ValueRefTo = append(dynamic.ValueRefTo, cv.Interface())
+					switch cv.Kind() {
+					case reflect.Chan, reflect.Func, reflect.Map, reflect.Pointer,
+						reflect.UnsafePointer, reflect.Interface, reflect.Slice:
+						if cv.IsNil() {
+							dynamic.ValueRefTo = append(dynamic.ValueRefTo, nil)
+						}
+					default:
+						if cv.IsValid() {
+							log.Log.Debugf("Add no-scan value type=%T field=%s elemValueName=%s: value=%#v",
+								cv.Interface(), fieldName, elemValue.Type().Name(), cv.Interface())
+							dynamic.ValueRefTo = append(dynamic.ValueRefTo, cv.Interface())
+						} else {
+							dynamic.ValueRefTo = append(dynamic.ValueRefTo, nil)
+						}
+					}
 				}
 			} else {
 				log.Log.Debugf("Skip field not in field set")
@@ -272,6 +334,14 @@ func (dynamic *typeInterface) generateFieldNames(ri reflect.Type) {
 				case "ignore":
 					continue
 				default:
+				}
+			}
+			if len(s) > 2 {
+				log.Log.Debugf("Field tag option %s", s[1])
+				switch s[2] {
+				case "YAML", "XML", "JSON":
+					dynamic.RowFields = append(dynamic.RowFields, fieldName)
+					continue
 				}
 			}
 		}

@@ -17,6 +17,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/tknie/flynn/common"
 	"github.com/tknie/log"
 )
 
@@ -99,7 +100,7 @@ func (t *testSQL) IndexNeeded() bool {
 	return true
 }
 
-func TestDataTypeStruct(t *testing.T) {
+func TestDataTypeStructBlogs(t *testing.T) {
 	InitLog(t)
 	log.Log.Debugf("TEST: %s", t.Name())
 
@@ -143,6 +144,34 @@ func TestDataTypeStruct(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, "DB000008: Array types are not supported used by field Test", err.Error())
 	assert.Equal(t, "", s)
+
+	z := struct {
+		ZSt   string `flynn:"KKK::1024"`
+		ZInt  string `flynn:"ABC::200"`
+		ZBlob []byte
+		Zstr0 *SubStruct `flynn:"NNN"`
+		Zstr1 *SubStruct `flynn:"YYY::YAML"`
+		Zstr2 *SubStruct `flynn:"XXX::XML"`
+		Zstr3 *SubStruct `flynn:"JJJ::JSON"`
+	}{"aaa", "djfgidjfgi", []byte{1, 9}, nil, nil, nil, nil}
+	s, err = SqlDataType(tSQL.ByteArrayAvailable(), &z)
+	assert.NoError(t, err)
+	assert.Equal(t, "KKK VARCHAR(1024) , ABC VARCHAR(200) , ZBlob BYTEA, ABC VARCHAR(255), Nr INTEGER, Value INTEGER, Doub DECIMAL(10,5), DoIt BIT(1), YYY ABYTE, XXX ABYTE, JJJ ABYTE", s)
+
+	ti := common.CreateInterface(&z, []string{"*"})
+	assert.Equal(t, []string{"KKK", "ABC", "ZBlob", "ABC", "Nr", "Value", "Doub", "DoIt", "YYY", "XXX", "JJJ"}, ti.RowFields)
+	v := ti.CreateInsertValues()
+	assert.Equal(t, []interface{}{"aaa", "djfgidjfgi", "", uint64(0), int64(0), float64(0), false, "", "", ""}, v)
+	z.Zstr1 = &SubStruct{ABC: "AAABBBCC", DoIt: true}
+	z.Zstr2 = &SubStruct{ABC: "XMLABC", DoIt: true}
+	z.Zstr3 = &SubStruct{ABC: "JSONABC", DoIt: true}
+	ti = common.CreateInterface(&z, []string{"*"})
+	assert.Equal(t, []string{"KKK", "ABC", "ZBlob", "ABC", "Nr", "Value", "Doub", "DoIt", "YYY", "XXX", "JJJ"}, ti.RowFields)
+	v = ti.CreateInsertValues()
+	assert.Equal(t, []interface{}{"aaa", "djfgidjfgi", "", uint64(0), int64(0), float64(0),
+		false, "abc: AAABBBCC\nnr: 0\nvalue: 0\ndoub: 0\ndoit: true\n",
+		"<SubStruct><ABC>XMLABC</ABC><Nr>0</Nr><Value>0</Value><Doub>0</Doub><DoIt>true</DoIt></SubStruct>",
+		"{\"ABC\":\"JSONABC\",\"Nr\":0,\"Value\":0,\"Doub\":0,\"DoIt\":true}"}, v)
 }
 
 func TestDataTypeStructTag(t *testing.T) {
