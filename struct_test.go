@@ -140,7 +140,9 @@ func TestInsertUser(t *testing.T) {
 		DataStruct: &User{},
 		Fields:     []string{"*"}}
 	_, err = userStoreID.Query(q, func(search *common.Query, result *common.Result) error {
+		assert.NotNil(t, result.Data)
 		userInfo = result.Data.(*User)
+		fmt.Printf("%#v\n", userInfo.Info)
 		fmt.Printf("%s -> %#v\n", userInfo.Info.User, userInfo.Info)
 		assert.True(t, userInfo.Info.User == "testUser1" || userInfo.Info.User == "testUser2" ||
 			userInfo.Info.User == "testUser3")

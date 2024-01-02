@@ -137,8 +137,11 @@ func (dynamic *typeInterface) CreateInsertValues() []any {
 	return dynamic.ValueRefTo
 }
 
+// generateField generate field values for dynamic query.
+// 'scan' is used to consider case for read (field creation out of database) or
+// write (no creation, data is used by application)
 func (dynamic *typeInterface) generateField(elemValue reflect.Value, scan bool) {
-	log.Log.Debugf("Generate field of Struct: %T %s -> %v",
+	log.Log.Debugf("Generate field of Struct: %T %s -> scan=%v",
 		elemValue.Interface(), elemValue.Type().Name(), scan)
 	for fi := 0; fi < elemValue.NumField(); fi++ {
 		fieldType := elemValue.Type().Field(fi)
@@ -153,12 +156,14 @@ func (dynamic *typeInterface) generateField(elemValue reflect.Value, scan bool) 
 			if tags[1] == "ignore" {
 				continue
 			}
+		}
+		if len(tags) > 0 {
 			if tags[0] != "" {
 				fieldName = tags[0]
 			}
 		}
 		if cv.Kind() == reflect.Pointer {
-			if cv.IsNil() {
+			if !scan && cv.IsNil() {
 				log.Log.Debugf("IsNil pointer = %v -> %s", cv.IsNil(), cv.Type().String())
 				if len(tags) > 2 {
 					switch tags[2] {
@@ -271,6 +276,8 @@ func (dynamic *typeInterface) generateField(elemValue reflect.Value, scan bool) 
 						reflect.UnsafePointer, reflect.Interface, reflect.Slice:
 						if cv.IsNil() {
 							dynamic.ValueRefTo = append(dynamic.ValueRefTo, nil)
+						} else {
+							dynamic.ValueRefTo = append(dynamic.ValueRefTo, cv.Interface())
 						}
 					default:
 						if cv.IsValid() {
