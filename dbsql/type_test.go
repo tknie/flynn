@@ -161,14 +161,14 @@ func TestDataTypeStructBlogs(t *testing.T) {
 	ti := common.CreateInterface(&z, []string{"*"})
 	assert.Equal(t, []string{"KKK", "ABC", "ZBlob", "ABC", "Nr", "Value", "Doub", "DoIt", "YYY", "XXX", "JJJ"}, ti.RowFields)
 	v := ti.CreateInsertValues()
-	assert.Equal(t, []interface{}{"aaa", "djfgidjfgi", "", uint64(0), int64(0), float64(0), false, "", "", ""}, v)
+	assert.Equal(t, []interface{}{"aaa", "djfgidjfgi", []uint8{0x1, 0x9}, "", uint64(0), int64(0), float64(0), false, "", "", ""}, v)
 	z.Zstr1 = &SubStruct{ABC: "AAABBBCC", DoIt: true}
 	z.Zstr2 = &SubStruct{ABC: "XMLABC", DoIt: true}
 	z.Zstr3 = &SubStruct{ABC: "JSONABC", DoIt: true}
 	ti = common.CreateInterface(&z, []string{"*"})
 	assert.Equal(t, []string{"KKK", "ABC", "ZBlob", "ABC", "Nr", "Value", "Doub", "DoIt", "YYY", "XXX", "JJJ"}, ti.RowFields)
 	v = ti.CreateInsertValues()
-	assert.Equal(t, []interface{}{"aaa", "djfgidjfgi", "", uint64(0), int64(0), float64(0),
+	assert.Equal(t, []interface{}{"aaa", "djfgidjfgi", []uint8{0x1, 0x9}, "", uint64(0), int64(0), float64(0),
 		false, "abc: AAABBBCC\nnr: 0\nvalue: 0\ndoub: 0\ndoit: true\n",
 		"<SubStruct><ABC>XMLABC</ABC><Nr>0</Nr><Value>0</Value><Doub>0</Doub><DoIt>true</DoIt></SubStruct>",
 		"{\"ABC\":\"JSONABC\",\"Nr\":0,\"Value\":0,\"Doub\":0,\"DoIt\":true}"}, v)
