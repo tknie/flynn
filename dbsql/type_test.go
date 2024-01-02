@@ -113,15 +113,16 @@ func TestDataTypeStructBlogs(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "St VARCHAR(255), Int INTEGER", s)
 	y := struct {
-		XSt  string
-		XInt int
-		Xstr struct {
+		XSt   string
+		ZBlob string `flynn:"SBLOB:BLOB:2048"`
+		XInt  int
+		Xstr  struct {
 			Xii uint64
 		}
-	}{"aaa", 1, struct{ Xii uint64 }{2}}
+	}{"aaa", "fjrpsgj", 1, struct{ Xii uint64 }{2}}
 	s, err = SqlDataType(tSQL.ByteArrayAvailable(), &y)
 	assert.NoError(t, err)
-	assert.Equal(t, "XSt VARCHAR(255), XInt INTEGER, Xii INTEGER", s)
+	assert.Equal(t, "XSt VARCHAR(255), SBLOB BYTEA, XInt INTEGER, Xii INTEGER", s)
 	global := &GlobStruct{}
 	s, err = SqlDataType(tSQL.ByteArrayAvailable(), global)
 	assert.NoError(t, err)

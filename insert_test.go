@@ -56,6 +56,7 @@ type TestData struct {
 	Bonus       uint64    `flynn:"::8"`
 	LeaveDue    uint64    `flynn:"::2"`
 	LeaveTaken  uint64    `flynn:"::2"`
+	Blob        string    `flynn:"BB:BLOB:2048"`
 	LobData     []byte
 	LeaveStart  time.Time
 	LeaveEnd    time.Time

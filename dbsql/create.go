@@ -284,16 +284,22 @@ func sqlDataTypeStructFieldDataType(baAvailable bool, sf reflect.StructField) (s
 	if sfi.info != "" {
 		return sfi.info, nil
 	}
-	log.Log.Debugf("dbsql name %s and kind %s (%s)", sfi.name, t.Kind(), t.Name())
+	log.Log.Debugf("dbsql name %s and kind %s (%s) (sfi kind=%s)",
+		sfi.name, t.Kind(), t.Name(), sfi.kind)
 	if t.PkgPath() == "time" && t.Name() == "Time" {
 		return sfi.name + " TIMESTAMP", nil
 	}
 	switch t.Kind() {
 	case reflect.String:
-		if sfi.length == 0 {
-			sfi.length = 255
+		switch sfi.kind {
+		case "BLOB", "ABYTE":
+			return sfi.name + " " + common.Bytes.SqlType(baAvailable, sfi.length), nil
+		default:
+			if sfi.length == 0 {
+				sfi.length = 255
+			}
+			return sfi.name + " " + common.Alpha.SqlType(sfi.length) + sfi.additional, nil
 		}
-		return sfi.name + " " + common.Alpha.SqlType(sfi.length) + sfi.additional, nil
 	case reflect.Int, reflect.Int8, reflect.Int16,
 		reflect.Int32, reflect.Int64:
 		return sfi.name + " " + common.Integer.SqlType() + sfi.additional, nil
@@ -320,7 +326,7 @@ func sqlDataTypeStructFieldDataType(baAvailable bool, sf reflect.StructField) (s
 				buffer.WriteString(", ")
 			}
 			f := ty.Field(i)
-			fmt.Println("Struct Field: " + f.Name)
+			log.Log.Debugf("Struct Field: " + f.Name)
 			s, err := sqlDataTypeStructFieldDataType(baAvailable, f)
 			if err != nil {
 				return "", err
@@ -350,14 +356,12 @@ type structFieldInfo struct {
 	name       string
 	additional string
 	info       string
+	kind       string
 	length     int
 }
 
+// evaluateName evaluate name of type given (extract tags and info)
 func evaluateName(sf reflect.StructField, tsf reflect.Type) *structFieldInfo {
-	// t := tsf
-	// if t.Kind() == reflect.Pointer {
-	// 	t = t.Elem()
-	// }
 	sfi := &structFieldInfo{name: sf.Name}
 	log.Log.Debugf("Found name " + sfi.name)
 	if tagName, ok := sf.Tag.Lookup(common.TagName); ok {
@@ -367,9 +371,10 @@ func evaluateName(sf reflect.StructField, tsf reflect.Type) *structFieldInfo {
 		}
 		if len(tagField) > 1 {
 			sfi.additional = " " + tagField[1]
+			sfi.kind = tagField[1]
 		}
 		log.Log.Debugf("Overwrite to name " + sfi.name)
-		if len(tagField) > 2 {
+		if len(tagField) > 2 && tagField[2] != "" {
 			if tagField[2] == "SERIAL" {
 				sfi.info = sfi.name + " SERIAL UNIQUE"
 				return sfi
