@@ -293,7 +293,10 @@ func sqlDataTypeStructFieldDataType(baAvailable bool, sf reflect.StructField) (s
 	case reflect.String:
 		switch sfi.kind {
 		case "BLOB", "ABYTE":
-			return sfi.name + " " + common.Bytes.SqlType(baAvailable, sfi.length), nil
+			if baAvailable {
+				return sfi.name + " " + common.Bytes.SqlType(baAvailable, sfi.length), nil
+			}
+			return sfi.name + " " + common.BLOB.SqlType(sfi.length), nil
 		default:
 			if sfi.length == 0 {
 				sfi.length = 255
