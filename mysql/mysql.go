@@ -317,7 +317,7 @@ func (mysql *Mysql) BatchSelectFct(search *common.Query, fct common.ResultFuncti
 	db := dbOpen.(*sql.DB)
 	selectCmd := search.Search
 	log.Log.Debugf("Query: %s", selectCmd)
-	rows, err := db.Query(selectCmd)
+	rows, err := db.Query(selectCmd, search.Parameters...)
 	if err != nil {
 		return err
 	}

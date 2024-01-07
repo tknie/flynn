@@ -28,6 +28,7 @@ type Query struct {
 	Join         string
 	Fields       []string
 	Order        []string
+	Parameters   []any
 	Limit        uint32
 	Blocksize    int32
 	Descriptor   bool

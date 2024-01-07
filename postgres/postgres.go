@@ -828,8 +828,8 @@ func (pg *PostGres) BatchSelectFct(search *common.Query, fct common.ResultFuncti
 	if err != nil {
 		return err
 	}
-	log.Log.Debugf("Query: %s", selectCmd)
-	rows, err := db.Query(ctx, selectCmd)
+	log.Log.Debugf("Query: %s Parameters: %#v", selectCmd, search.Parameters)
+	rows, err := db.Query(ctx, selectCmd, search.Parameters...)
 	if err != nil {
 		log.Log.Debugf("Query error: %v", err)
 		return err
@@ -841,41 +841,6 @@ func (pg *PostGres) BatchSelectFct(search *common.Query, fct common.ResultFuncti
 		_, err = pg.ParseStruct(search, rows, fct)
 	}
 	return err
-	// layer, url := pg.Reference()
-	// db, err := sql.Open(layer, url)
-	// if err != nil {
-	// 	return err
-	// }
-	// defer db.Close()
-	// // Query batch SQL
-	// rows, err := db.Query(batch.Search)
-	// if err != nil {
-	// 	return err
-	// }
-	// ct, err := rows.ColumnTypes()
-	// if err != nil {
-	// 	return err
-	// }
-	// result := &common.Result{}
-	// query := &common.Query{Search: batch.Search}
-	// for rows.Next() {
-	// 	if rows.Err() != nil {
-	// 		fmt.Println("Batch SQL error:", rows.Err())
-	// 		return rows.Err()
-	// 	}
-	// 	if result.Header == nil {
-	// 		result.Header = common.CreateHeader(ct)
-	// 	}
-	// 	data := common.CreateTypeData(ct)
-	// 	err := rows.Scan(data...)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	result.Rows = common.Unpointer(data)
-	// 	result.Counter++
-	// 	fct(query, result)
-	// }
-	// return nil
 }
 
 func (pg *PostGres) defineContext() {

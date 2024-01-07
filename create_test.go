@@ -210,13 +210,16 @@ func createStruct(t *testing.T, target *target) error {
 	log.Log.Debugf("Inserting into table: %s", testCreationTableStruct)
 	err = id.Batch("SELECT NAME FROM " + testCreationTableStruct)
 	assert.NoError(t, err, "select fail using "+target.layer)
+	found := false
 	err = id.BatchSelectFct(&common.Query{Search: "SELECT NAME FROM " + testCreationTableStruct + " WHERE NAME='Gellanger'"},
 		func(search *def.Query, result *def.Result) error {
 			assert.Equal(t, uint64(1), result.Counter)
 			assert.Equal(t, "Gellanger", result.Rows[0].(string))
+			found = true
 			return nil
 		})
 	assert.NoError(t, err)
+	assert.True(t, found, "on "+target.layer)
 	err = id.Commit()
 	assert.NoError(t, err)
 	err = id.BatchSelectFct(&common.Query{Search: "SELECT COUNT(*) FROM " + testCreationTableStruct},
@@ -240,6 +243,22 @@ func createStruct(t *testing.T, target *target) error {
 			return nil
 		})
 	assert.NoError(t, err)
+
+	placeHolder := "$1"
+	if target.layer != "postgres" {
+		placeHolder = " ? "
+	}
+	found = false
+	err = id.BatchSelectFct(&common.Query{Search: "SELECT NAME FROM " + testCreationTableStruct + " WHERE NAME = " + placeHolder, Parameters: []any{"Gellanger"}},
+		func(search *def.Query, result *def.Result) error {
+			assert.Equal(t, uint64(1), result.Counter)
+			assert.Equal(t, "Gellanger", result.Rows[0].(string))
+			found = true
+			return nil
+		})
+	assert.NoError(t, err, "on "+target.layer)
+	assert.True(t, found, "on "+target.layer)
+
 	err = id.Batch("TRUNCATE " + testCreationTableStruct)
 	if !assert.NoError(t, err) {
 		return err
