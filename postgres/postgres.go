@@ -212,7 +212,7 @@ func (pg *PostGres) open() (dbOpen *pgxpool.Conn, err error) {
 		return nil, err
 	}
 
-	log.Log.Debugf("Acquire Postgres database to %s: %p", pg.dbURL, dbOpen)
+	log.Log.Debugf("Acquire Postgres (%p) database to %s: db=%p", pg, pg.dbURL, dbOpen)
 	log.Log.Debugf("Opened postgres database")
 	if dbOpen == nil {
 		return nil, fmt.Errorf("error open handle and err nil")
@@ -224,6 +224,7 @@ func (pg *PostGres) open() (dbOpen *pgxpool.Conn, err error) {
 // Open open the database connection
 func (pg *PostGres) Open() (dbOpen any, err error) {
 	if pg.openDB != nil {
+		log.Log.Debugf("Already open pg=%p/db=%p", pg, pg.openDB)
 		return pg.openDB, nil
 	}
 	db, err := pg.open()
@@ -245,7 +246,7 @@ func (pg *PostGres) Open() (dbOpen any, err error) {
 		log.Log.Debugf("Tx started pg=%p/tx=%p", pg, pg.tx)
 
 	}
-	log.Log.Debugf("Opened database %s after transaction", pg.dbURL)
+	log.Log.Debugf("Opened database %s after transaction (pg=%p,db=%p)", pg.dbURL, pg, db)
 	return db, nil
 }
 
@@ -317,21 +318,23 @@ func (pg *PostGres) Close() {
 	}
 	if pg.openDB != nil {
 		log.Log.Debugf("Close/release %p(pg=%p/tx=%p)", pg.openDB, pg, pg.tx)
-		pg.openDB.Release()
+		db := pg.openDB
 		pg.openDB = nil
 		pg.tx = nil
 		pg.ctx = nil
-		log.Log.Debugf("Closing database done")
+		defer db.Release()
+		log.Log.Debugf("Closing database done (pg=%p)", pg)
 		return
 	}
-	log.Log.Debugf("Close not opened database")
+	log.Log.Debugf("Close not opened database (pg=%p)", pg)
 }
 
 // FreeHandler don't use the driver anymore
 func (pg *PostGres) FreeHandler() {
 	if pg.openDB != nil {
 		log.Log.Debugf("Free entry %p(pg=%p/tx=%p)", pg.openDB, pg, pg.tx)
-		pg.openDB.Release()
+		db := pg.openDB
+		defer db.Release()
 		pg.openDB = nil
 		pg.tx = nil
 		pg.ctx = nil
