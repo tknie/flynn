@@ -471,10 +471,10 @@ func (pg *PostGres) Query(search *common.Query, f common.ResultFunction) (*commo
 	if err != nil {
 		return nil, err
 	}
-	log.Log.Debugf("Query: %s", selectCmd)
+	log.Log.Debugf("Query: %s (%p)", selectCmd, db)
 	rows, err := db.Query(ctx, selectCmd)
 	if err != nil {
-		log.Log.Debugf("Query error: %v", err)
+		log.Log.Debugf("Query error: %v (%p)", err, db)
 		return nil, err
 	}
 	if search.DataStruct == nil {
@@ -718,6 +718,9 @@ func (pg *PostGres) Update(name string, updateInfo *common.Entries) (rowsAffecte
 		log.Log.Debugf("Tx used pg=%p/tx=%p", pg, pg.tx)
 		tx = pg.tx
 		ctx = pg.ctx
+	}
+	if tx == nil {
+		return 0, fmt.Errorf("nil internal error update")
 	}
 	insertCmd, whereFields := dbsql.GenerateUpdate(pg.IndexNeeded(), name, updateInfo)
 	var updateValues [][]any
