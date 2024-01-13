@@ -267,7 +267,7 @@ func (dynamic *typeInterface) generateField(elemValue reflect.Value, scan bool) 
 					case reflect.Float32, reflect.Float64:
 						dynamic.ScanValues = append(dynamic.ScanValues, &sql.NullFloat64{})
 					default:
-						log.Log.Errorf("%s not defined %s", fieldType.Name, cv.Kind().String())
+						log.Log.Debugf("'%s' dynamic Kind not defined for SQL %s", fieldType.Name, cv.Kind().String())
 						dynamic.ScanValues = append(dynamic.ScanValues, ptrInt)
 					}
 				} else {
@@ -412,7 +412,7 @@ func ShiftValues(scanValues, values []any) (err error) {
 				case *string:
 					*vt = vv.(string)
 				default:
-					log.Log.Errorf("%d: Unknown type %T -> %T", d, values[d], vv)
+					log.Log.Debugf("%d: Unknown type for shifting value %T -> %T", d, values[d], vv)
 				}
 			}
 		}

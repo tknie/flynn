@@ -478,6 +478,9 @@ func (pg *PostGres) Query(search *common.Query, f common.ResultFunction) (*commo
 	rows, err := db.Query(ctx, selectCmd)
 	if err != nil {
 		log.Log.Debugf("Query error: %v (%p)", err, db)
+		if err.Error() == "conn busy" {
+			pg.Close()
+		}
 		return nil, err
 	}
 	if search.DataStruct == nil {
