@@ -335,6 +335,7 @@ func (id RegDbID) FreeHandler() error {
 	for i, d := range Databases {
 		if d.ID() == id {
 			log.Log.Debugf("FreeHandler db %s", d.ID())
+			d.Close()
 			d.FreeHandler()
 			newDatabases := make([]Database, 0)
 			if i > 0 {
