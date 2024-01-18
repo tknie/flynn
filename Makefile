@@ -1,5 +1,5 @@
 #
-# Copyright 2022-2023 Thorsten A. Knieling
+# Copyright 2022-2024 Thorsten A. Knieling
 #
 # SPDX-License-Identifier: Apache-2.0
 #
