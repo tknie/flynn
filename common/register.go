@@ -29,6 +29,7 @@ func searchDataDriver(id RegDbID) (Database, error) {
 	for _, d := range Databases {
 		log.Log.Debugf("Check id %d", d.ID())
 		if d.ID() == id {
+			d.Used()
 			return d, nil
 		}
 	}

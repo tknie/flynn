@@ -313,7 +313,7 @@ func (pg *PostGres) Close() {
 	// defer pg.txLock.Unlock()
 	// defer log.Log.Debugf("Unlock close")
 	if pg.ctx != nil {
-		log.Log.Debugf("Rollback transaction during close")
+		log.Log.Debugf("Rollback transaction during close %s", pg.ID)
 		pg.EndTransaction(false)
 	}
 	if pg.openDB != nil {
@@ -323,10 +323,10 @@ func (pg *PostGres) Close() {
 		pg.tx = nil
 		pg.ctx = nil
 		defer db.Release()
-		log.Log.Debugf("Closing database done (pg=%p)", pg)
+		log.Log.Debugf("Closing database done (pg=%p) %s", pg, pg.ID)
 		return
 	}
-	log.Log.Debugf("Close not opened database (pg=%p)", pg)
+	log.Log.Debugf("Close not opened database (pg=%p) %s", pg, pg.ID)
 }
 
 // FreeHandler don't use the driver anymore

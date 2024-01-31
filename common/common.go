@@ -15,6 +15,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/tknie/errorrepo"
 	"github.com/tknie/log"
@@ -53,6 +54,7 @@ type Entries struct {
 }
 
 type Database interface {
+	Used()
 	ID() RegDbID
 	URL() string
 	Ping() error
@@ -93,10 +95,15 @@ type StreamFunction func(search *Query, stream *Stream) error
 type CommonDatabase struct {
 	RegDbID     RegDbID
 	Transaction bool
+	LastUsed    time.Time
 }
 
 func (cd *CommonDatabase) IsTransaction() bool {
 	return cd.Transaction
+}
+
+func (cd *CommonDatabase) Used() {
+	cd.LastUsed = time.Now()
 }
 
 func (id RegDbID) String() string {
@@ -331,7 +338,7 @@ func (id RegDbID) FreeHandler() error {
 	handlerLock.Lock()
 	defer handlerLock.Unlock()
 	defer log.Log.Debugf("Unlock common (unregister)")
-	log.Log.Debugf("FreeHandler db before state of %s(%d): %v", id, len(Databases), DBHelper())
+	log.Log.Debugf("FreeHandler db before state of %s(%d,%s): %v", id, len(Databases), id, DBHelper())
 	for i, d := range Databases {
 		if d.ID() == id {
 			log.Log.Debugf("FreeHandler db %s", d.ID())

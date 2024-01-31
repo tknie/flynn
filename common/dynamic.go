@@ -411,8 +411,10 @@ func ShiftValues(scanValues, values []any) (err error) {
 					*vt = vv.(int)
 				case *string:
 					*vt = vv.(string)
+				case *time.Time:
+					*vt = vv.(time.Time)
 				default:
-					log.Log.Debugf("%d: Unknown type for shifting value %T -> %T", d, values[d], vv)
+					log.Log.Fatalf("%d: Unknown type for shifting value %T -> %T", d, values[d], vv)
 				}
 			}
 		}
