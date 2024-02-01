@@ -64,14 +64,19 @@ type pool struct {
 var poolMap sync.Map
 
 func (p *pool) IncUsage() uint64 {
-	return atomic.AddUint64(&p.useCounter, 1)
+	used := atomic.AddUint64(&p.useCounter, 1)
+	log.Log.Debugf("Inc usage = %d", used)
+	return used
 }
 
 func (p *pool) DecUsage() uint64 {
 	c := atomic.AddUint64(&p.useCounter, ^uint64(0))
+	log.Log.Debugf("Dec usage = %d", c)
 	if c == 0 {
 		log.Log.Debugf("Pool closing %p", p.pool)
 		p.pool.Close()
+		p.pool = nil
+		log.Log.Debugf("Pool closed")
 		poolMap.Delete(p.url)
 	}
 	return c
@@ -313,7 +318,7 @@ func (pg *PostGres) Close() {
 	// defer pg.txLock.Unlock()
 	// defer log.Log.Debugf("Unlock close")
 	if pg.ctx != nil {
-		log.Log.Debugf("Rollback transaction during close %s", pg.ID)
+		log.Log.Debugf("Rollback transaction during close %s", pg.ID())
 		pg.EndTransaction(false)
 	}
 	if pg.openDB != nil {
@@ -323,16 +328,16 @@ func (pg *PostGres) Close() {
 		pg.tx = nil
 		pg.ctx = nil
 		defer db.Release()
-		log.Log.Debugf("Closing database done (pg=%p) %s", pg, pg.ID)
+		log.Log.Debugf("Closing database done (pg=%p) %s", pg, pg.ID())
 		return
 	}
-	log.Log.Debugf("Close not opened database (pg=%p) %s", pg, pg.ID)
+	log.Log.Debugf("Close not opened database (pg=%p) %s", pg, pg.ID())
 }
 
 // FreeHandler don't use the driver anymore
 func (pg *PostGres) FreeHandler() {
 	if pg.openDB != nil {
-		log.Log.Debugf("Free entry %p(pg=%p/tx=%p)", pg.openDB, pg, pg.tx)
+		log.Log.Debugf("Free handler release entry %p(pg=%p/tx=%p)", pg.openDB, pg, pg.tx)
 		db := pg.openDB
 		defer db.Release()
 		pg.openDB = nil
@@ -341,8 +346,8 @@ func (pg *PostGres) FreeHandler() {
 	}
 
 	if p, err := pg.getPool(); err == nil {
-		p.DecUsage()
-		log.Log.Debugf("Release database pool")
+		used := p.DecUsage()
+		log.Log.Debugf("Reduce database pool usage %d", used)
 	}
 }
 

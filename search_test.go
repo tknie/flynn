@@ -749,3 +749,46 @@ func TestSearchPgRowsDistinct(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 22, counter)
 }
+
+func TestMultipleOpenClose(t *testing.T) {
+	InitLog(t)
+
+	pgInstance, passwd, err := postgresTargetInstance(t)
+	if !assert.NoError(t, err) {
+		return
+	}
+
+	log.Log.Debugf("Postgres target registered")
+
+	type pic struct {
+		Title        string
+		ExifOrigTime time.Time
+	}
+	idx := make([]common.RegDbID, 10)
+	for i := 0; i < 10; i++ {
+		idx[i], err = Handler(pgInstance, passwd)
+		if !assert.NoError(t, err) {
+			return
+		}
+		fmt.Println("GOT", idx[i])
+		p := &pic{}
+		q := &common.Query{TableName: "Pictures",
+			Search:     "checksumpicture='02E88E36FF888D0344B633B329AE8C5E'",
+			DataStruct: p,
+			Fields:     []string{"title", "exiforigtime"},
+		}
+		counter := 0
+		_, err = idx[i].Query(q, func(search *common.Query, result *common.Result) error {
+			assert.Len(t, result.Fields, 2)
+			p := result.Data.(*pic)
+			fmt.Println(p.Title, p.ExifOrigTime)
+			counter++
+
+			return nil
+		})
+		assert.NoError(t, err)
+		assert.Equal(t, 1, counter)
+		defer idx[i].FreeHandler()
+		defer idx[i].Close()
+	}
+}
