@@ -327,7 +327,7 @@ func (pg *PostGres) Close() {
 		pg.openDB = nil
 		pg.tx = nil
 		pg.ctx = nil
-		defer db.Release()
+		db.Release()
 		log.Log.Debugf("Closing database done (pg=%p) %s", pg, pg.ID())
 		if p, err := pg.getPool(); err == nil {
 			used := p.DecUsage()
