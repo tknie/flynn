@@ -210,7 +210,7 @@ func (pg *PostGres) open() (dbOpen *pgxpool.Conn, err error) {
 		Logger:   NewLogger(),
 		LogLevel: tracelog.LogLevelTrace,
 	}*/
-	log.Log.Debugf("Acquire Postgres to pool=%p", p.pool)
+	log.Log.Debugf("Acquire Postgres to pool=%p %v", p.pool, pg.ID())
 	dbOpen, err = p.pool.Acquire(pg.ctx)
 	if err != nil {
 		log.Log.Debugf("Acquire Postgres err=%v", err)
@@ -329,6 +329,10 @@ func (pg *PostGres) Close() {
 		pg.ctx = nil
 		defer db.Release()
 		log.Log.Debugf("Closing database done (pg=%p) %s", pg, pg.ID())
+		if p, err := pg.getPool(); err == nil {
+			used := p.DecUsage()
+			log.Log.Debugf("Reduce database pool usage %d", used)
+		}
 		return
 	}
 	log.Log.Debugf("Close not opened database (pg=%p) %s", pg, pg.ID())
@@ -343,11 +347,6 @@ func (pg *PostGres) FreeHandler() {
 		pg.openDB = nil
 		pg.tx = nil
 		pg.ctx = nil
-	}
-
-	if p, err := pg.getPool(); err == nil {
-		used := p.DecUsage()
-		log.Log.Debugf("Reduce database pool usage %d", used)
 	}
 }
 
