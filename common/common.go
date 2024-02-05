@@ -234,10 +234,15 @@ func (id RegDbID) Ping() error {
 
 // Insert insert record into table
 func (id RegDbID) Insert(name string, insert *Entries) error {
+	log.Log.Debugf("Searching id %v", id.String())
 	driver, err := searchDataDriver(id)
 	if err != nil {
 		return err
 	}
+	if id != driver.ID() {
+		log.Log.Fatal("ID mismatch")
+	}
+	log.Log.Debugf("Driver %d == %d-> %p", id, driver.ID(), driver)
 	return driver.Insert(name, insert)
 }
 

@@ -607,7 +607,7 @@ func TestSearchPgRowsOrdered(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
-
+	pg += "?pool_max_conns=10"
 	x, err := Handle("postgres", pg)
 	if !assert.NoError(t, err) {
 		return

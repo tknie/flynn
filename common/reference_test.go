@@ -84,6 +84,11 @@ func TestReferenceURL(t *testing.T) {
 	assert.Equal(t, &Reference{Driver: OracleType, Host: "xaaaa", Port: 99989, Database: "schema",
 		User: "<user>"}, ref)
 	assert.Equal(t, "<password>", p)
+	ref, p, err = NewReference("postgres://admin:axx@localhost:5432/bitgarten?pool_max_conns=10")
+	assert.NoError(t, err)
+	assert.Equal(t, &Reference{Driver: PostgresType, Host: "localhost", Port: 5432, Database: "bitgarten",
+		User: "admin", Options: []string{"pool_max_conns=10"}}, ref)
+	assert.Equal(t, "axx", p)
 
 }
 

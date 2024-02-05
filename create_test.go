@@ -33,7 +33,16 @@ type target struct {
 	url   string
 }
 
-var dataChan = make(chan []any, 0)
+type msg struct {
+	index int
+	msg   string
+}
+
+func (m *msg) values() []any {
+	return []any{strconv.Itoa(m.index), m.msg}
+}
+
+var dataChan = make(chan *msg, 0)
 var wgThread sync.WaitGroup
 var doneChan = make(chan bool, 0)
 var wgTest sync.WaitGroup
@@ -171,7 +180,6 @@ func createStruct(t *testing.T, target *target) error {
 	if target.layer == "adabas" {
 		return nil
 	}
-	// fmt.Println("Work on layer", target.layer)
 	id, err := Handle(target.layer, target.url)
 	if !assert.NoError(t, err, "register fail using "+target.layer) {
 		return err
@@ -265,31 +273,43 @@ func createStruct(t *testing.T, target *target) error {
 	}
 	err = initTheadTest(t, target.layer, target.url, insertThread)
 	assert.NoError(t, err)
+	log.Log.Debugf("Ended thread first test on target %s", target.layer)
 	err = initTheadTest(t, target.layer, target.url, insertAtomarThread)
 	assert.NoError(t, err)
+	log.Log.Debugf("Ended thread last test on target %s", target.layer)
 	return err
 }
 
 func initTheadTest(t *testing.T, layer, url string, f func(t *testing.T, layer, url string)) error {
+	urlMaxConns := url
+	if layer == "postgres" {
+		urlMaxConns = url + "?pool_max_conns=100"
+	}
 	for i := 0; i < 10; i++ {
 		log.Log.Debugf("Trigger thread %02d ....", i)
-		go f(t, layer, url)
+		go f(t, layer, urlMaxConns)
 	}
 
 	for i := 1; i < 100; i++ {
+		fmt.Println("ADD-" + layer)
 		wgTest.Add(1)
-		dataChan <- []any{strconv.Itoa(i), "Kermit und Pigi " + strconv.Itoa(i)}
+		messgage := "Kermit und Pigi " + strconv.Itoa(i)
+		log.Log.Debugf("Put into channel " + messgage)
+		dataChan <- &msg{i, messgage}
 	}
 
-	log.Log.Debugf("Waiting for insert wait group")
+	log.Log.Debugf("Waiting for insert wait group " + layer)
+	fmt.Println("WAIT-" + layer)
 	wgTest.Wait()
+	fmt.Println("WENDED-" + layer)
+	log.Log.Debugf("Closeing group")
 	for i := 0; i < 10; i++ {
 		doneChan <- true
 	}
 	log.Log.Debugf("Waiting for thread wait group")
 	wgThread.Wait()
 	atomicInt = 0
-	log.Log.Debugf("Ready waiting for thread wait group")
+	log.Log.Debugf("Ready waiting for thread wait group %s", layer)
 	//log.Log.Debugf("Deleting table: %s", testCreationTableStruct)
 	//deleteTable(t, id, testCreationTableStruct, target.layer)
 	return nil
@@ -304,21 +324,25 @@ func insertThread(t *testing.T, layer, url string) {
 	}
 	// fmt.Println("Start thread ....", nr)
 	defer id.FreeHandler()
+	defer log.Log.Debugf("Close thread %d", nr)
 	wgThread.Add(1)
 	defer wgThread.Done()
 	for {
-		log.Log.Debugf("%02d: Waiting for entry .... ", nr)
+		log.Log.Debugf("%02d: Waiting for entry .... %s", nr, layer)
 		select {
 		case x := <-dataChan:
-			log.Log.Debugf("%02d: Received entry  ....%v", nr, x[1])
+			log.Log.Debugf("%v-%02d: Received entry  ....%v -> %s", id, nr, x.msg, layer)
 			err = id.Insert(testCreationTableStruct, &def.Entries{Fields: []string{"name", "firstname"},
-				Values: [][]any{x}})
+				Values: [][]any{x.values()}})
+			log.Log.Debugf("%v-%02d: insert returned  ....%v -> %s %v", id, nr, x.msg, layer, err)
 			if !assert.NoError(t, err, "insert fail using "+layer) {
 				fmt.Println("Error thread ....")
-				log.Log.Debugf("%02d: Error storing  ....%v", nr, x[1])
+				log.Log.Debugf("%02d: Error storing  ....%v", nr, x.msg)
 			} else {
-				log.Log.Debugf("%02d: Entry ready ....", nr)
+				log.Log.Debugf("%d-%02d: Entry thread stored .... %s -> %v", id, nr, layer, x.msg)
 			}
+			fmt.Printf("DONEX-%d-%s", nr, layer)
+			log.Log.Debugf("DONEX-%s -> %s", layer, x.msg)
 			wgTest.Done()
 		case <-doneChan:
 			// fmt.Println("Ready thread ....", nr)
@@ -347,15 +371,16 @@ func insertRecordForThread(t *testing.T, layer, url string, nr int32) {
 		log.Log.Debugf("%02d: Waiting for entry .... ", nr)
 		select {
 		case x := <-dataChan:
-			log.Log.Debugf("%02d: Received entry  ....%v", nr, x[1])
+			log.Log.Debugf("%02d: Received entry  ....%v", nr, x.msg)
 			err = id.Insert(testCreationTableStruct, &def.Entries{Fields: []string{"name", "firstname"},
-				Values: [][]any{x}})
+				Values: [][]any{x.values()}})
 			if !assert.NoError(t, err, "insert fail using "+layer) {
 				fmt.Println("Error thread ....")
-				log.Log.Debugf("%02d: Error storing  ....%v", nr, x[1])
+				log.Log.Debugf("%02d: Error storing  ....%v", nr, x.msg)
 			} else {
 				log.Log.Debugf("%02d: Entry ready ....", nr)
 			}
+			fmt.Println("DONEY-" + layer)
 			wgTest.Done()
 		case <-doneChan:
 			// fmt.Println("Ready thread ....", nr)
