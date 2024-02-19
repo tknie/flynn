@@ -51,7 +51,7 @@ type PostGres struct {
 	tx           pgx.Tx
 	ctx          context.Context
 	cancel       context.CancelFunc
-	txLock       sync.Mutex
+	lock         sync.Mutex
 }
 
 type pool struct {
@@ -62,7 +62,8 @@ type pool struct {
 }
 
 var poolMap sync.Map
-var poolLock sync.Mutex
+
+// var poolLock sync.Mutex
 
 func (p *pool) IncUsage() uint64 {
 	used := atomic.AddUint64(&p.useCounter, 1)
@@ -200,13 +201,13 @@ func (pg *PostGres) getPool() (*pool, error) {
 }
 
 func (pg *PostGres) open() (dbOpen *pgxpool.Conn, err error) {
+	log.Log.Debugf("%s Open pool Lock", pg.ID().String())
+	pg.lock.Lock()
+	defer pg.lock.Unlock()
+	defer log.Log.Debugf("%s Open pool Unlock", pg.ID().String())
 	if pg.IsTransaction() && pg.openDB != nil {
 		return pg.openDB, nil
 	}
-	log.Log.Debugf("%s Pool Lock", pg.ID().String())
-	poolLock.Lock()
-	defer poolLock.Unlock()
-	defer log.Log.Debugf("%s Pool Unlock", pg.ID().String())
 
 	p, err := pg.getPool()
 	if err != nil {
@@ -252,10 +253,6 @@ func (pg *PostGres) Open() (dbOpen any, err error) {
 	pg.openDB = db
 
 	if pg.IsTransaction() {
-		// log.Log.Debugf("Lock open")
-		// pg.txLock.Lock()
-		// defer pg.txLock.Unlock()
-		// defer log.Log.Debugf("Unlock open")
 		pg.tx, err = db.Begin(context.Background())
 		if err != nil {
 			return nil, err
@@ -291,10 +288,7 @@ func (pg *PostGres) EndTransaction(commit bool) (err error) {
 	if pg == nil || !pg.IsTransaction() {
 		return nil
 	}
-	// log.Log.Debugf("Lock end transaction")
-	// pg.txLock.Lock()
-	// defer pg.txLock.Unlock()
-	// defer log.Log.Debugf("Unlock end transaction")
+	log.Log.Debugf("Start end transaction")
 	if pg.ctx == nil {
 		return fmt.Errorf("error context not valid")
 	}
@@ -325,18 +319,15 @@ func (pg *PostGres) EndTransaction(commit bool) (err error) {
 
 // Close close the database connection
 func (pg *PostGres) Close() {
-	// log.Log.Debugf("Lock close")
-	// pg.txLock.Lock()
-	// defer pg.txLock.Unlock()
-	// defer log.Log.Debugf("Unlock close")
+	log.Log.Debugf("%s Close of connection", pg.ID().String())
 	if pg.ctx != nil {
 		log.Log.Debugf("Rollback transaction during close %s", pg.ID())
 		pg.EndTransaction(false)
 	}
+	pg.lock.Lock()
+	defer pg.lock.Unlock()
 	if pg.openDB != nil {
 		log.Log.Debugf("Pool Lock")
-		poolLock.Lock()
-		defer poolLock.Unlock()
 		defer log.Log.Debugf("Pool Unock")
 
 		log.Log.Debugf("%s Close/release %p(pg=%p/tx=%p)", pg.ID().String(), pg.openDB, pg, pg.tx)
@@ -344,7 +335,9 @@ func (pg *PostGres) Close() {
 		pg.openDB = nil
 		pg.tx = nil
 		pg.ctx = nil
-		db.Release()
+		if db != nil {
+			db.Release()
+		}
 		log.Log.Debugf("%s Released database done (pg=%p) %s", pg.ID().String(), pg)
 		if p, err := pg.getPool(); err == nil {
 			used := p.DecUsage()
@@ -357,10 +350,11 @@ func (pg *PostGres) Close() {
 
 // FreeHandler don't use the driver anymore
 func (pg *PostGres) FreeHandler() {
+	log.Log.Debugf("%s free handler", pg.ID().String())
+	pg.lock.Lock()
+	defer pg.lock.Unlock()
 	if pg.openDB != nil {
 		log.Log.Debugf("Pool Lock")
-		poolLock.Lock()
-		defer poolLock.Unlock()
 		defer log.Log.Debugf("Pool Unock")
 
 		log.Log.Debugf("Free handler release entry %p(pg=%p/tx=%p)", pg.openDB, pg, pg.tx)
@@ -489,7 +483,7 @@ func (pg *PostGres) GetTableColumn(tableName string) ([]string, error) {
 
 // Query query database records with search or SELECT
 func (pg *PostGres) Query(search *common.Query, f common.ResultFunction) (*common.Result, error) {
-	log.Log.Debugf("Query postgres database")
+	log.Log.Debugf("%s Query postgres database", pg.ID().String())
 	dbOpen, err := pg.Open()
 	if err != nil {
 		return nil, err
@@ -904,9 +898,6 @@ func (pg *PostGres) StartTransaction() (pgx.Tx, context.Context, error) {
 		}
 	}
 	log.Log.Debugf("%s Start transaction opened", pg.ID().String())
-	// pg.txLock.Lock()
-	// defer pg.txLock.Unlock()
-	// defer log.Log.Debugf("Unlock Start transaction opened")
 	pg.defineContext()
 	if pg.openDB == nil || pg == nil || pg.ctx == nil {
 		log.Log.Fatalf("Error invalid openDB handle")
