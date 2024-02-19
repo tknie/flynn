@@ -234,7 +234,7 @@ func (id RegDbID) Ping() error {
 
 // Insert insert record into table
 func (id RegDbID) Insert(name string, insert *Entries) error {
-	log.Log.Debugf("Searching id %v", id.String())
+	log.Log.Debugf("%s Searching id", id.String())
 	driver, err := searchDataDriver(id)
 	if err != nil {
 		return err
@@ -343,10 +343,10 @@ func (id RegDbID) FreeHandler() error {
 	handlerLock.Lock()
 	defer handlerLock.Unlock()
 	defer log.Log.Debugf("Unlock common (unregister)")
-	log.Log.Debugf("FreeHandler db before state of %s(%d,%s): %v", id, len(Databases), id, DBHelper())
+	log.Log.Debugf("%s FreeHandler db before state of (%d,%s): %v", id, len(Databases), id, DBHelper())
 	for i, d := range Databases {
 		if d.ID() == id {
-			log.Log.Debugf("FreeHandler db %s", d.ID())
+			log.Log.Debugf("%s FreeHandler db", d.ID())
 			d.Close()
 			d.FreeHandler()
 			newDatabases := make([]Database, 0)
@@ -357,11 +357,11 @@ func (id RegDbID) FreeHandler() error {
 				newDatabases = append(newDatabases, Databases[i+1:]...)
 			}
 			Databases = newDatabases
-			log.Log.Debugf("FreeHandler db=%p of %s(len=%d): %v", d, id, len(Databases), DBHelper())
+			log.Log.Debugf("%s FreeHandler db=%p of (len=%d): %v", id, d, len(Databases), DBHelper())
 			return nil
 		}
 	}
-	log.Log.Debugf("FreeHandler db error of %s(len=%d): %v", id, len(Databases), DBHelper())
+	log.Log.Debugf("%s FreeHandler db error of (len=%d): %v", id, len(Databases), DBHelper())
 	return errorrepo.NewError("DB000001")
 }
 

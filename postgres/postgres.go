@@ -59,6 +59,7 @@ type pool struct {
 	pool       *pgxpool.Pool
 	ctx        context.Context
 	url        string
+	lock       sync.Mutex
 }
 
 var poolMap sync.Map
@@ -72,6 +73,8 @@ func (p *pool) IncUsage() uint64 {
 }
 
 func (p *pool) DecUsage() uint64 {
+	p.lock.Lock()
+	defer p.lock.Unlock()
 	c := atomic.AddUint64(&p.useCounter, ^uint64(0))
 	log.Log.Debugf("Dec usage = %d", c)
 	if c == 0 {
@@ -164,12 +167,32 @@ func (pg *PostGres) Maps() ([]string, error) {
 
 func (pg *PostGres) getPool() (*pool, error) {
 	url := pg.generateURL()
-	if p, ok := poolMap.Load(url); ok && p.(*pool).pool != nil {
-		log.Log.Debugf("%s pool entry found", pg.ID().String())
-		po := p.(*pool)
-		log.Log.Debugf("Pool use counter %d", po.useCounter)
-		pg.ctx = po.ctx
-		return po, nil
+	if p, ok := poolMap.Load(url); ok {
+		pl := p.(*pool)
+		pl.lock.Lock()
+		defer pl.lock.Unlock()
+		if pl.pool == nil {
+			config, err := pgxpool.ParseConfig(pg.generateURL())
+			if err != nil {
+				return nil, err
+			}
+			pg.defineContext()
+			if pg.ctx == nil {
+				return nil, fmt.Errorf("context error nil")
+			}
+			pl.pool, err = pgxpool.NewWithConfig(pg.ctx, config)
+			if err != nil {
+				return nil, err
+			}
+			log.Log.Debugf("%s pool entry recreated", pg.ID().String())
+		} else {
+			log.Log.Debugf("%s pool entry found", pg.ID().String())
+		}
+		pl.IncUsage()
+
+		log.Log.Debugf("%s Pool use counter %d", pg.ID().String(), pl.useCounter)
+		pg.ctx = pl.ctx
+		return pl, nil
 	} else {
 		log.Log.Debugf("%s pool entry not found", pg.ID().String())
 		pg.defineContext()
@@ -188,6 +211,8 @@ func (pg *PostGres) getPool() (*pool, error) {
 		// pg.ctx = context.Background()
 		log.Log.Debugf("%s Create pool for Postgres database to %s", pg.ID().String(), pg.dbURL)
 		p := &pool{url: url, ctx: pg.ctx}
+		p.lock.Lock()
+		defer p.lock.Unlock()
 		p.pool, err = pgxpool.NewWithConfig(pg.ctx, config)
 		if err != nil {
 			log.Log.Debugf("Postgres driver connect error: %v", err)
@@ -196,6 +221,7 @@ func (pg *PostGres) getPool() (*pool, error) {
 
 		poolMap.Store(url, p)
 
+		p.IncUsage()
 		return p, nil
 	}
 }
@@ -231,18 +257,17 @@ func (pg *PostGres) open() (dbOpen *pgxpool.Conn, err error) {
 	}
 
 	log.Log.Debugf("%s Acquire Postgres (%p) database to %s: db=%p", pg.ID().String(), pg, pg.dbURL, dbOpen)
-	log.Log.Debugf("Opened postgres database")
+	log.Log.Debugf("%s Opened postgres database", pg.ID().String())
 	if dbOpen == nil {
 		return nil, fmt.Errorf("error open handle and err nil")
 	}
-	p.IncUsage()
 	return dbOpen, nil
 }
 
 // Open open the database connection
 func (pg *PostGres) Open() (dbOpen any, err error) {
 	if pg.openDB != nil {
-		log.Log.Debugf("Already open pg=%p/db=%p", pg, pg.openDB)
+		log.Log.Debugf("%s Already open pg=%p/db=%p", pg.ID().String(), pg, pg.openDB)
 		return pg.openDB, nil
 	}
 	db, err := pg.open()
@@ -260,7 +285,8 @@ func (pg *PostGres) Open() (dbOpen any, err error) {
 		log.Log.Debugf("Tx started pg=%p/tx=%p", pg, pg.tx)
 
 	}
-	log.Log.Debugf("Opened database %s after transaction (pg=%p,db=%p)", pg.dbURL, pg, db)
+	log.Log.Debugf("%s Opened database %s after transaction (pg=%p,db=%p)", pg.ID().String(),
+		pg.dbURL, pg, db)
 	return db, nil
 }
 
@@ -288,7 +314,7 @@ func (pg *PostGres) EndTransaction(commit bool) (err error) {
 	if pg == nil || !pg.IsTransaction() {
 		return nil
 	}
-	log.Log.Debugf("Start end transaction")
+	log.Log.Debugf("%s Start end transaction", pg.ID().String())
 	if pg.ctx == nil {
 		return fmt.Errorf("error context not valid")
 	}
@@ -297,10 +323,10 @@ func (pg *PostGres) EndTransaction(commit bool) (err error) {
 		return fmt.Errorf("error tx empty")
 	}
 	if commit {
-		log.Log.Debugf("End transaction commiting ...(pg=%p/tx=%p) %v", pg, pg.tx, pg.IsTransaction())
+		log.Log.Debugf("%s End transaction commiting ...(pg=%p/tx=%p) %v", pg.ID().String(), pg, pg.tx, pg.IsTransaction())
 		err = pg.tx.Commit(pg.ctx)
 	} else {
-		log.Log.Debugf("End transaction rollback ...(pg=%p/tx=%p) %v", pg, pg.tx, pg.IsTransaction())
+		log.Log.Debugf("%s End transaction rollback ...(pg=%p/tx=%p) %v", pg.ID().String(), pg, pg.tx, pg.IsTransaction())
 		err = pg.tx.Rollback(pg.ctx)
 	}
 	log.Log.Debugf("Tx cleared pg=%p/tx=%p", pg, pg.tx)
@@ -309,7 +335,7 @@ func (pg *PostGres) EndTransaction(commit bool) (err error) {
 	}
 	pg.tx = nil
 	pg.cancel = nil
-	log.Log.Debugf("End transaction done: %v", err)
+	log.Log.Debugf("%s End transaction done: %v", pg.ID().String(), err)
 	pg.Transaction = false
 	if err != nil {
 		log.Log.Errorf("Error end transaction commit=%v: %v", commit, err)
@@ -321,14 +347,12 @@ func (pg *PostGres) EndTransaction(commit bool) (err error) {
 func (pg *PostGres) Close() {
 	log.Log.Debugf("%s Close of connection", pg.ID().String())
 	if pg.ctx != nil {
-		log.Log.Debugf("Rollback transaction during close %s", pg.ID())
+		log.Log.Debugf("%s Rollback transaction during close", pg.ID().String())
 		pg.EndTransaction(false)
 	}
 	pg.lock.Lock()
 	defer pg.lock.Unlock()
 	if pg.openDB != nil {
-		log.Log.Debugf("Pool Lock")
-		defer log.Log.Debugf("Pool Unock")
 
 		log.Log.Debugf("%s Close/release %p(pg=%p/tx=%p)", pg.ID().String(), pg.openDB, pg, pg.tx)
 		db := pg.openDB
@@ -338,26 +362,23 @@ func (pg *PostGres) Close() {
 		if db != nil {
 			db.Release()
 		}
-		log.Log.Debugf("%s Released database done (pg=%p) %s", pg.ID().String(), pg)
+		log.Log.Debugf("%s Released database done (pg=%p)", pg.ID().String(), pg)
 		if p, err := pg.getPool(); err == nil {
 			used := p.DecUsage()
 			log.Log.Debugf("Reduce database pool usage %d", used)
 		}
 		return
 	}
-	log.Log.Debugf("Close not opened database (pg=%p) %s", pg, pg.ID())
+	log.Log.Debugf("%s Close not opened database (pg=%p)", pg.ID().String(), pg)
 }
 
 // FreeHandler don't use the driver anymore
 func (pg *PostGres) FreeHandler() {
-	log.Log.Debugf("%s free handler", pg.ID().String())
+	log.Log.Debugf("%s free postgres handler", pg.ID().String())
 	pg.lock.Lock()
 	defer pg.lock.Unlock()
 	if pg.openDB != nil {
-		log.Log.Debugf("Pool Lock")
-		defer log.Log.Debugf("Pool Unock")
-
-		log.Log.Debugf("Free handler release entry %p(pg=%p/tx=%p)", pg.openDB, pg, pg.tx)
+		log.Log.Debugf("%s Free handler release entry %p(pg=%p/tx=%p)", pg.ID().String(), pg.openDB, pg, pg.tx)
 		db := pg.openDB
 		db.Release()
 		pg.openDB = nil
@@ -652,7 +673,7 @@ func (pg *PostGres) Insert(name string, insert *common.Entries) (err error) {
 	if !transaction {
 		tx, ctx, err = pg.StartTransaction()
 		if err != nil {
-			log.Log.Debugf("Error start transaction %v", err)
+			log.Log.Debugf("%s Error start transaction: %v", pg.ID().String(), err)
 			return err
 		}
 		// defer pg.Close()
@@ -893,7 +914,7 @@ func (pg *PostGres) StartTransaction() (pgx.Tx, context.Context, error) {
 		log.Log.Debugf("%s Open with transaction enabled", pg.ID().String())
 		pg.openDB, err = pg.open()
 		if err != nil {
-			log.Log.Debugf("Error opening connection for transaction")
+			log.Log.Debugf("Error opening connection for transaction: %v", err)
 			return nil, nil, err
 		}
 	}
@@ -909,20 +930,20 @@ func (pg *PostGres) StartTransaction() (pgx.Tx, context.Context, error) {
 		log.Log.Debugf("Begin of transaction fails: %v", err)
 		return nil, nil, err
 	}
-	log.Log.Debugf("Start transaction begin (pg=%p/tx=%p)", pg, pg.tx)
+	log.Log.Debugf("%s Start transaction begin (pg=%p/tx=%p)", pg.ID().String(), pg, pg.tx)
 	pg.Transaction = true
 	return pg.tx, pg.ctx, nil
 }
 
 // Commit commit the transaction
 func (pg *PostGres) Commit() error {
-	log.Log.Debugf("Commit transaction")
+	log.Log.Debugf("%s Commit transaction", pg.ID().String())
 	return pg.EndTransaction(true)
 }
 
 // Rollback rollback the transaction
 func (pg *PostGres) Rollback() error {
-	log.Log.Debugf("Rollback transaction")
+	log.Log.Debugf("%s Rollback transaction", pg.ID().String())
 	return pg.EndTransaction(false)
 }
 
@@ -943,7 +964,7 @@ func (pg *PostGres) Stream(search *common.Query, sf common.StreamFunction) error
 	offset := int32(0)
 	dataMaxLen := int32(math.MaxInt32)
 
-	log.Log.Debugf("Start stream for %s for %s", search.Fields[0], search.TableName)
+	log.Log.Debugf("%s Start stream for %s for %s", pg.ID().String(), search.Fields[0], search.TableName)
 	for offset < dataMaxLen {
 		selectCmd := ""
 		if dataMaxLen == int32(math.MaxInt32) {

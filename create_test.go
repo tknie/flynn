@@ -291,7 +291,7 @@ func initTheadTest(t *testing.T, layer, url string, f func(t *testing.T, layer, 
 	}
 
 	for i := 1; i < 100; i++ {
-		fmt.Println("ADD-" + layer)
+		//fmt.Println("ADD-" + layer)
 		wgTest.Add(1)
 		messgage := "Kermit und Pigi " + strconv.Itoa(i)
 		log.Log.Debugf("Put into channel " + messgage)
@@ -299,7 +299,7 @@ func initTheadTest(t *testing.T, layer, url string, f func(t *testing.T, layer, 
 	}
 
 	log.Log.Debugf("Waiting for insert wait group " + layer)
-	fmt.Println("WAIT-" + layer)
+	// fmt.Println("WAIT-" + layer)
 	wgTest.Wait()
 	fmt.Println("WENDED-" + layer)
 	log.Log.Debugf("Closeing group")
@@ -341,7 +341,7 @@ func insertThread(t *testing.T, layer, url string) {
 			} else {
 				log.Log.Debugf("%d-%02d: Entry thread stored .... %s -> %v", id, nr, layer, x.msg)
 			}
-			fmt.Printf("DONEX-%d-%s", nr, layer)
+			// fmt.Printf("DONEX-%d-%s", nr, layer)
 			log.Log.Debugf("DONEX-%s -> %s", layer, x.msg)
 			wgTest.Done()
 		case <-doneChan:
@@ -380,7 +380,7 @@ func insertRecordForThread(t *testing.T, layer, url string, nr int32) {
 			} else {
 				log.Log.Debugf("%02d: Entry ready ....", nr)
 			}
-			fmt.Println("DONEY-" + layer)
+			// fmt.Println("DONEY-" + layer)
 			wgTest.Done()
 		case <-doneChan:
 			// fmt.Println("Ready thread ....", nr)
