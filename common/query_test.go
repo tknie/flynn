@@ -28,28 +28,28 @@ func TestQuery(t *testing.T) {
 	q.TableName = "ABC"
 	selectCmd, err = q.Select()
 	assert.NoError(t, err)
-	assert.Equal(t, "SELECT * FROM ABC", selectCmd)
+	assert.Equal(t, "SELECT * FROM ABC tn", selectCmd)
 
 	q.Fields = []string{"field1", "field2"}
 	q.Limit = 10
 	selectCmd, err = q.Select()
 	assert.NoError(t, err)
-	assert.Equal(t, "SELECT field1,field2 FROM ABC LIMIT 10", selectCmd)
+	assert.Equal(t, "SELECT field1,field2 FROM ABC tn LIMIT 10", selectCmd)
 
 	q.Order = []string{"fieldOrder:ASC"}
 	selectCmd, err = q.Select()
 	assert.NoError(t, err)
-	assert.Equal(t, "SELECT field1,field2 FROM ABC ORDER BY fieldOrder ASC LIMIT 10", selectCmd)
+	assert.Equal(t, "SELECT field1,field2 FROM ABC tn ORDER BY fieldOrder ASC LIMIT 10", selectCmd)
 
 	q.Search = "id='10'"
 	q.Limit = 0
 	selectCmd, err = q.Select()
 	assert.NoError(t, err)
-	assert.Equal(t, "SELECT field1,field2 FROM ABC WHERE id='10' ORDER BY fieldOrder ASC", selectCmd)
+	assert.Equal(t, "SELECT field1,field2 FROM ABC tn WHERE id='10' ORDER BY fieldOrder ASC", selectCmd)
 
 	q.Order = []string{"aaa:asc", "bbb:asc", "dddd:desc"}
 	selectCmd, err = q.Select()
 	assert.NoError(t, err)
-	assert.Equal(t, "SELECT field1,field2 FROM ABC WHERE id='10' ORDER BY aaa ASC,bbb ASC,dddd DESC", selectCmd)
+	assert.Equal(t, "SELECT field1,field2 FROM ABC tn WHERE id='10' ORDER BY aaa ASC,bbb ASC,dddd DESC", selectCmd)
 
 }
