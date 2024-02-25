@@ -55,7 +55,7 @@ func (q *Query) Select() (string, error) {
 		ti := CreateInterface(q.DataStruct, q.Fields)
 		q.TypeInfo = ti
 		selectCmd.WriteString(ti.CreateQueryFields())
-		selectCmd.WriteString(" FROM " + q.TableName)
+		selectCmd.WriteString(" FROM " + q.TableName + " tn")
 	default:
 		selectCmd.WriteString("SELECT ")
 		if q.Descriptor {
@@ -71,7 +71,7 @@ func (q *Query) Select() (string, error) {
 				selectCmd.WriteString(s)
 			}
 		}
-		selectCmd.WriteString(" FROM " + q.TableName)
+		selectCmd.WriteString(" FROM " + q.TableName + " tn")
 	}
 	if q.Search != "" {
 		selectCmd.WriteString(" WHERE " + q.Search)
