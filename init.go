@@ -90,7 +90,7 @@ func Maps() []string {
 		log.Log.Debugf("Map found " + database.URL())
 		subMaps, err := database.Maps()
 		if err != nil {
-			log.Log.Errorf("Error reading sub maps: %v", err)
+			log.Log.Errorf("%s Error reading sub maps: %v", database.ID().String(), err)
 			continue
 		}
 		databaseMaps = append(databaseMaps, subMaps...)

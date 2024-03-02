@@ -402,7 +402,7 @@ func (pg *PostGres) Ping() error {
 
 	rows, err := db.Query(context.Background(), "SELECT table_name FROM information_schema.tables WHERE table_schema='public' and (table_type = 'BASE TABLE' or table_type = 'VIEW')")
 	if err != nil {
-		log.Log.Debugf("Error pinging database ...%v", err)
+		log.Log.Debugf("%s Error pinging database ...%v", pg.ID().String(), err)
 		return err
 	}
 	defer rows.Close()
@@ -410,7 +410,7 @@ func (pg *PostGres) Ping() error {
 	for rows.Next() {
 		err = rows.Scan(&tableName)
 		if err != nil {
-			log.Log.Debugf("Error pinging and scan database ...%v", err)
+			log.Log.Debugf("%s Error pinging and scan database ...%v", pg.ID().String(), err)
 			return err
 		}
 		pg.dbTableNames = append(pg.dbTableNames, tableName)
