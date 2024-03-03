@@ -34,6 +34,12 @@ func New(id common.RegDbID, url string) (common.Database, error) {
 	return nil, errorrepo.NewError("DB065535")
 }
 
+func (ada *Adabas) Clone() common.Database {
+	newAda := &Adabas{}
+	*newAda = *ada
+	return newAda
+}
+
 // SetCredentials set credentials to connect to database
 func (ada *Adabas) SetCredentials(user, password string) error {
 	return errorrepo.NewError("DB065535")

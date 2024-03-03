@@ -83,6 +83,12 @@ func New(id common.RegDbID, url string) (common.Database, error) {
 	return oracle, nil
 }
 
+func (oracle *Oracle) Clone() common.Database {
+	newOc := &Oracle{}
+	*newOc = *oracle
+	return newOc
+}
+
 // SetCredentials set credentials to connect to database
 func (oracle *Oracle) SetCredentials(user, password string) error {
 	oracle.user = user

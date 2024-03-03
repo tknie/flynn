@@ -60,6 +60,7 @@ type Database interface {
 	Ping() error
 	SetCredentials(string, string) error
 	Maps() ([]string, error)
+	Clone() Database
 	GetTableColumn(tableName string) ([]string, error)
 	CreateTable(string, any) error
 	DeleteTable(string) error

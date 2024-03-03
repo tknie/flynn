@@ -69,6 +69,12 @@ func New(id common.RegDbID, url string) (common.Database, error) {
 	return mysql, nil
 }
 
+func (mysql *Mysql) Clone() common.Database {
+	newMy := &Mysql{}
+	*newMy = *mysql
+	return newMy
+}
+
 // SetCredentials set credentials to connect to database
 func (mysql *Mysql) SetCredentials(user, password string) error {
 	mysql.user = user

@@ -39,6 +39,12 @@ func (ada *oracle) SetCredentials(user, password string) error {
 	return errorrepo.NewError("DB065535")
 }
 
+func (oracle *oracle) Clone() common.Database {
+	newOc := &oracle{}
+	*newOc = *oracle
+	return newOc
+}
+
 // ID current id used
 func (ada *oracle) ID() common.RegDbID {
 	return math.MaxUint64

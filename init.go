@@ -78,7 +78,7 @@ func Handler(dbref *common.Reference, password string) (common.RegDbID, error) {
 		return 0, err
 	}
 	common.RegisterDbClient(db)
-	log.Log.Debugf("Register db type %s on db=%p driver=%d,len=%d: %v", db.ID(),
+	log.Log.Debugf("%s Register db type on db=%p driver=%d,len=%d: %v", db.ID().String(),
 		db, dbref.Driver, len(common.Databases), common.DBHelper())
 	return db.ID(), nil
 }
@@ -86,7 +86,8 @@ func Handler(dbref *common.Reference, password string) (common.RegDbID, error) {
 // Maps database tables,views and/or maps usable for queries
 func Maps() []string {
 	databaseMaps := make([]string, 0)
-	for _, database := range common.Databases {
+	for _, db := range common.Databases {
+		database := db.Clone()
 		log.Log.Debugf("Map found " + database.URL())
 		subMaps, err := database.Maps()
 		if err != nil {

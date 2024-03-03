@@ -98,6 +98,12 @@ func NewInstance(id common.RegDbID, reference *common.Reference, password string
 	return pg, nil
 }
 
+func (pg *PostGres) Clone() common.Database {
+	newPg := &PostGres{}
+	*newPg = *pg
+	return newPg
+}
+
 // New create new postgres reference instance
 func New(id common.RegDbID, url string) (common.Database, error) {
 	reference, passwd, err := common.NewReference(url)

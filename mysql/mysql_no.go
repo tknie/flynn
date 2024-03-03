@@ -34,6 +34,12 @@ func New(id common.RegDbID, url string) (common.Database, error) {
 	return nil, errorrepo.NewError("DB065535")
 }
 
+func (mysql *mysql) Clone() common.Database {
+	newMy := &mysql{}
+	*newMy = *mysql
+	return newMy
+}
+
 // SetCredentials set credentials to connect to database
 func (ada *mysql) SetCredentials(user, password string) error {
 	return errorrepo.NewError("DB065535")
