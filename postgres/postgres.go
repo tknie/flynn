@@ -101,6 +101,10 @@ func NewInstance(id common.RegDbID, reference *common.Reference, password string
 func (pg *PostGres) Clone() common.Database {
 	newPg := &PostGres{}
 	*newPg = *pg
+	newPg.ctx = nil
+	newPg.openDB = nil
+	newPg.tx = nil
+	newPg.lock = sync.Mutex{}
 	return newPg
 }
 
