@@ -80,7 +80,7 @@ func (q *Query) Select() (string, error) {
 	if q.Join != "" {
 		selectCmd.WriteString(" LIKE " + q.Join)
 	}
-	if len(q.Order) > 0 {
+	if len(q.Group) > 0 {
 		selectCmd.WriteString(" GROUP BY ")
 		for x, s := range q.Order {
 			if x > 0 {
