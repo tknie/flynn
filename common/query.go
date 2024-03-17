@@ -82,7 +82,7 @@ func (q *Query) Select() (string, error) {
 	}
 	if len(q.Group) > 0 {
 		selectCmd.WriteString(" GROUP BY ")
-		for x, s := range q.Order {
+		for x, s := range q.Group {
 			if x > 0 {
 				selectCmd.WriteString(",")
 			}
