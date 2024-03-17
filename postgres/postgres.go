@@ -553,11 +553,13 @@ func (pg *PostGres) ParseRows(search *common.Query, rows pgx.Rows, f common.Resu
 		result.Header = append(result.Header, &common.Column{Name: f.Name,
 			Length: uint16(f.DataTypeSize)})
 	}
+	log.Log.Debugf("Go through rows ... fields=%d header=%d desc=%d",
+		len(result.Fields), len(result.Header), len(rows.FieldDescriptions()))
 	currentCounter := uint64(0)
 	for rows.Next() {
 		currentCounter++
 		result.Counter = currentCounter
-		log.Log.Debugf("Checking row...")
+		log.Log.Debugf("Checking row %d...", currentCounter)
 
 		result.Rows, err = rows.Values()
 		if err != nil {

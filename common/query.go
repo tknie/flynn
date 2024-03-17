@@ -146,7 +146,7 @@ func (search *Query) ParseRows(rows *sql.Rows, f ResultFunction) (result *Result
 		}
 		result.Rows = make([]any, len(scanRows))
 		for i, r := range scanRows {
-			log.Log.Debugf("Parse Rows %T", r)
+			log.Log.Debugf("Parse Row %T", r)
 			switch n := r.(type) {
 			case *sql.NullByte:
 				if n.Valid {
