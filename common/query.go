@@ -28,6 +28,7 @@ type Query struct {
 	Join         string
 	Fields       []string
 	Order        []string
+	Group        []string
 	Parameters   []any
 	Limit        uint32
 	Blocksize    int32
@@ -78,6 +79,15 @@ func (q *Query) Select() (string, error) {
 	}
 	if q.Join != "" {
 		selectCmd.WriteString(" LIKE " + q.Join)
+	}
+	if len(q.Order) > 0 {
+		selectCmd.WriteString(" GROUP BY ")
+		for x, s := range q.Order {
+			if x > 0 {
+				selectCmd.WriteString(",")
+			}
+			selectCmd.WriteString(s)
+		}
 	}
 	if len(q.Order) > 0 {
 		selectCmd.WriteString(" ORDER BY ")
