@@ -448,6 +448,7 @@ func (pg *PostGres) Delete(name string, remove *common.Entries) (rowsAffected in
 
 	if remove.Criteria != "" {
 		deleteCmd := "DELETE FROM " + name + " WHERE " + remove.Criteria
+		log.Log.Debugf("Delete cmd: %s", deleteCmd)
 		res, err := tx.Exec(ctx, deleteCmd)
 		if err != nil {
 			log.Log.Debugf("Delete error: %v", err)
@@ -471,6 +472,7 @@ func (pg *PostGres) Delete(name string, remove *common.Entries) (rowsAffected in
 	}
 
 	if !transaction {
+		log.Log.Debugf("Delete not in transaction and commit data to database")
 		err = pg.EndTransaction(true)
 		if err != nil {
 			return -1, err
