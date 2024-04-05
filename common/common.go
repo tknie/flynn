@@ -69,7 +69,7 @@ type Database interface {
 	Close()
 	FreeHandler()
 	Insert(name string, insert *Entries) ([][]any, error)
-	Update(name string, insert *Entries) (int64, error)
+	Update(name string, insert *Entries) ([][]any, int64, error)
 	Delete(name string, remove *Entries) (int64, error)
 	Batch(batch string) error
 	BatchSelect(batch string) ([][]interface{}, error)
@@ -249,10 +249,10 @@ func (id RegDbID) Insert(name string, insert *Entries) ([][]any, error) {
 }
 
 // Update update record in table
-func (id RegDbID) Update(name string, insert *Entries) (int64, error) {
+func (id RegDbID) Update(name string, insert *Entries) ([][]any, int64, error) {
 	driver, err := searchDataDriver(id)
 	if err != nil {
-		return 0, err
+		return nil, 0, err
 	}
 	return driver.Update(name, insert)
 }

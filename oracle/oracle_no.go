@@ -80,8 +80,8 @@ func (ada *oracle) Insert(name string, insert *common.Entries) ([][]any, error) 
 }
 
 // Update update record in table
-func (ada *oracle) Update(name string, insert *common.Entries) (int64, error) {
-	return 0, errorrepo.NewError("DB065535")
+func (ada *oracle) Update(name string, insert *common.Entries) ([][]any, int64, error) {
+	return nil, 0, errorrepo.NewError("DB065535")
 }
 
 // Delete Delete database records

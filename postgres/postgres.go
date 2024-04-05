@@ -850,14 +850,14 @@ func scanStruct(row pgx.Row, insert *common.Entries) ([]any, error) {
 }
 
 // Update update record in table
-func (pg *PostGres) Update(name string, updateInfo *common.Entries) (rowsAffected int64, err error) {
+func (pg *PostGres) Update(name string, updateInfo *common.Entries) (returning [][]any, rowsAffected int64, err error) {
 	transaction := pg.IsTransaction()
 	var ctx context.Context
 	var tx pgx.Tx
 	if !transaction {
 		tx, ctx, err = pg.StartTransaction()
 		if err != nil {
-			return -1, err
+			return nil, -1, err
 		}
 		defer pg.Close()
 	} else {
@@ -866,7 +866,7 @@ func (pg *PostGres) Update(name string, updateInfo *common.Entries) (rowsAffecte
 		ctx = pg.ctx
 	}
 	if tx == nil {
-		return 0, fmt.Errorf("nil internal error update")
+		return nil, 0, fmt.Errorf("nil internal error update")
 	}
 	var insertFields []string
 	var updateValues [][]any
@@ -883,20 +883,55 @@ func (pg *PostGres) Update(name string, updateInfo *common.Entries) (rowsAffecte
 	} else {
 		updateValues = updateInfo.Values
 	}
-	insertCmd, whereFields := dbsql.GenerateUpdate(pg.IndexNeeded(), name, updateInfo)
+	updateCmd, whereFields := dbsql.GenerateUpdate(pg.IndexNeeded(), name, updateInfo)
+	if len(updateInfo.Returning) > 0 {
+		updateCmd += " RETURNING "
+		for i, r := range updateInfo.Returning {
+			if i > 0 {
+				updateCmd += ","
+			}
+			updateCmd += r
+		}
+	}
 
+	returning = make([][]any, 0)
 	for i, v := range updateValues {
+		av := v
 		whereClause := dbsql.CreateWhere(i, updateInfo, whereFields)
-		ic := insertCmd + whereClause
+		ic := updateCmd + whereClause
 		log.Log.Debugf("Update call: %s", ic)
 		log.Log.Debugf("Update values: %d -> %#v tx=%v %v", len(v), v, tx, ctx)
-		res, err := tx.Exec(ctx, ic, v...)
-		if err != nil {
-			log.Log.Debugf("Update error: %s -> %v", ic, err)
-			pg.EndTransaction(false)
-			return 0, err
+		if len(updateInfo.Returning) > 0 {
+			row := tx.QueryRow(ctx, updateCmd, av...)
+			if updateInfo.DataStruct != nil {
+				log.Log.Debugf("Use data struct for returning")
+				rv, err := scanStruct(row, updateInfo)
+				if err != nil {
+					trErr := pg.EndTransaction(false)
+					log.Log.Debugf("Error insert CMD: %v of %s and cmd %s trErr=%v",
+						err, name, updateCmd, trErr)
+					return nil, 0, err
+				}
+				returning = append(returning, rv)
+			} else {
+				rv, err := scanRow(row, len(updateInfo.Returning))
+				if err != nil {
+					trErr := pg.EndTransaction(false)
+					log.Log.Debugf("Error insert CMD: %v of %s and cmd %s trErr=%v",
+						err, name, updateCmd, trErr)
+					return nil, 0, err
+				}
+				returning = append(returning, rv)
+			}
+		} else {
+			res, err := tx.Exec(ctx, ic, v...)
+			if err != nil {
+				log.Log.Debugf("Update error: %s -> %v", ic, err)
+				pg.EndTransaction(false)
+				return nil, 0, err
+			}
+			rowsAffected += res.RowsAffected()
 		}
-		rowsAffected += res.RowsAffected()
 		log.Log.Debugf("Rows affected %d", rowsAffected)
 	}
 	log.Log.Debugf("Update done")
@@ -904,10 +939,10 @@ func (pg *PostGres) Update(name string, updateInfo *common.Entries) (rowsAffecte
 	if !transaction {
 		err = pg.EndTransaction(true)
 		if err != nil {
-			return -1, err
+			return nil, -1, err
 		}
 	}
-	return rowsAffected, nil
+	return returning, rowsAffected, nil
 }
 
 // Batch batch SQL query in table

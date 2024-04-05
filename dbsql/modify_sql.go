@@ -46,10 +46,12 @@ func Insert(dbsql DBsql, name string, insert *common.Entries) ([][]any, error) {
 	if insert.DataStruct != nil {
 		dynamic := common.CreateInterface(insert.DataStruct, insert.Fields)
 		insertFields = dynamic.RowFields
-		v := dynamic.CreateInsertValues()
-		insertValues = [][]any{v}
-		log.Log.Debugf("Row   fields: %#v", insertFields)
-		log.Log.Debugf("Value fields: %#v", insertValues)
+		for _, vi := range insert.Values {
+			v := dynamic.CreateValues(vi[0])
+			log.Log.Debugf("Row   fields: %#v", insertFields)
+			log.Log.Debugf("Value fields: %#v", insertValues)
+			insertValues = append(insertValues, v)
+		}
 	} else {
 		insertFields = insert.Fields
 		insertValues = insert.Values
@@ -161,10 +163,10 @@ func GenerateDelete(indexNeeded bool, name string, valueIndex int, deleteInfo *c
 	return deleteCmd, values
 }
 
-func Update(dbsql DBsql, name string, updateInfo *common.Entries) (rowsAffected int64, err error) {
+func Update(dbsql DBsql, name string, updateInfo *common.Entries) (running [][]any, rowsAffected int64, err error) {
 	tx, ctx, err := dbsql.StartTransaction()
 	if err != nil {
-		return -1, err
+		return nil, -1, err
 	}
 	log.Log.Debugf("Transaction %p", tx)
 	if !dbsql.IsTransaction() {
@@ -173,12 +175,17 @@ func Update(dbsql DBsql, name string, updateInfo *common.Entries) (rowsAffected 
 	}
 	insertCmd, whereFields := GenerateUpdate(dbsql.IndexNeeded(), name, updateInfo)
 	log.Log.Debugf("CMD: %s - %s", insertCmd, whereFields)
+	var insertFields []string
 	var insertValues [][]any
 	if updateInfo.DataStruct != nil {
 		dynamic := common.CreateInterface(updateInfo.DataStruct, updateInfo.Fields)
-		v := dynamic.CreateInsertValues()
-		insertValues = [][]any{v}
-		log.Log.Debugf("Value fields: %#v", insertValues)
+		insertFields = dynamic.RowFields
+		for _, vi := range updateInfo.Values {
+			v := dynamic.CreateValues(vi[0])
+			insertValues = append(insertValues, v)
+			log.Log.Debugf("Row   fields: %#v", insertFields)
+			log.Log.Debugf("Value fields: %#v", insertValues)
+		}
 	} else {
 		insertValues = updateInfo.Values
 	}
@@ -191,7 +198,7 @@ func Update(dbsql DBsql, name string, updateInfo *common.Entries) (rowsAffected 
 		if err != nil {
 			log.Log.Debugf("Update error: %s -> %v", ic, err)
 			dbsql.EndTransaction(false)
-			return 0, err
+			return nil, 0, err
 		}
 		ra, _ := res.RowsAffected()
 		rowsAffected += ra
@@ -205,7 +212,7 @@ func Update(dbsql DBsql, name string, updateInfo *common.Entries) (rowsAffected 
 		if err != nil {
 			log.Log.Debugf("Error transaction %v", err)
 			dbsql.Close()
-			return 0, err
+			return nil, 0, err
 		}
 		log.Log.Debugf("Close ...")
 		dbsql.Close()
@@ -213,7 +220,7 @@ func Update(dbsql DBsql, name string, updateInfo *common.Entries) (rowsAffected 
 		log.Log.Debugf("Transaction, NO end and close")
 	}
 
-	return rowsAffected, nil
+	return nil, rowsAffected, nil
 }
 
 func CreateWhere(valueIndex int, updateInfo *common.Entries, whereFields []int) string {

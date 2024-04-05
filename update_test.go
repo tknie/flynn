@@ -53,7 +53,7 @@ func updateTest(t *testing.T, target *target) error {
 	}
 	list = [][]any{{vId1, "changeValue", 2323}, {vId2, "mfngkfngkfngk changed", 87766}}
 	input.Values = list
-	ra, err := x.Update(testStructTable, input)
+	_, ra, err := x.Update(testStructTable, input)
 	if !assert.NoError(t, err) {
 		return err
 	}
@@ -166,7 +166,7 @@ func TestPostgresTransaction(t *testing.T) {
 	input.Values = [][]any{{newID}}
 	input.Fields = []string{"ID"}
 	input.Update[0] = "ID='" + vId1b + "'"
-	_, err = x.Update(testStructTable, input)
+	_, _, err = x.Update(testStructTable, input)
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -179,7 +179,7 @@ func TestPostgresTransaction(t *testing.T) {
 	}{ID: "2221111", Name: "Wolfen", MiddleName: "Otto", City: "Hongkong"}
 	input = &common.Entries{DataStruct: record, Fields: []string{"*"}, Values: [][]any{{record}}}
 	input.Update = []string{"ID='" + newID + "'"}
-	_, err = x.Update(testStructTable, input)
+	_, _, err = x.Update(testStructTable, input)
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -330,7 +330,7 @@ func TestMySQLTransaction(t *testing.T) {
 	input.Values = [][]any{{newID}}
 	input.Fields = []string{"ID"}
 	input.Update[0] = "ID='" + vId1b + "'"
-	_, err = x.Update(testStructTable, input)
+	_, _, err = x.Update(testStructTable, input)
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -343,7 +343,7 @@ func TestMySQLTransaction(t *testing.T) {
 	}{ID: "2221111", Name: "Wolfen", MiddleName: "Otto", City: "Hongkong"}
 	input = &common.Entries{DataStruct: record, Fields: []string{"*"}}
 	input.Update = []string{"ID='" + newID + "'"}
-	_, err = x.Update(testStructTable, input)
+	_, _, err = x.Update(testStructTable, input)
 	if !assert.NoError(t, err) {
 		return
 	}

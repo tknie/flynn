@@ -298,7 +298,7 @@ func (mysql *Mysql) Insert(name string, insert *common.Entries) ([][]any, error)
 }
 
 // Update update record in table
-func (mysql *Mysql) Update(name string, insert *common.Entries) (int64, error) {
+func (mysql *Mysql) Update(name string, insert *common.Entries) ([][]any, int64, error) {
 	return dbsql.Update(mysql, name, insert)
 }
 

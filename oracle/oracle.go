@@ -31,7 +31,7 @@ import (
 )
 
 const (
-	layer             = "oracle"
+	layer             = "godor"
 	userPlaceholder   = "<user>"
 	passwdPlaceholder = "<password>"
 )
@@ -310,7 +310,7 @@ func (oracle *Oracle) Insert(name string, insert *common.Entries) ([][]any, erro
 }
 
 // Update update record in table
-func (oracle *Oracle) Update(name string, insert *common.Entries) (int64, error) {
+func (oracle *Oracle) Update(name string, insert *common.Entries) ([][]any, int64, error) {
 	return dbsql.Update(oracle, name, insert)
 }
 
