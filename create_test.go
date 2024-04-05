@@ -13,7 +13,10 @@ package flynn
 
 import (
 	"fmt"
+	"os"
+	"slices"
 	"strconv"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -156,8 +159,12 @@ func deleteTable(t *testing.T, id common.RegDbID, name, layer string) {
 func TestCreateStruct(t *testing.T) {
 	InitLog(t)
 	log.Log.Debugf("TEST: %s", t.Name())
-
+	targetsEnv := os.Getenv("TEST_FILTER_TARGETS")
+	targets := strings.Split(targetsEnv, ",")
 	for _, target := range getTestTargets(t) {
+		if targetsEnv != "" && !slices.Contains(targets, target.layer) {
+			continue
+		}
 		log.Log.Debugf("Work on target %#v", target)
 		err := createStruct(t, target)
 		assert.NoError(t, err)
@@ -210,7 +217,7 @@ func createStruct(t *testing.T, target *target) error {
 	}
 	// Insert data (all fields)
 	_, err = id.Insert(testCreationTableStruct, &common.Entries{Fields: []string{"*"},
-		DataStruct: &columns})
+		DataStruct: &columns, Values: [][]any{{&columns}}})
 	if !assert.NoError(t, err, "insert data struct fail using "+target.layer) {
 		return err
 	}
@@ -300,7 +307,7 @@ func initTheadTest(t *testing.T, layer, url string, f func(t *testing.T, layer, 
 	log.Log.Debugf("Waiting for insert wait group " + layer)
 	// fmt.Println("WAIT-" + layer)
 	wgTest.Wait()
-	fmt.Println("WENDED-" + layer)
+	// fmt.Println("WENDED-" + layer)
 	log.Log.Debugf("Closeing group")
 	for i := 0; i < 10; i++ {
 		doneChan <- true
