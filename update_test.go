@@ -177,7 +177,7 @@ func TestPostgresTransaction(t *testing.T) {
 		MiddleName string
 		City       string
 	}{ID: "2221111", Name: "Wolfen", MiddleName: "Otto", City: "Hongkong"}
-	input = &common.Entries{DataStruct: record, Fields: []string{"*"}}
+	input = &common.Entries{DataStruct: record, Fields: []string{"*"}, Values: [][]any{{record}}}
 	input.Update = []string{"ID='" + newID + "'"}
 	_, err = x.Update(testStructTable, input)
 	if !assert.NoError(t, err) {
@@ -197,7 +197,7 @@ func TestPostgresTransaction(t *testing.T) {
 		count++
 		return nil
 	})
-	assert.Equal(t, count, 0)
+	assert.Equal(t, 1, count)
 	assert.NoError(t, err)
 
 	q = &common.Query{TableName: testStructTable,
