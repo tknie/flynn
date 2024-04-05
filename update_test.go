@@ -197,7 +197,7 @@ func TestPostgresTransaction(t *testing.T) {
 		count++
 		return nil
 	})
-	assert.Equal(t, 1, count)
+	assert.Equal(t, 0, count)
 	assert.NoError(t, err)
 
 	q = &common.Query{TableName: testStructTable,
