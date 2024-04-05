@@ -341,7 +341,7 @@ func TestMySQLTransaction(t *testing.T) {
 		MiddleName string
 		City       string
 	}{ID: "2221111", Name: "Wolfen", MiddleName: "Otto", City: "Hongkong"}
-	input = &common.Entries{DataStruct: record, Fields: []string{"*"}}
+	input = &common.Entries{DataStruct: record, Fields: []string{"*"}, Values: [][]any{{&record}}}
 	input.Update = []string{"ID='" + newID + "'"}
 	_, _, err = x.Update(testStructTable, input)
 	if !assert.NoError(t, err) {
