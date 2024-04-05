@@ -19,7 +19,6 @@ import (
 	"testing"
 
 	"github.com/tknie/flynn/common"
-	def "github.com/tknie/flynn/common"
 	"github.com/tknie/log"
 
 	"github.com/stretchr/testify/assert"
@@ -42,9 +41,9 @@ func (m *msg) values() []any {
 	return []any{strconv.Itoa(m.index), m.msg}
 }
 
-var dataChan = make(chan *msg, 0)
+var dataChan = make(chan *msg)
 var wgThread sync.WaitGroup
-var doneChan = make(chan bool, 0)
+var doneChan = make(chan bool)
 var wgTest sync.WaitGroup
 var atomicInt = int32(0)
 
@@ -72,10 +71,10 @@ func getTestTargets(t *testing.T) (targets []*target) {
 func TestCreateStringArray(t *testing.T) {
 	InitLog(t)
 
-	columns := make([]*def.Column, 0)
-	columns = append(columns, &def.Column{Name: "Id", DataType: def.Alpha, Length: 8})
-	columns = append(columns, &def.Column{Name: "Name", DataType: def.Alpha, Length: 10})
-	columns = append(columns, &def.Column{Name: "FirstName", DataType: def.Alpha, Length: 20})
+	columns := make([]*common.Column, 0)
+	columns = append(columns, &common.Column{Name: "Id", DataType: common.Alpha, Length: 8})
+	columns = append(columns, &common.Column{Name: "Name", DataType: common.Alpha, Length: 10})
+	columns = append(columns, &common.Column{Name: "FirstName", DataType: common.Alpha, Length: 20})
 
 	for _, target := range getTestTargets(t) {
 		fmt.Println("Working at string creation on target " + target.layer)
@@ -86,7 +85,7 @@ func TestCreateStringArray(t *testing.T) {
 			return
 		}
 		if target.layer == "adabas" {
-			_, err := id.Delete(testCreationTable, &def.Entries{Fields: []string{"%Id"},
+			_, err := id.Delete(testCreationTable, &common.Entries{Fields: []string{"%Id"},
 				Values: [][]any{{"TEST%"}}})
 			if !assert.NoError(t, err, "DELETE") {
 				return
@@ -109,13 +108,13 @@ func TestCreateStringArray(t *testing.T) {
 		}
 		count++
 		list = append(list, []any{"TEST" + strconv.Itoa(count), "Letztes", "Anton"})
-		err = id.Insert(testCreationTable, &def.Entries{Fields: []string{"Id", "Name", "FirstName"},
+		_, err = id.Insert(testCreationTable, &common.Entries{Fields: []string{"Id", "Name", "FirstName"},
 			Values: list})
 		if !assert.NoError(t, err, "insert fail using "+target.layer) {
 			return
 		}
 		log.Log.Debugf("Delete TEST records")
-		dr, err := id.Delete(testCreationTable, &def.Entries{Fields: []string{"%Id"},
+		dr, err := id.Delete(testCreationTable, &common.Entries{Fields: []string{"%Id"},
 			Values: [][]any{{"TEST%"}}})
 		if !assert.NoError(t, err, "insert fail using "+target.layer) {
 			return
@@ -125,12 +124,12 @@ func TestCreateStringArray(t *testing.T) {
 		log.Log.Debugf("Delete of records done")
 		tId := "TEST" + strconv.Itoa(count)
 		list = append(list, []any{tId, "Tom", "Terminal"})
-		err = id.Insert(testCreationTable, &def.Entries{Fields: []string{"Id", "Name", "FirstName"},
+		_, err = id.Insert(testCreationTable, &common.Entries{Fields: []string{"Id", "Name", "FirstName"},
 			Values: list})
 		if !assert.NoError(t, err, "insert fail using "+target.layer) {
 			return
 		}
-		dr, err = id.Delete(testCreationTable, &def.Entries{Criteria: "Id='" + tId + "'"})
+		dr, err = id.Delete(testCreationTable, &common.Entries{Criteria: "Id='" + tId + "'"})
 		if !assert.NoError(t, err, "delete fail using "+target.layer) {
 			return
 		}
@@ -142,13 +141,13 @@ func TestCreateStringArray(t *testing.T) {
 	}
 }
 
-func unregisterDatabase(t *testing.T, id def.RegDbID) {
+func unregisterDatabase(t *testing.T, id common.RegDbID) {
 	log.Log.Debugf("FreeHandler %s", id)
 	err := id.FreeHandler()
 	assert.NoError(t, err)
 }
 
-func deleteTable(t *testing.T, id def.RegDbID, name, layer string) {
+func deleteTable(t *testing.T, id common.RegDbID, name, layer string) {
 	log.Log.Debugf("Delete table %s", name)
 	err := id.DeleteTable(name)
 	assert.NoError(t, err, "delete fail using "+layer)
@@ -196,7 +195,7 @@ func createStruct(t *testing.T, target *target) error {
 	}
 	x, err := id.CreateTableIfNotExists(testCreationTableStruct, columns)
 	assert.NoError(t, err)
-	assert.Equal(t, def.CreateExists, x)
+	assert.Equal(t, common.CreateExists, x)
 
 	list := make([][]any, 0)
 	list = append(list, []any{"Eins", "Ernie"})
@@ -204,13 +203,13 @@ func createStruct(t *testing.T, target *target) error {
 		list = append(list, []any{strconv.Itoa(i), "Graf Zahl " + strconv.Itoa(i)})
 	}
 	list = append(list, []any{"Letztes", "Anton"})
-	err = id.Insert(testCreationTableStruct, &def.Entries{Fields: []string{"name", "firstname"},
+	_, err = id.Insert(testCreationTableStruct, &common.Entries{Fields: []string{"name", "firstname"},
 		Values: list})
 	if !assert.NoError(t, err, "insert fail using "+target.layer) {
 		return err
 	}
 	// Insert data (all fields)
-	err = id.Insert(testCreationTableStruct, &def.Entries{Fields: []string{"*"},
+	_, err = id.Insert(testCreationTableStruct, &common.Entries{Fields: []string{"*"},
 		DataStruct: &columns})
 	if !assert.NoError(t, err, "insert data struct fail using "+target.layer) {
 		return err
@@ -220,7 +219,7 @@ func createStruct(t *testing.T, target *target) error {
 	assert.NoError(t, err, "select fail using "+target.layer)
 	found := false
 	err = id.BatchSelectFct(&common.Query{Search: "SELECT NAME FROM " + testCreationTableStruct + " WHERE NAME='Gellanger'"},
-		func(search *def.Query, result *def.Result) error {
+		func(search *common.Query, result *common.Result) error {
 			assert.Equal(t, uint64(1), result.Counter)
 			assert.Equal(t, "Gellanger", result.Rows[0].(string))
 			found = true
@@ -231,7 +230,7 @@ func createStruct(t *testing.T, target *target) error {
 	err = id.Commit()
 	assert.NoError(t, err)
 	err = id.BatchSelectFct(&common.Query{Search: "SELECT COUNT(*) FROM " + testCreationTableStruct},
-		func(search *def.Query, result *def.Result) error {
+		func(search *common.Query, result *common.Result) error {
 			count := uint64(0)
 			switch c := result.Rows[0].(type) {
 			case int64:
@@ -258,7 +257,7 @@ func createStruct(t *testing.T, target *target) error {
 	}
 	found = false
 	err = id.BatchSelectFct(&common.Query{Search: "SELECT NAME FROM " + testCreationTableStruct + " WHERE NAME = " + placeHolder, Parameters: []any{"Gellanger"}},
-		func(search *def.Query, result *def.Result) error {
+		func(search *common.Query, result *common.Result) error {
 			assert.Equal(t, uint64(1), result.Counter)
 			assert.Equal(t, "Gellanger", result.Rows[0].(string))
 			found = true
@@ -332,7 +331,7 @@ func insertThread(t *testing.T, layer, url string) {
 		select {
 		case x := <-dataChan:
 			log.Log.Debugf("%v-%02d: Received entry  ....%v -> %s", id, nr, x.msg, layer)
-			err = id.Insert(testCreationTableStruct, &def.Entries{Fields: []string{"name", "firstname"},
+			_, err = id.Insert(testCreationTableStruct, &common.Entries{Fields: []string{"name", "firstname"},
 				Values: [][]any{x.values()}})
 			log.Log.Debugf("%v-%02d: insert returned  ....%v -> %s %v", id, nr, x.msg, layer, err)
 			if !assert.NoError(t, err, "insert fail using "+layer) {
@@ -372,7 +371,7 @@ func insertRecordForThread(t *testing.T, layer, url string, nr int32) {
 		select {
 		case x := <-dataChan:
 			log.Log.Debugf("%02d: Received entry  ....%v", nr, x.msg)
-			err = id.Insert(testCreationTableStruct, &def.Entries{Fields: []string{"name", "firstname"},
+			_, err = id.Insert(testCreationTableStruct, &common.Entries{Fields: []string{"name", "firstname"},
 				Values: [][]any{x.values()}})
 			if !assert.NoError(t, err, "insert fail using "+layer) {
 				fmt.Println("Error thread ....")

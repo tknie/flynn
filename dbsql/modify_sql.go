@@ -23,11 +23,11 @@ import (
 	"github.com/tknie/log"
 )
 
-func Insert(dbsql DBsql, name string, insert *common.Entries) error {
+func Insert(dbsql DBsql, name string, insert *common.Entries) ([][]any, error) {
 	log.Log.Debugf("Transaction (begin insert): %v", dbsql.IsTransaction())
 	tx, ctx, err := dbsql.StartTransaction()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	log.Log.Debugf("Transaction %p", tx)
 	if !dbsql.IsTransaction() {
@@ -77,14 +77,14 @@ func Insert(dbsql DBsql, name string, insert *common.Entries) error {
 		if err != nil {
 			dbsql.EndTransaction(false)
 			log.Log.Debugf("Error insert CMD: %v of %s and cmd %s", err, name, insertCmd)
-			return err
+			return nil, err
 		}
 		l, err := res.RowsAffected()
 		if err != nil {
-			return err
+			return nil, err
 		}
 		if l == 0 {
-			return fmt.Errorf("insert of rows failed")
+			return nil, fmt.Errorf("insert of rows failed")
 		}
 	}
 	log.Log.Debugf("Transaction: %v", dbsql.IsTransaction())
@@ -94,14 +94,14 @@ func Insert(dbsql DBsql, name string, insert *common.Entries) error {
 		if err != nil {
 			log.Log.Debugf("Error transaction %v", err)
 			dbsql.Close()
-			return err
+			return nil, err
 		}
 		log.Log.Debugf("Close ...")
 		dbsql.Close()
 	} else {
 		log.Log.Debugf("Transaction, NO end and close")
 	}
-	return nil
+	return make([][]any, 0), nil
 }
 
 func GenerateUpdate(indexNeeded bool, name string, updateInfo *common.Entries) (string, []int) {

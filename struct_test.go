@@ -25,8 +25,6 @@ var userTableName = "testStructUser"
 var userDbRef *common.Reference
 var userDbPassword = ""
 
-var userFieldList = []string{"Name"}
-
 // UserInfo user information context
 type UserInfo struct {
 	UUID     string
@@ -105,7 +103,7 @@ func TestInsertUser(t *testing.T) {
 	insert := &common.Entries{Fields: []string{"*"}, DataStruct: userInfo}
 	insert.Values = [][]any{{userInfo}}
 	log.Log.Debugf("Insert value %#v", userInfo.Info)
-	err = userStoreID.Insert(userTableName, insert)
+	_, err = userStoreID.Insert(userTableName, insert)
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -114,7 +112,7 @@ func TestInsertUser(t *testing.T) {
 	insert = &common.Entries{Fields: []string{"name", "created"}, DataStruct: userInfo}
 	insert.Values = [][]any{{userInfo}}
 	log.Log.Debugf("Insert value %#v", userInfo.Info)
-	err = userStoreID.Insert(userTableName, insert)
+	_, err = userStoreID.Insert(userTableName, insert)
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -124,7 +122,7 @@ func TestInsertUser(t *testing.T) {
 	insert = &common.Entries{Fields: []string{"name"}, DataStruct: userInfo}
 	insert.Values = [][]any{{userInfo}}
 	log.Log.Debugf("Insert value %#v", userInfo.Info)
-	err = userStoreID.Insert(userTableName, insert)
+	_, err = userStoreID.Insert(userTableName, insert)
 	if !assert.NoError(t, err) {
 		return
 	}

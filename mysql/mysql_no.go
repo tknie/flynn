@@ -75,7 +75,7 @@ func (ada *mysql) Close() {
 }
 
 // Insert insert record into table
-func (ada *mysql) Insert(name string, insert *common.Entries) error {
+func (ada *mysql) Insert(name string, insert *common.Entries) ([][]any, error) {
 	return errorrepo.NewError("DB065535")
 }
 

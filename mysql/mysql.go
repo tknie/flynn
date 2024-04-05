@@ -293,7 +293,7 @@ func (mysql *Mysql) DeleteTable(name string) error {
 }
 
 // Insert insert record into table
-func (mysql *Mysql) Insert(name string, insert *common.Entries) error {
+func (mysql *Mysql) Insert(name string, insert *common.Entries) ([][]any, error) {
 	return dbsql.Insert(mysql, name, insert)
 }
 

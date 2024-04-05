@@ -50,6 +50,7 @@ type Entries struct {
 	DataStruct any
 	Update     []string
 	Values     [][]any
+	Returning  []string
 	Criteria   string
 }
 
@@ -67,7 +68,7 @@ type Database interface {
 	Open() (any, error)
 	Close()
 	FreeHandler()
-	Insert(name string, insert *Entries) error
+	Insert(name string, insert *Entries) ([][]any, error)
 	Update(name string, insert *Entries) (int64, error)
 	Delete(name string, remove *Entries) (int64, error)
 	Batch(batch string) error
@@ -234,11 +235,11 @@ func (id RegDbID) Ping() error {
 }
 
 // Insert insert record into table
-func (id RegDbID) Insert(name string, insert *Entries) error {
+func (id RegDbID) Insert(name string, insert *Entries) ([][]any, error) {
 	log.Log.Debugf("%s Searching id", id.String())
 	driver, err := searchDataDriver(id)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if id != driver.ID() {
 		log.Log.Fatal("ID mismatch")

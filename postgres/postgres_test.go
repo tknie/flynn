@@ -31,6 +31,8 @@ import (
 var logRus = logrus.StandardLogger()
 var once = new(sync.Once)
 
+const testStructTable = "TestStructTableData"
+
 type Picture struct {
 	Index       int
 	Description string
@@ -297,4 +299,78 @@ func TestPostgresBatchSelectFct(t *testing.T) {
 		})
 	assert.Equal(t, 25, count)
 	assert.NoError(t, err)
+}
+
+func TestPostgresInsertRows(t *testing.T) {
+	InitLog(t)
+
+	url := PostgresTable(t)
+	pg, err := New(1, url)
+	assert.NoError(t, err)
+	if !assert.NotNil(t, pg) {
+		return
+	}
+	defer pg.FreeHandler()
+	nameValue := time.Now().Format("20060102150405")
+	vId1 := "i-" + nameValue + "-1"
+	vId2 := "i-" + nameValue + "-2"
+	list := [][]any{{vId1, "aaadasfdsnaflksdnf", 1}, {vId2, "dmfklsfgmskdlmgsmgls", 2}}
+	input := &common.Entries{Fields: []string{"ID", "Name", "account"},
+		Update:    []string{"ID"},
+		Values:    list,
+		Returning: []string{"ID", "account"}}
+	returning, err := pg.Insert(testStructTable, input)
+	if !assert.NoError(t, err) {
+		return
+	}
+	assert.Equal(t, 2, len(returning))
+	for i, r := range returning {
+		assert.Equal(t, 2, len(r))
+		assert.Equal(t, list[i][0], r[0])
+		l, err := strconv.ParseFloat(r[1].(string), 64)
+		assert.NoError(t, err)
+		assert.Equal(t, float64(list[i][2].(int)), l)
+	}
+}
+
+type TestInsertData struct {
+	Name    string
+	ID      string
+	Account float64
+}
+
+func TestPostgresInsertStruct(t *testing.T) {
+	InitLog(t)
+
+	url := PostgresTable(t)
+	pg, err := New(1, url)
+	assert.NoError(t, err)
+	if !assert.NotNil(t, pg) {
+		return
+	}
+	defer pg.FreeHandler()
+	nameValue := time.Now().Format("20060102150405")
+	vId1 := "s-" + nameValue + "-1"
+	vId2 := "s-" + nameValue + "-2"
+	list := [][]any{{&TestInsertData{vId1, "aaadasfdsnaflksdnf", 1}},
+		{&TestInsertData{vId2, "dmfklsfgmskdlmgsmgls", 2}}}
+	input := &common.Entries{Fields: []string{"ID", "Name", "Account"},
+		Update:     []string{"ID"},
+		DataStruct: &TestInsertData{},
+		Values:     list,
+		Returning:  []string{"ID", "Account"}}
+	returning, err := pg.Insert(testStructTable, input)
+	if !assert.NoError(t, err) {
+		return
+	}
+	if assert.Equal(t, 2, len(returning)) {
+		for i, r := range returning {
+			if x, ok := r[0].(*TestInsertData); ok {
+				assert.Equal(t, list[i][0].(*TestInsertData).ID, x.ID)
+				assert.Equal(t, "", x.Name)
+				assert.Equal(t, list[i][0].(*TestInsertData).Account, x.Account)
+				assert.Equal(t, &TestInsertData{ID: list[i][0].(*TestInsertData).ID, Account: list[i][0].(*TestInsertData).Account}, x)
+			}
+		}
+	}
 }

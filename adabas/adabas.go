@@ -140,49 +140,49 @@ func (ada *Adabas) FreeHandler() {
 }
 
 // Insert insert record into table
-func (ada *Adabas) Insert(name string, insert *common.Entries) error {
+func (ada *Adabas) Insert(name string, insert *common.Entries) ([][]any, error) {
 	con, err := ada.Open()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	conn := con.(*adabas.Connection)
 	req, err := conn.CreateMapStoreRequest(name)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	log.Log.Debugf("Fields %#v\n", insert.Fields)
 	err = req.StoreFields(insert.Fields)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	for _, v := range insert.Values {
 		record, rerr := req.CreateRecord()
 		if rerr != nil {
-			return rerr
+			return nil, rerr
 		}
 		for i, rv := range v {
 			log.Log.Debugf("%d. %s %v\n", i, insert.Fields[i], rv)
 			err = record.SetValue(insert.Fields[i], rv)
 			if err != nil {
-				return err
+				return nil, err
 			}
 		}
 		log.Log.Debugf("Values %#v\n", v)
 		err = req.Store(record)
 		if err != nil {
 			log.Log.Debugf("Error %v\n", err)
-			return err
+			return nil, err
 		}
 		err = req.EndTransaction()
 		if err != nil {
 			log.Log.Debugf("ET Error %v\n", err)
-			return err
+			return nil, err
 		}
 	}
 	err = req.EndTransaction()
 
-	return err
+	return nil, err
 }
 
 // Update update record in table

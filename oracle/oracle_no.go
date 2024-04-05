@@ -75,7 +75,7 @@ func (ada *oracle) Close() {
 }
 
 // Insert insert record into table
-func (ada *oracle) Insert(name string, insert *common.Entries) error {
+func (ada *oracle) Insert(name string, insert *common.Entries) ([][]any, error) {
 	return errorrepo.NewError("DB065535")
 }
 

@@ -217,7 +217,7 @@ func fillStructTestTable(t *testing.T, target *target) error {
 		DataStruct: data,
 		Update:     []string{"ID", "LobData"},
 		Values:     [][]any{{data}}}
-	err = id.Insert(testStructTable, input)
+	_, err = id.Insert(testStructTable, input)
 	assert.NoError(t, err)
 	return err
 }
@@ -237,7 +237,7 @@ func TestInsertStruct(t *testing.T) {
 	input := &common.Entries{Fields: []string{"ID", "Name", "account"},
 		Update: []string{"ID"},
 		Values: list}
-	err = x.Insert(testStructTable, input)
+	_, err = x.Insert(testStructTable, input)
 	if !assert.NoError(t, err) {
 		return
 	}

@@ -173,6 +173,10 @@ func TestDataTypeStructBlogs(t *testing.T) {
 		false, "abc: AAABBBCC\nnr: 0\nvalue: 0\ndoub: 0\ndoit: true\n",
 		"<SubStruct><ABC>XMLABC</ABC><Nr>0</Nr><Value>0</Value><Doub>0</Doub><DoIt>true</DoIt></SubStruct>",
 		"{\"ABC\":\"JSONABC\",\"Nr\":0,\"Value\":0,\"Doub\":0,\"DoIt\":true}"}, v)
+
+	ti = common.CreateInterface(&GlobStruct{}, []string{"*"})
+	v = ti.CreateValues(&GlobStruct{Test: "ABCBCC"})
+	assert.Equal(t, []interface{}{"ABCBCC", "", uint64(0), int64(0), float64(0), false}, v)
 }
 
 func TestDataTypeStructTag(t *testing.T) {

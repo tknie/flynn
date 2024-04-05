@@ -122,18 +122,39 @@ func (dynamic *typeInterface) CreateQueryValues() (any, []any, []any) {
 }
 
 // CreateQueryValues create query value copy of struct
+// deprecated: should not be used anymore
 func (dynamic *typeInterface) CreateInsertValues() []any {
 	if dynamic.SetType == EmptySet {
 		log.Log.Debugf("Empty set defined")
 		return nil
 	}
 	log.Log.Debugf("Create insert values")
-	value := reflect.ValueOf(dynamic.DataType)
-	if value.Type().Kind() == reflect.Pointer {
+	valueOf := reflect.ValueOf(dynamic.DataType)
+	if valueOf.Type().Kind() == reflect.Pointer {
 		//		fmt.Println(fieldType.Kind(), value.Kind())
-		value = value.Elem()
+		valueOf = valueOf.Elem()
 	}
-	dynamic.generateField(value, false)
+	dynamic.generateField(valueOf, false)
+	log.Log.Debugf("Create insert values done")
+	return dynamic.ValueRefTo
+}
+
+// CreateQueryValues create query value copy of struct
+// deprecated: should not be used anymore
+func (dynamic *typeInterface) CreateValues(value interface{}) []any {
+	dynamic.ValueRefTo = make([]any, 0)
+	if dynamic.SetType == EmptySet {
+		log.Log.Debugf("Empty set defined")
+		return nil
+	}
+	log.Log.Debugf("Create insert values")
+	valueOf := reflect.ValueOf(value)
+	if valueOf.Type().Kind() == reflect.Pointer {
+		//		fmt.Println(fieldType.Kind(), value.Kind())
+		valueOf = valueOf.Elem()
+	}
+	dynamic.generateField(valueOf, false)
+	log.Log.Debugf("Create insert values done")
 	return dynamic.ValueRefTo
 }
 
@@ -235,7 +256,7 @@ func (dynamic *typeInterface) generateField(elemValue reflect.Value, scan bool) 
 				dynamic.generateField(cv, scan)
 			}
 		} else {
-			log.Log.Debugf("Work on field %s -> %v", fieldName, scan)
+			log.Log.Debugf("Work on field %s -> scan=%v", fieldName, scan)
 			checkField := dynamic.checkFieldSet(fieldName)
 			if checkField {
 				if scan {
@@ -260,7 +281,7 @@ func (dynamic *typeInterface) generateField(elemValue reflect.Value, scan bool) 
 						dynamic.ScanValues = append(dynamic.ScanValues, &sql.NullByte{})
 					case reflect.Int16:
 						dynamic.ScanValues = append(dynamic.ScanValues, &sql.NullInt16{})
-					case reflect.Int32:
+					case reflect.Int32, reflect.Int:
 						dynamic.ScanValues = append(dynamic.ScanValues, &sql.NullInt32{})
 					case reflect.Int64:
 						dynamic.ScanValues = append(dynamic.ScanValues, &sql.NullInt64{})
@@ -285,6 +306,7 @@ func (dynamic *typeInterface) generateField(elemValue reflect.Value, scan bool) 
 								cv.Interface(), fieldName, elemValue.Type().Name(), cv.Interface())
 							dynamic.ValueRefTo = append(dynamic.ValueRefTo, cv.Interface())
 						} else {
+							log.Log.Debugf("Invalid no-scan field %s", fieldName)
 							dynamic.ValueRefTo = append(dynamic.ValueRefTo, nil)
 						}
 					}
@@ -302,8 +324,8 @@ func (dynamic *typeInterface) checkFieldSet(fieldName string) bool {
 	log.Log.Debugf("Check %s in %#v", strings.ToLower(fieldName), dynamic.FieldSet)
 	if dynamic.SetType == GivenSet {
 		_, ok = dynamic.FieldSet[strings.ToLower(fieldName)]
-		log.Log.Debugf("Restrict to %v", ok)
 	}
+	log.Log.Debugf("Restrict to %v", ok)
 
 	return ok
 }
@@ -406,9 +428,23 @@ func ShiftValues(scanValues, values []any) (err error) {
 			}
 			if vv != nil {
 				log.Log.Debugf("(%d) Found value %T pointer=%p", d, values[d], values[d])
+				log.Log.Debugf("Shift values %v", vv)
 				switch vt := values[d].(type) {
 				case *int:
-					*vt = vv.(int)
+					switch vvv := vv.(type) {
+					case int:
+						*vt = int(vvv)
+					case int32:
+						*vt = int(vvv)
+					case int64:
+						*vt = int(vvv)
+					default:
+						log.Log.Debugf("Unknown type %T", vv)
+					}
+				case *float32:
+					*vt = vv.(float32)
+				case *float64:
+					*vt = vv.(float64)
 				case *string:
 					*vt = vv.(string)
 				case *time.Time:
@@ -416,6 +452,8 @@ func ShiftValues(scanValues, values []any) (err error) {
 				default:
 					log.Log.Fatalf("%d: Unknown type for shifting value %T -> %T", d, values[d], vv)
 				}
+			} else {
+				log.Log.Debugf("SQL interface value nil")
 			}
 		}
 	}

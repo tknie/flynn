@@ -47,7 +47,7 @@ func updateTest(t *testing.T, target *target) error {
 	input := &common.Entries{Fields: []string{"ID", "Name", "account"},
 		Update: []string{"ID"},
 		Values: list}
-	err = x.Insert(testStructTable, input)
+	_, err = x.Insert(testStructTable, input)
 	if !assert.NoError(t, err) {
 		return err
 	}
@@ -99,7 +99,7 @@ func TestPostgresUpdateRollbackTransaction(t *testing.T) {
 	input := &common.Entries{Fields: []string{"ID", "Name", "account"},
 		Update: []string{"ID"},
 		Values: list}
-	err = x.Insert(testStructTable, input)
+	_, err = x.Insert(testStructTable, input)
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -107,7 +107,7 @@ func TestPostgresUpdateRollbackTransaction(t *testing.T) {
 	vId1b := "y-" + nameValue + "-3"
 	vId2b := "y-" + nameValue + "-4"
 	input.Values = [][]any{{vId1b, "jhhhhmmmmm", 1}, {vId2b, "ppppoiierer", 2}}
-	err = x.Insert(testStructTable, input)
+	_, err = x.Insert(testStructTable, input)
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -150,7 +150,7 @@ func TestPostgresTransaction(t *testing.T) {
 	input := &common.Entries{Fields: []string{"ID", "Name", "account"},
 		Update: []string{"ID"},
 		Values: list}
-	err = x.Insert(testStructTable, input)
+	_, err = x.Insert(testStructTable, input)
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -158,7 +158,7 @@ func TestPostgresTransaction(t *testing.T) {
 	vId1b := "u-" + nameValue + "-3"
 	vId2b := "u-" + nameValue + "-4"
 	input.Values = [][]any{{vId1b, "jhhhhmmmmm", 1}, {vId2b, "ppppoiierer", 2}}
-	err = x.Insert(testStructTable, input)
+	_, err = x.Insert(testStructTable, input)
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -264,7 +264,7 @@ func TestMySQLUpdateTransaction(t *testing.T) {
 	input := &common.Entries{Fields: []string{"ID", "Name", "account"},
 		Update: []string{"ID"},
 		Values: list}
-	err = x.Insert(testStructTable, input)
+	_, err = x.Insert(testStructTable, input)
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -272,7 +272,7 @@ func TestMySQLUpdateTransaction(t *testing.T) {
 	vId1b := "y-" + nameValue + "-3"
 	vId2b := "y-" + nameValue + "-4"
 	input.Values = [][]any{{vId1b, "jhhhhmmmmm", 1}, {vId2b, "ppppoiierer", 2}}
-	err = x.Insert(testStructTable, input)
+	_, err = x.Insert(testStructTable, input)
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -314,7 +314,7 @@ func TestMySQLTransaction(t *testing.T) {
 	input := &common.Entries{Fields: []string{"ID", "Name", "account"},
 		Update: []string{"ID"},
 		Values: list}
-	err = x.Insert(testStructTable, input)
+	_, err = x.Insert(testStructTable, input)
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -322,7 +322,7 @@ func TestMySQLTransaction(t *testing.T) {
 	vId1b := "u-" + nameValue + "-3"
 	vId2b := "u-" + nameValue + "-4"
 	input.Values = [][]any{{vId1b, "jhhhhmmmmm", 1}, {vId2b, "ppppoiierer", 2}}
-	err = x.Insert(testStructTable, input)
+	_, err = x.Insert(testStructTable, input)
 	if !assert.NoError(t, err) {
 		return
 	}

@@ -305,7 +305,7 @@ func (oracle *Oracle) DeleteTable(name string) error {
 }
 
 // Insert insert record into table
-func (oracle *Oracle) Insert(name string, insert *common.Entries) error {
+func (oracle *Oracle) Insert(name string, insert *common.Entries) ([][]any, error) {
 	return dbsql.Insert(oracle, name, insert)
 }
 

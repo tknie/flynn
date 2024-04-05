@@ -679,7 +679,7 @@ func (pg *PostGres) DeleteTable(name string) error {
 }
 
 // Insert insert record into table
-func (pg *PostGres) Insert(name string, insert *common.Entries) (err error) {
+func (pg *PostGres) Insert(name string, insert *common.Entries) (returning [][]any, err error) {
 	var ctx context.Context
 	var tx pgx.Tx
 	transaction := pg.IsTransaction()
@@ -688,7 +688,7 @@ func (pg *PostGres) Insert(name string, insert *common.Entries) (err error) {
 		tx, ctx, err = pg.StartTransaction()
 		if err != nil {
 			log.Log.Debugf("%s Error start transaction: %v", pg.ID().String(), err)
-			return err
+			return nil, err
 		}
 		// defer pg.Close()
 	} else {
@@ -699,12 +699,12 @@ func (pg *PostGres) Insert(name string, insert *common.Entries) (err error) {
 	}
 	if tx == nil || ctx == nil {
 		log.Log.Debugf("Error context transaction")
-		return fmt.Errorf("%p: transaction=%v or context=%v not set", pg, tx, ctx)
+		return nil, fmt.Errorf("%p: transaction=%v or context=%v not set", pg, tx, ctx)
 	}
 	if !pg.IsTransaction() {
 		log.Log.Debugf("%s: Init defer close ... in inserting", pg.ID().String())
 		pg.Close()
-		return fmt.Errorf("init of transaction fails")
+		return nil, fmt.Errorf("init of transaction fails")
 	}
 
 	log.Log.Debugf("%s Insert SQL record", pg.ID().String())
@@ -716,16 +716,20 @@ func (pg *PostGres) Insert(name string, insert *common.Entries) (err error) {
 	var insertValues [][]any
 	var insertFields []string
 	if insert.DataStruct != nil {
+		insertValues = make([][]any, 0)
 		dynamic := common.CreateInterface(insert.DataStruct, insert.Fields)
 		insertFields = dynamic.RowFields
-		v := dynamic.CreateInsertValues()
-		insertValues = [][]any{v}
-		log.Log.Debugf("Row   fields: %#v", insertFields)
-		log.Log.Debugf("Value fields: %#v", insertValues)
+		for _, vi := range insert.Values {
+			v := dynamic.CreateValues(vi[0])
+			log.Log.Debugf("Row   fields: %#v", insertFields)
+			log.Log.Debugf("Value fields: %#v", insertValues)
+			insertValues = append(insertValues, v)
+		}
 	} else {
 		insertFields = insert.Fields
 		insertValues = insert.Values
 	}
+	log.Log.Debugf("Final values: %#v", insertValues)
 	for i, field := range insertFields {
 		if i > 0 {
 			insertCmd += ","
@@ -742,32 +746,107 @@ func (pg *PostGres) Insert(name string, insert *common.Entries) (err error) {
 
 	values += ")"
 	insertCmd += ") VALUES " + values
+	if len(insert.Returning) > 0 {
+		insertCmd += " RETURNING "
+		for i, r := range insert.Returning {
+			if i > 0 {
+				insertCmd += ","
+			}
+			insertCmd += r
+		}
+	}
 	log.Log.Debugf("%s Insert pre-CMD: %s", pg.ID().String(), insertCmd)
+	returning = make([][]any, 0)
 	for _, v := range insertValues {
 		av := v
 		log.Log.Debugf("%s Insert values: %d -> %#v", pg.ID().String(), len(av), av)
-		res, err := tx.Exec(ctx, insertCmd, av...)
-		if err != nil {
-			trErr := pg.EndTransaction(false)
-			log.Log.Debugf("Error insert CMD: %v of %s and cmd %s trErr=%v",
-				err, name, insertCmd, trErr)
-			return err
-		}
-		l := res.RowsAffected()
-		if l == 0 {
-			return fmt.Errorf("insert of rows failed")
+		if len(insert.Returning) > 0 {
+			row := tx.QueryRow(ctx, insertCmd, av...)
+			if insert.DataStruct != nil {
+				log.Log.Debugf("Use data struct for returning")
+				rv, err := scanStruct(row, insert)
+				if err != nil {
+					trErr := pg.EndTransaction(false)
+					log.Log.Debugf("Error insert CMD: %v of %s and cmd %s trErr=%v",
+						err, name, insertCmd, trErr)
+					return nil, err
+				}
+				returning = append(returning, rv)
+			} else {
+				rv, err := scanRow(row, len(insert.Returning))
+				if err != nil {
+					trErr := pg.EndTransaction(false)
+					log.Log.Debugf("Error insert CMD: %v of %s and cmd %s trErr=%v",
+						err, name, insertCmd, trErr)
+					return nil, err
+				}
+				returning = append(returning, rv)
+			}
+		} else {
+			res, err := tx.Exec(ctx, insertCmd, av...)
+			if err != nil {
+				trErr := pg.EndTransaction(false)
+				log.Log.Debugf("Error insert CMD: %v of %s and cmd %s trErr=%v",
+					err, name, insertCmd, trErr)
+				return nil, err
+			}
+			l := res.RowsAffected()
+			if l == 0 {
+				return nil, fmt.Errorf("insert of rows failed")
+			}
 		}
 	}
+
 	if !transaction {
 		log.Log.Debugf("%s Need to end because not in Transaction: %v", pg.ID().String(), pg.IsTransaction())
 		err = pg.EndTransaction(true)
 		if err != nil {
 			log.Log.Debugf("Error transaction %v", err)
-			return err
+			return nil, err
 		}
 		pg.Close()
 	}
-	return nil
+	return returning, nil
+}
+
+func scanRow(row pgx.Row, cols int) ([]any, error) {
+	scanData := make([]interface{}, 0)
+	for i := 0; i < cols; i++ {
+		id := ""
+		scanData = append(scanData, &id)
+	}
+	err := row.Scan(scanData...)
+	if err != nil {
+		return nil, err
+	}
+	rv := make([]any, 0)
+	for _, sd := range scanData {
+		rv = append(rv, *sd.(*string))
+	}
+	return rv, nil
+}
+
+func scanStruct(row pgx.Row, insert *common.Entries) ([]any, error) {
+	typeInfo := common.CreateInterface(insert.DataStruct, insert.Returning)
+	copy, values, scanValues := typeInfo.CreateQueryValues()
+	log.Log.Debugf("Parse columns row -> flen=%d vlen=%d %T scanVal=%d",
+		len(insert.Returning), len(values), copy, len(scanValues))
+	fmt.Println(scanValues[0].(*sql.NullString).String)
+	err := row.Scan(scanValues...)
+	if err != nil {
+		fmt.Println("Error scanning structs", values, err)
+		log.Log.Debugf("Error during scan of struct: %v/%v", err, copy)
+		return nil, err
+	}
+	log.Log.Debugf("Scan values %#v", scanValues)
+	err = common.ShiftValues(scanValues, values)
+	if err != nil {
+		return nil, err
+	}
+	log.Log.Debugf("Returning: %#v", copy)
+	rv := make([]any, 0)
+	rv = append(rv, copy)
+	return rv, nil
 }
 
 // Update update record in table
@@ -789,15 +868,22 @@ func (pg *PostGres) Update(name string, updateInfo *common.Entries) (rowsAffecte
 	if tx == nil {
 		return 0, fmt.Errorf("nil internal error update")
 	}
-	insertCmd, whereFields := dbsql.GenerateUpdate(pg.IndexNeeded(), name, updateInfo)
+	var insertFields []string
 	var updateValues [][]any
 	if updateInfo.DataStruct != nil {
+		updateValues = make([][]any, 0)
 		dynamic := common.CreateInterface(updateInfo.DataStruct, updateInfo.Fields)
-		v := dynamic.CreateInsertValues()
-		updateValues = [][]any{v}
+		insertFields = dynamic.RowFields
+		for _, vi := range updateInfo.Values {
+			v := dynamic.CreateValues(vi[0])
+			updateValues = append(updateValues, v)
+			log.Log.Debugf("Row   fields: %#v", insertFields)
+			log.Log.Debugf("Value fields: %#v", updateValues)
+		}
 	} else {
 		updateValues = updateInfo.Values
 	}
+	insertCmd, whereFields := dbsql.GenerateUpdate(pg.IndexNeeded(), name, updateInfo)
 
 	for i, v := range updateValues {
 		whereClause := dbsql.CreateWhere(i, updateInfo, whereFields)
@@ -897,9 +983,6 @@ func (pg *PostGres) BatchSelectFct(search *common.Query, fct common.ResultFuncti
 	ctx := context.Background()
 	defer pg.Close()
 	selectCmd := search.Search
-	if err != nil {
-		return err
-	}
 	log.Log.Debugf("Query: %s Parameters: %#v", selectCmd, search.Parameters)
 	rows, err := db.Query(ctx, selectCmd, search.Parameters...)
 	if err != nil {
