@@ -361,7 +361,7 @@ func TestMySQLTransaction(t *testing.T) {
 		count++
 		return nil
 	})
-	assert.Equal(t, count, 0)
+	assert.Equal(t, 0, count)
 	assert.NoError(t, err)
 
 	q = &common.Query{TableName: testStructTable,
@@ -373,7 +373,7 @@ func TestMySQLTransaction(t *testing.T) {
 		count++
 		return nil
 	})
-	assert.Equal(t, count, 1)
+	assert.Equal(t, 1, count)
 	assert.NoError(t, err)
 
 	q = &common.Query{TableName: testStructTable,
@@ -385,7 +385,7 @@ func TestMySQLTransaction(t *testing.T) {
 		count++
 		return nil
 	})
-	assert.Equal(t, count, 1)
+	assert.Equal(t, 1, count)
 	assert.NoError(t, err)
 
 	q = &common.Query{TableName: testStructTable,
@@ -400,6 +400,6 @@ func TestMySQLTransaction(t *testing.T) {
 		count++
 		return nil
 	})
-	assert.Equal(t, count, 1)
+	assert.Equal(t, 1, count)
 	assert.NoError(t, err)
 }
