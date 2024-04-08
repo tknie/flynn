@@ -121,7 +121,7 @@ func New(id common.RegDbID, url string) (common.Database, error) {
 func (pg *PostGres) SetCredentials(user, password string) error {
 	pg.user = user
 	pg.password = password
-	fmt.Println("Store credentials")
+	log.Log.Debugf("Store credentials")
 	return nil
 }
 
@@ -234,6 +234,20 @@ func (pg *PostGres) getPool() (*pool, error) {
 		p.IncUsage()
 		return p, nil
 	}
+
+	// TODO: handle timeout
+	// ctx, cancelfunc := context.WithTimeout(context.Background(), 5*time.Second)
+	// defer cancelfunc()
+	// conn, err := di.db.Conn(ctx)
+	// if err != nil {
+	// 	return 0, err
+	// }
+	// conn.Raw(func(driverConn any) error {
+	// 	c := driverConn.(*stdlib.Conn).Conn()
+	// 	pgxdecimal.Register(c.TypeMap())
+	// 	return nil
+	// })
+
 }
 
 func (pg *PostGres) open() (dbOpen *pgxpool.Conn, err error) {
@@ -603,7 +617,6 @@ func (pg *PostGres) ParseStruct(search *common.Query, rows pgx.Rows, f common.Re
 		}
 		err := rows.Scan(scanValues...)
 		if err != nil {
-			fmt.Println("Error scanning structs", values, err)
 			log.Log.Debugf("Error during scan of struct: %v/%v", err, copy)
 			return nil, err
 		}
@@ -831,10 +844,8 @@ func scanStruct(row pgx.Row, insert *common.Entries) ([]any, error) {
 	copy, values, scanValues := typeInfo.CreateQueryValues()
 	log.Log.Debugf("Parse columns row -> flen=%d vlen=%d %T scanVal=%d",
 		len(insert.Returning), len(values), copy, len(scanValues))
-	fmt.Println(scanValues[0].(*sql.NullString).String)
 	err := row.Scan(scanValues...)
 	if err != nil {
-		fmt.Println("Error scanning structs", values, err)
 		log.Log.Debugf("Error during scan of struct: %v/%v", err, copy)
 		return nil, err
 	}
@@ -964,7 +975,7 @@ func (pg *PostGres) Batch(batch string) error {
 	defer rows.Close()
 	for rows.Next() {
 		if rows.Err() != nil {
-			fmt.Println("Batch SQL error:", rows.Err())
+			log.Log.Debugf("Batch SQL error: %v", rows.Err())
 			return rows.Err()
 		}
 	}
@@ -992,7 +1003,7 @@ func (pg *PostGres) BatchSelect(batch string) ([][]interface{}, error) {
 	result := make([][]interface{}, 0)
 	for rows.Next() {
 		if rows.Err() != nil {
-			fmt.Println("Batch SQL error:", rows.Err())
+			log.Log.Errorf("Batch SQL error: %v", rows.Err())
 			return nil, rows.Err()
 		}
 		data := common.CreateTypeData(ct)
