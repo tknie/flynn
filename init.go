@@ -51,6 +51,9 @@ func Handle(p ...string) (common.RegDbID, error) {
 // Handler Register database driver with a database URL returning a
 // reference id for the driver path to database
 func Handler(dbref *common.Reference, password string) (common.RegDbID, error) {
+	if dbref == nil {
+		return 0, fmt.Errorf("DB reference not given")
+	}
 	id := common.RegDbID(atomic.AddUint64((*uint64)(&globalRegID), 1))
 
 	if log.IsDebugLevel() {
