@@ -30,6 +30,8 @@ import (
 	"github.com/tknie/log"
 )
 
+// Use configuration URL like 'user="anton" password"secret" connectString="(DESCRIPTION=(ADDRESS_LIST=(ADDRES=(PROTOCOL...))))"'
+
 const (
 	layer             = "godor"
 	userPlaceholder   = "<user>"
@@ -113,6 +115,7 @@ func (oracle *Oracle) open() (dbOpen any, err error) {
 		log.Log.Debugf("Oracle database to %s", oracle.generateURL())
 		oracle.openDB, err = sql.Open(layer, oracle.generateURL())
 		if err != nil {
+			log.Log.Errorf("Error opening connection: %v", err)
 			return
 		}
 	}
@@ -243,6 +246,7 @@ func (oracle *Oracle) Ping() error {
 
 	oracle.dbTableNames = make([]string, 0)
 
+	log.Log.Debugf("Query all tables with: SELECT owner, table_name FROM all_tables")
 	rows, err := db.Query("SELECT owner, table_name FROM all_tables")
 	if err != nil {
 		return err

@@ -121,7 +121,7 @@ func (mysql *Mysql) Open() (dbOpen any, err error) {
 		}
 
 	}
-	log.Log.Debugf("Open database %s after transaction", mysql.dbURL)
+	log.Log.Debugf("Open MySQL database %s after transaction", mysql.dbURL)
 	return db, nil
 }
 
