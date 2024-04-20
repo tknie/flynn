@@ -107,6 +107,16 @@ The update and insert are using the corresponding `common.Entries` structure to 
  }
 ```
 
+## Database URL syntax
+
+Database | URL
+---------|----------
+  PostgreSQL | `postgres://<user>:<password>@host:<port>/mydb`
+  MySQL | `<user>:<password>@tcp(host:<port>)/mydb`
+  Oracle | `user="<user>" password="<password>" connectString="(DESCRIPTION =(ADDRESS_LIST =(ADDRESS =(PROTOCOL = TCP)(HOST = abc)(PORT = <port>)))(CONNECT_DATA=(SERVICE_NAME = SchemaXXX))"`
+  Adabas | `adatcp://host:<port>`
+
+
 ## Check List
 
 Feature | Ready-State | Description
