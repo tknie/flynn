@@ -792,3 +792,43 @@ func TestMultipleOpenClose(t *testing.T) {
 		defer idx[i].Close()
 	}
 }
+
+type Employee struct {
+	FirstName  string `flynn:"first_name"`
+	Name       string `flynn:"last_name"`
+	Department string
+	Birth      time.Time
+}
+
+func TestReadmeQuery(t *testing.T) {
+	InitLog(t)
+
+	employee := &Employee{}
+
+	userURL := "postgres://admin:abc@bear:5432/bitgarten"
+	userDbRef, _, err := common.NewReference(userURL)
+	if !assert.NoError(t, err) {
+		return
+	}
+	postgresPassword := os.Getenv("POSTGRES_PWD")
+	x, err := Handler(userDbRef, postgresPassword)
+	if !assert.NoError(t, err) {
+		return
+	}
+	defer x.FreeHandler()
+
+	q := &common.Query{TableName: "Employees",
+		DataStruct: employee,
+		Search:     "id=23",
+		Fields:     []string{"*"}}
+	counter := 0
+	_, err = x.Query(q, func(search *common.Query, result *common.Result) error {
+		counter++
+		log.Log.Debugf("Got resut data ... %d", counter)
+		e := result.Data.(*Employee)
+		fmt.Println(e.FirstName, " ", e.Name, " ", e.Birth)
+		return nil
+	})
+	assert.NoError(t, err)
+	assert.Equal(t, 1, counter)
+}

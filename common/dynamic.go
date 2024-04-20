@@ -164,6 +164,7 @@ func (dynamic *typeInterface) CreateValues(value interface{}) []any {
 func (dynamic *typeInterface) generateField(elemValue reflect.Value, scan bool) {
 	log.Log.Debugf("Generate field of Struct: %T %s -> scan=%v",
 		elemValue.Interface(), elemValue.Type().Name(), scan)
+	defer log.Log.Debugf("generated field of struct")
 	for fi := 0; fi < elemValue.NumField(); fi++ {
 		fieldType := elemValue.Type().Field(fi)
 		tag := fieldType.Tag

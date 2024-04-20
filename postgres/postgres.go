@@ -178,12 +178,14 @@ func (pg *PostGres) Maps() ([]string, error) {
 func (pg *PostGres) getPool() (*pool, error) {
 	url := pg.generateURL()
 	if p, ok := poolMap.Load(url); ok {
+		log.Log.Debugf("%s pool entry found", pg.ID().String())
 		pl := p.(*pool)
 		pl.lock.Lock()
 		defer pl.lock.Unlock()
 		if pl.pool == nil {
 			config, err := pgxpool.ParseConfig(pg.generateURL())
 			if err != nil {
+				log.Log.Debugf("Error parsing url: %s", pg.dbURL)
 				return nil, err
 			}
 			pg.defineContext()
@@ -215,6 +217,7 @@ func (pg *PostGres) getPool() (*pool, error) {
 		//config, err := pgxpool.ParseConfig(pg.generateURL() + "?pool_max_conns=100")
 		config, err := pgxpool.ParseConfig(pg.generateURL())
 		if err != nil {
+			log.Log.Debugf("Error parsing url: %s", pg.dbURL)
 			return nil, err
 		}
 		// config.Tracer = tracer
@@ -598,6 +601,7 @@ func (pg *PostGres) ParseStruct(search *common.Query, rows pgx.Rows, f common.Re
 	if search.DataStruct == nil {
 		return pg.ParseRows(search, rows, f)
 	}
+	log.Log.Debugf("Parse struct .... started")
 	result = &common.Result{}
 	result.Data = search.DataStruct
 	copy, values, scanValues, err := result.GenerateColumnByStruct(search)
@@ -609,7 +613,7 @@ func (pg *PostGres) ParseStruct(search *common.Query, rows pgx.Rows, f common.Re
 		len(result.Fields), len(values), copy, len(scanValues))
 	for rows.Next() {
 		result.Counter++
-		log.Log.Debugf("Row found and scanning with %#v", scanValues...)
+		log.Log.Debugf("%d. row found and scanning with %#v", result.Counter, scanValues)
 		if len(result.Fields) == 0 {
 			for _, f := range rows.FieldDescriptions() {
 				result.Fields = append(result.Fields, f.Name)
@@ -630,6 +634,7 @@ func (pg *PostGres) ParseStruct(search *common.Query, rows pgx.Rows, f common.Re
 			return nil, err
 		}
 	}
+	log.Log.Debugf("Parse of structure finished")
 	return
 }
 

@@ -182,6 +182,7 @@ func createStruct(t *testing.T, target *target) error {
 		Bonus     int64
 	}{XY: nrLoops + 10, Name: "Gellanger",
 		FirstName: "Bob", Salary: 10000}
+
 	log.Log.Debugf("Working on creating with target " + target.layer)
 	if target.layer == "adabas" {
 		return nil
