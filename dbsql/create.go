@@ -256,7 +256,7 @@ func sqlDataTypeStructField(baAvailable bool, field reflect.StructField) (string
 					fieldName = tagField[0]
 				}
 				if len(tagField) > 1 && tagField[1] == common.SubTypeTag {
-					return fieldName + " " + common.Bytes.SqlType(baAvailable, sfi.length), nil
+					return fieldName + " " + common.Bytes.SqlType(baAvailable, 255), nil
 				}
 				if len(tagField) > 2 {
 					switch tagField[2] {
