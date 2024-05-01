@@ -406,7 +406,7 @@ func (oracle *Oracle) Stream(search *common.Query, sf common.StreamFunction) err
 		stream.Data = make([]byte, 0)
 		if !rows.Next() {
 			log.Log.Errorf("rows missing")
-			return fmt.Errorf("rows read missing")
+			return errorrepo.NewError("DB000022")
 		}
 		if dataMaxLen == int32(math.MaxInt32) {
 			err = rows.Scan(&stream.Data, &dataMaxLen)

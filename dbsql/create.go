@@ -242,20 +242,27 @@ func sqlDataTypeStructField(baAvailable bool, field reflect.StructField) (string
 	log.Log.Debugf("Check kind %s/%s %s", x.Kind(), x.Name(), field.Name)
 	switch x.Kind() {
 	case reflect.Struct:
+		log.Log.Debugf("Check struct")
 		sfi := evaluateName(field, x)
 		if x.Name() == "Time" {
 			return sfi.name + " TIMESTAMP " + sfi.additional, nil
 		}
 		if tagName, ok := field.Tag.Lookup(common.TagName); ok {
+			log.Log.Debugf("Found tag %s for %s", tagName, field.Name)
 			tagField := strings.Split(tagName, ":")
-			if len(tagField) > 2 {
-				fieldName := x.Name()
+			fieldName := field.Name
+			if len(tagField) > 1 {
 				if tagField[0] != "" {
 					fieldName = tagField[0]
 				}
-				switch tagField[2] {
-				case "YAML", "XML", "JSON":
-					return fieldName + " ABYTE", nil
+				if len(tagField) > 1 && tagField[1] == common.SubTypeTag {
+					return fieldName + " " + common.Bytes.SqlType(baAvailable, sfi.length), nil
+				}
+				if len(tagField) > 2 {
+					switch tagField[2] {
+					case "YAML", "XML", "JSON":
+						return fieldName + " " + common.Bytes.SqlType(baAvailable, sfi.length), nil
+					}
 				}
 			}
 		}

@@ -100,6 +100,13 @@ type CommonDatabase struct {
 	LastUsed    time.Time
 }
 
+type ValueDefinition struct {
+	dynamic    *typeInterface
+	Copy       any
+	Values     []any
+	ScanValues []any
+}
+
 func (cd *CommonDatabase) IsTransaction() bool {
 	return cd.Transaction
 }
@@ -275,12 +282,12 @@ func (id RegDbID) GetTableColumn(tableName string) ([]string, error) {
 	return driver.GetTableColumn(tableName)
 }
 
-func (result *Result) GenerateColumnByStruct(search *Query) (any, []any, []any, error) {
+func (result *Result) GenerateColumnByStruct(search *Query) (*ValueDefinition, error) {
 	ti := search.TypeInfo.(*typeInterface)
-	copy, values, scanValues := ti.CreateQueryValues()
+	vd, err := ti.CreateQueryValues()
 	result.Rows = ti.ValueRefTo
 	result.Data = ti.DataType
-	return copy, values, scanValues, nil
+	return vd, err
 }
 
 // BeginTransaction begin a transaction

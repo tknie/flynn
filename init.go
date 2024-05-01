@@ -12,7 +12,6 @@
 package flynn
 
 import (
-	"fmt"
 	"os"
 	"sync/atomic"
 
@@ -32,7 +31,7 @@ var globalRegID = common.RegDbID(0)
 func Handle(p ...string) (common.RegDbID, error) {
 	l := len(p) - 1
 	if l < 0 {
-		return 0, fmt.Errorf("API error parameter missing")
+		return 0, errorrepo.NewError("DB000012")
 	}
 	log.Log.Debugf("Register %v", p[0])
 	r, passwd, err := common.NewReference(p[l])
@@ -43,7 +42,7 @@ func Handle(p ...string) (common.RegDbID, error) {
 		r.SetType(p[0])
 	}
 	if r.Driver == common.NoType {
-		return 0, fmt.Errorf("database type not given in API or URL")
+		return 0, errorrepo.NewError("DB000013")
 	}
 	return Handler(r, passwd)
 }
@@ -52,7 +51,7 @@ func Handle(p ...string) (common.RegDbID, error) {
 // reference id for the driver path to database
 func Handler(dbref *common.Reference, password string) (common.RegDbID, error) {
 	if dbref == nil {
-		return 0, fmt.Errorf("DB reference not given")
+		return 0, errorrepo.NewError("DB000014")
 	}
 	id := common.RegDbID(atomic.AddUint64((*uint64)(&globalRegID), 1))
 

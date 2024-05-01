@@ -17,9 +17,11 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
 
+	"github.com/tknie/errorrepo"
 	"github.com/tknie/log"
 	"gopkg.in/yaml.v3"
 )
@@ -28,6 +30,7 @@ type SetType byte
 
 // TagName name to be used for tagging structure field
 const TagName = "flynn"
+const SubTypeTag = "sub"
 
 const (
 	EmptySet SetType = iota
@@ -47,6 +50,11 @@ type typeInterface struct {
 	FieldSet   map[string]void
 	ValueRefTo []any
 	ScanValues []any
+}
+
+type SubInterface interface {
+	Data() []byte
+	ParseData(sub []byte) error
 }
 
 func CreateInterface(i interface{}, createFields []string) *typeInterface {
@@ -95,10 +103,10 @@ func (dynamic *typeInterface) CreateQueryFields() string {
 }
 
 // CreateQueryValues create query value copy of struct
-func (dynamic *typeInterface) CreateQueryValues() (any, []any, []any) {
+func (dynamic *typeInterface) CreateQueryValues() (*ValueDefinition, error) {
 	if dynamic.SetType == EmptySet {
 		log.Log.Debugf("Empty set defined")
-		return nil, nil, nil
+		return nil, nil
 	}
 	log.Log.Debugf("Create query values")
 	value := reflect.ValueOf(dynamic.DataType)
@@ -114,54 +122,42 @@ func (dynamic *typeInterface) CreateQueryValues() (any, []any, []any) {
 	rt := elemValue.Type()
 	if rt.Kind() == reflect.Pointer {
 		elemValue = elemValue.Elem()
-		log.Log.Debugf("Sub: %T", elemValue.Interface())
+		log.Log.Debugf("Pointer type: %T", elemValue.Interface())
 	}
-	log.Log.Debugf("Final: %T", elemValue.Interface())
-	dynamic.generateField(elemValue, true)
-	return copyValue.Interface(), dynamic.ValueRefTo, dynamic.ScanValues
+	log.Log.Debugf("Final type: %T", elemValue.Interface())
+	err := dynamic.generateField(elemValue, true)
+	if err != nil {
+		return nil, err
+	}
+	vd := &ValueDefinition{dynamic, copyValue.Interface(), dynamic.ValueRefTo, dynamic.ScanValues}
+	return vd, nil
 }
 
-// CreateQueryValues create query value copy of struct
+// CreateValues create query value copy of struct
 // deprecated: should not be used anymore
-func (dynamic *typeInterface) CreateInsertValues() []any {
-	if dynamic.SetType == EmptySet {
-		log.Log.Debugf("Empty set defined")
-		return nil
-	}
-	log.Log.Debugf("Create insert values")
-	valueOf := reflect.ValueOf(dynamic.DataType)
-	if valueOf.Type().Kind() == reflect.Pointer {
-		//		fmt.Println(fieldType.Kind(), value.Kind())
-		valueOf = valueOf.Elem()
-	}
-	dynamic.generateField(valueOf, false)
-	log.Log.Debugf("Create insert values done")
-	return dynamic.ValueRefTo
-}
-
-// CreateQueryValues create query value copy of struct
-// deprecated: should not be used anymore
-func (dynamic *typeInterface) CreateValues(value interface{}) []any {
+func (dynamic *typeInterface) CreateValues(value interface{}) ([]any, error) {
 	dynamic.ValueRefTo = make([]any, 0)
 	if dynamic.SetType == EmptySet {
 		log.Log.Debugf("Empty set defined")
-		return nil
+		return nil, nil
 	}
 	log.Log.Debugf("Create insert values")
 	valueOf := reflect.ValueOf(value)
 	if valueOf.Type().Kind() == reflect.Pointer {
-		//		fmt.Println(fieldType.Kind(), value.Kind())
 		valueOf = valueOf.Elem()
 	}
-	dynamic.generateField(valueOf, false)
+	err := dynamic.generateField(valueOf, false)
+	if err != nil {
+		return nil, err
+	}
 	log.Log.Debugf("Create insert values done")
-	return dynamic.ValueRefTo
+	return dynamic.ValueRefTo, nil
 }
 
 // generateField generate field values for dynamic query.
 // 'scan' is used to consider case for read (field creation out of database) or
 // write (no creation, data is used by application)
-func (dynamic *typeInterface) generateField(elemValue reflect.Value, scan bool) {
+func (dynamic *typeInterface) generateField(elemValue reflect.Value, scan bool) error {
 	log.Log.Debugf("Generate field of Struct: %T %s -> scan=%v",
 		elemValue.Interface(), elemValue.Type().Name(), scan)
 	defer log.Log.Debugf("generated field of struct")
@@ -177,6 +173,30 @@ func (dynamic *typeInterface) generateField(elemValue reflect.Value, scan bool) 
 			log.Log.Debugf("Tag for %s = %s", fieldType.Name, tag)
 			if tags[1] == "ignore" {
 				continue
+			}
+			checkField := dynamic.checkFieldSet(fieldType.Name)
+			if checkField {
+				log.Log.Debugf("Tags[1]=%v / %s", tags[1], cv.Type().Name())
+				if tags[1] == SubTypeTag {
+					log.Log.Debugf("is nil = %v scan = %v", cv.IsNil(), scan)
+					di := cv.Interface()
+					if cd, ok := di.(SubInterface); ok {
+						if scan {
+							x := reflect.Indirect(reflect.New(cv.Type().Elem()))
+							log.Log.Debugf("X = %T", x.Interface())
+							cv.Set(x.Addr())
+							di = cv.Interface()
+							log.Log.Debugf("V = %v/%T", di, di)
+							dynamic.ValueRefTo = append(dynamic.ValueRefTo, di)
+						} else {
+							data := cd.Data()
+							dynamic.ValueRefTo = append(dynamic.ValueRefTo, data)
+						}
+						dynamic.ScanValues = append(dynamic.ScanValues, &sql.NullString{})
+						continue
+					}
+					return errorrepo.NewError("DB000011", fieldType.Name)
+				}
 			}
 		}
 		if len(tags) > 0 {
@@ -198,7 +218,10 @@ func (dynamic *typeInterface) generateField(elemValue reflect.Value, scan bool) 
 				// x := reflect.New(cv.Type().Elem())
 				x := reflect.Indirect(reflect.New(cv.Type().Elem()))
 
-				dynamic.generateField(x, scan)
+				err := dynamic.generateField(x, scan)
+				if err != nil {
+					return err
+				}
 				// dynamic.ValueRefTo = append(dynamic.ValueRefTo, nil)
 				continue
 			}
@@ -226,26 +249,39 @@ func (dynamic *typeInterface) generateField(elemValue reflect.Value, scan bool) 
 				}
 				continue
 			default:
+				if len(tags) > 1 {
+					log.Log.Debugf("Tags[1]=%v / %s", tags[1], cv.Type().Name())
+					if tags[1] == SubTypeTag {
+						di := cv.Interface()
+						if cd, ok := di.(SubInterface); ok {
+							data := cd.Data()
+							dynamic.ValueRefTo = append(dynamic.ValueRefTo, data)
+							dynamic.ScanValues = append(dynamic.ScanValues, &sql.NullString{})
+							continue
+						}
+						return errorrepo.NewError("DB000011", fieldType.Name)
+					}
+				}
 				if len(tags) > 2 {
 					switch tags[2] {
 					case "YAML":
 						out, err := yaml.Marshal(cv.Interface())
 						if err != nil {
-							return
+							return err
 						}
 						dynamic.ValueRefTo = append(dynamic.ValueRefTo, string(out))
 						continue
 					case "XML":
 						out, err := xml.Marshal(cv.Interface())
 						if err != nil {
-							return
+							return err
 						}
 						dynamic.ValueRefTo = append(dynamic.ValueRefTo, string(out))
 						continue
 					case "JSON":
 						out, err := json.Marshal(cv.Interface())
 						if err != nil {
-							return
+							return err
 						}
 						dynamic.ValueRefTo = append(dynamic.ValueRefTo, string(out))
 						continue
@@ -286,6 +322,8 @@ func (dynamic *typeInterface) generateField(elemValue reflect.Value, scan bool) 
 						dynamic.ScanValues = append(dynamic.ScanValues, &sql.NullInt32{})
 					case reflect.Int64:
 						dynamic.ScanValues = append(dynamic.ScanValues, &sql.NullInt64{})
+					case reflect.Uint64:
+						dynamic.ScanValues = append(dynamic.ScanValues, &sql.NullString{})
 					case reflect.Float32, reflect.Float64:
 						dynamic.ScanValues = append(dynamic.ScanValues, &sql.NullFloat64{})
 					default:
@@ -318,6 +356,7 @@ func (dynamic *typeInterface) generateField(elemValue reflect.Value, scan bool) 
 		}
 		log.Log.Debugf("Row values len=%d", len(dynamic.ValueRefTo))
 	}
+	return nil
 }
 
 func (dynamic *typeInterface) checkFieldSet(fieldName string) bool {
@@ -362,6 +401,14 @@ func (dynamic *typeInterface) generateFieldNames(ri reflect.Type) {
 					dynamic.RowNames["#index"] = []string{fieldName}
 					continue
 				case "ignore":
+					continue
+				case SubTypeTag:
+					log.Log.Debugf("Found sub")
+					ok := dynamic.checkFieldSet(fieldName)
+					if ok {
+						dynamic.RowFields = append(dynamic.RowFields, fieldName)
+						log.Log.Debugf("RowFields: Add field name %s", fieldName)
+					}
 					continue
 				default:
 				}
@@ -420,17 +467,30 @@ func (dynamic *typeInterface) generateFieldNames(ri reflect.Type) {
 	log.Log.Debugf("Field list generated %#v", dynamic.RowFields)
 }
 
-func ShiftValues(scanValues, values []any) (err error) {
-	for d, v := range scanValues {
+func (vd *ValueDefinition) ShiftValues() error {
+	for d, v := range vd.ScanValues {
+		if di, ok := vd.Values[d].(SubInterface); ok {
+
+			log.Log.Debugf("%d. entry is sub interface %v", d, vd.Values[d])
+			ns := v.(*sql.NullString)
+			if ns.Valid {
+				if di == nil || vd.Values[d] == nil {
+					return errorrepo.NewError("DB000032")
+				}
+				log.Log.Debugf("Found sub data: %s(%v)/%v", ns.String, di, v)
+				return di.ParseData([]byte(ns.String))
+			}
+			return nil
+		}
 		if _, ok := v.(sqlInterface); ok {
 			vv, err := v.(sqlInterface).Value()
 			if err != nil {
 				return err
 			}
 			if vv != nil {
-				log.Log.Debugf("(%d) Found value %T pointer=%p", d, values[d], values[d])
+				log.Log.Debugf("(%d) Found value %T pointer=%p", d, vd.Values[d], vd.Values[d])
 				log.Log.Debugf("Shift values %v", vv)
-				switch vt := values[d].(type) {
+				switch vt := vd.Values[d].(type) {
 				case *int:
 					switch vvv := vv.(type) {
 					case int:
@@ -446,12 +506,20 @@ func ShiftValues(scanValues, values []any) (err error) {
 					*vt = vv.(float32)
 				case *float64:
 					*vt = vv.(float64)
+				case *int64:
+					*vt = vv.(int64)
+				case *uint64:
+					v := vv.(string)
+					*vt, err = strconv.ParseUint(v, 0, 64)
+					if err != nil {
+						return err
+					}
 				case *string:
 					*vt = vv.(string)
 				case *time.Time:
 					*vt = vv.(time.Time)
 				default:
-					log.Log.Fatalf("%d: Unknown type for shifting value %T -> %T", d, values[d], vv)
+					log.Log.Fatalf("Unknown type for shifting at index %d value %T <- %T", d, vd.Values[d], vv)
 				}
 			} else {
 				log.Log.Debugf("SQL interface value nil")

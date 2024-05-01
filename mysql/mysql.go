@@ -395,7 +395,7 @@ func (mysql *Mysql) Stream(search *common.Query, sf common.StreamFunction) error
 		stream.Data = make([]byte, 0)
 		if !rows.Next() {
 			log.Log.Errorf("rows missing")
-			return fmt.Errorf("rows read missing")
+			return errorrepo.NewError("DB000021")
 		}
 		if dataMaxLen == int32(math.MaxInt32) {
 			err = rows.Scan(&stream.Data, &dataMaxLen)

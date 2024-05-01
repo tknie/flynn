@@ -19,6 +19,7 @@ import (
 
 	"golang.org/x/exp/slices"
 
+	"github.com/tknie/errorrepo"
 	"github.com/tknie/flynn/common"
 	"github.com/tknie/log"
 )
@@ -47,7 +48,10 @@ func Insert(dbsql DBsql, name string, insert *common.Entries) ([][]any, error) {
 		dynamic := common.CreateInterface(insert.DataStruct, insert.Fields)
 		insertFields = dynamic.RowFields
 		for _, vi := range insert.Values {
-			v := dynamic.CreateValues(vi[0])
+			v, err := dynamic.CreateValues(vi[0])
+			if err != nil {
+				return nil, err
+			}
 			log.Log.Debugf("Row   fields: %#v", insertFields)
 			log.Log.Debugf("Value fields: %#v", insertValues)
 			insertValues = append(insertValues, v)
@@ -86,7 +90,7 @@ func Insert(dbsql DBsql, name string, insert *common.Entries) ([][]any, error) {
 			return nil, err
 		}
 		if l == 0 {
-			return nil, fmt.Errorf("insert of rows failed")
+			return nil, errorrepo.NewError("DB000020")
 		}
 	}
 	log.Log.Debugf("Transaction: %v", dbsql.IsTransaction())
@@ -181,7 +185,10 @@ func Update(dbsql DBsql, name string, updateInfo *common.Entries) (running [][]a
 		dynamic := common.CreateInterface(updateInfo.DataStruct, updateInfo.Fields)
 		insertFields = dynamic.RowFields
 		for _, vi := range updateInfo.Values {
-			v := dynamic.CreateValues(vi[0])
+			v, err := dynamic.CreateValues(vi[0])
+			if err != nil {
+				return nil, -1, err
+			}
 			insertValues = append(insertValues, v)
 			log.Log.Debugf("Row   fields: %#v", insertFields)
 			log.Log.Debugf("Value fields: %#v", insertValues)

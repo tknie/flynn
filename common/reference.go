@@ -12,10 +12,11 @@
 package common
 
 import (
-	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/tknie/errorrepo"
 )
 
 const referenceRegexp = `(?m)((\w*)://)?(([\w<>]+)(:(\S+))?@)?(tcp\()?(\w[\w.]*):(\d+)\)?(/(\w+))?\??(.*)`
@@ -52,11 +53,11 @@ func NewReference(url string) (*Reference, string, error) {
 	match := re.FindStringSubmatch(url)
 
 	if len(match) < 10 {
-		return nil, "", fmt.Errorf("URL parse error (match only %d)", len(match))
+		return nil, "", errorrepo.NewError("DB000018", len(match))
 	}
 	p, err := strconv.Atoi(match[9])
 	if err != nil {
-		return nil, "", fmt.Errorf("Reference url port error: %v", err)
+		return nil, "", errorrepo.NewError("DB000019", err)
 	}
 	ref := &Reference{Driver: ParseTypeName(match[2]),
 		Host: match[8], Port: p, User: match[4], Database: match[11]}

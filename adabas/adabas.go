@@ -440,7 +440,7 @@ func (ada *Adabas) Stream(search *common.Query, sf common.StreamFunction) error 
 		return err
 	}
 	if result.NrRecords() == 0 {
-		return fmt.Errorf("no record found with search")
+		return errorrepo.NewError("DB000015")
 	}
 	stream := &common.Stream{}
 	dataRead := 0

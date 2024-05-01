@@ -27,6 +27,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/tknie/errorrepo"
 	"github.com/tknie/flynn/common"
 	"github.com/tknie/flynn/dbsql"
 	"github.com/tknie/log"
@@ -190,7 +191,7 @@ func (pg *PostGres) getPool() (*pool, error) {
 			}
 			pg.defineContext()
 			if pg.ctx == nil {
-				return nil, fmt.Errorf("context error nil")
+				return nil, errorrepo.NewError("DB000023")
 			}
 			pl.pool, err = pgxpool.NewWithConfig(pg.ctx, config)
 			if err != nil {
@@ -209,7 +210,7 @@ func (pg *PostGres) getPool() (*pool, error) {
 		log.Log.Debugf("%s pool entry not found", pg.ID().String())
 		pg.defineContext()
 		if pg.ctx == nil {
-			return nil, fmt.Errorf("context error nil")
+			return nil, errorrepo.NewError("DB000024")
 		}
 		//config := &pgx.ConnConfig{Tracer: tracer}
 
@@ -286,7 +287,7 @@ func (pg *PostGres) open() (dbOpen *pgxpool.Conn, err error) {
 	log.Log.Debugf("%s Acquire Postgres (%p) database to %s: db=%p", pg.ID().String(), pg, pg.dbURL, dbOpen)
 	log.Log.Debugf("%s Opened postgres database", pg.ID().String())
 	if dbOpen == nil {
-		return nil, fmt.Errorf("error open handle and err nil")
+		return nil, errorrepo.NewError("DB000025")
 	}
 	return dbOpen, nil
 }
@@ -343,11 +344,11 @@ func (pg *PostGres) EndTransaction(commit bool) (err error) {
 	}
 	log.Log.Debugf("%s Start end transaction", pg.ID().String())
 	if pg.ctx == nil {
-		return fmt.Errorf("error context not valid")
+		return errorrepo.NewError("DB000026")
 	}
 	if pg.tx == nil {
 		pg.Transaction = false
-		return fmt.Errorf("error tx empty")
+		return errorrepo.NewError("DB000027")
 	}
 	if commit {
 		log.Log.Debugf("%s End transaction commiting ...(pg=%p/tx=%p) %v", pg.ID().String(), pg, pg.tx, pg.IsTransaction())
@@ -604,31 +605,31 @@ func (pg *PostGres) ParseStruct(search *common.Query, rows pgx.Rows, f common.Re
 	log.Log.Debugf("Parse struct .... started")
 	result = &common.Result{}
 	result.Data = search.DataStruct
-	copy, values, scanValues, err := result.GenerateColumnByStruct(search)
+	vd, err := result.GenerateColumnByStruct(search)
 	if err != nil {
 		log.Log.Debugf("Error generating column: %v", err)
 		return nil, err
 	}
 	log.Log.Debugf("Parse columns rows -> flen=%d vlen=%d %T scanVal=%d",
-		len(result.Fields), len(values), copy, len(scanValues))
+		len(result.Fields), len(vd.Values), vd.Copy, len(vd.ScanValues))
 	for rows.Next() {
 		result.Counter++
-		log.Log.Debugf("%d. row found and scanning with %#v", result.Counter, scanValues)
+		log.Log.Debugf("%d. row found and scanning with %#v", result.Counter, vd.ScanValues)
 		if len(result.Fields) == 0 {
 			for _, f := range rows.FieldDescriptions() {
 				result.Fields = append(result.Fields, f.Name)
 			}
 		}
-		err := rows.Scan(scanValues...)
+		err := rows.Scan(vd.ScanValues...)
 		if err != nil {
-			log.Log.Debugf("Error during scan of struct: %v/%v", err, copy)
+			log.Log.Debugf("Error during scan of struct: %v/%v", err, vd.Copy)
 			return nil, err
 		}
-		err = common.ShiftValues(scanValues, values)
+		err = vd.ShiftValues()
 		if err != nil {
 			return nil, err
 		}
-		result.Data = copy
+		result.Data = vd.Copy
 		err = f(search, result)
 		if err != nil {
 			return nil, err
@@ -686,10 +687,10 @@ func (pg *PostGres) DeleteTable(name string) error {
 	}
 	defer db.Close()
 
-	log.Log.Debugf("Init Drop table %s", name)
+	log.Log.Debugf("Init DROP TABLE %s", name)
 	_, err = db.Query("DROP TABLE " + name)
 	if err != nil {
-		log.Log.Debugf("Drop table error: %v", err)
+		log.Log.Debugf("DROP TABLE error: %v", err)
 		return err
 	}
 	log.Log.Debugf("Drop table " + name)
@@ -717,12 +718,12 @@ func (pg *PostGres) Insert(name string, insert *common.Entries) (returning [][]a
 	}
 	if tx == nil || ctx == nil {
 		log.Log.Debugf("Error context transaction")
-		return nil, fmt.Errorf("%p: transaction=%v or context=%v not set", pg, tx, ctx)
+		return nil, errorrepo.NewError("DB000028", pg, tx, ctx)
 	}
 	if !pg.IsTransaction() {
 		log.Log.Debugf("%s: Init defer close ... in inserting", pg.ID().String())
 		pg.Close()
-		return nil, fmt.Errorf("init of transaction fails")
+		return nil, errorrepo.NewError("DB000029")
 	}
 
 	log.Log.Debugf("%s Insert SQL record", pg.ID().String())
@@ -738,7 +739,10 @@ func (pg *PostGres) Insert(name string, insert *common.Entries) (returning [][]a
 		dynamic := common.CreateInterface(insert.DataStruct, insert.Fields)
 		insertFields = dynamic.RowFields
 		for _, vi := range insert.Values {
-			v := dynamic.CreateValues(vi[0])
+			v, err := dynamic.CreateValues(vi[0])
+			if err != nil {
+				return nil, err
+			}
 			log.Log.Debugf("Row   fields: %#v", insertFields)
 			log.Log.Debugf("Value fields: %#v", insertValues)
 			insertValues = append(insertValues, v)
@@ -810,7 +814,7 @@ func (pg *PostGres) Insert(name string, insert *common.Entries) (returning [][]a
 			}
 			l := res.RowsAffected()
 			if l == 0 {
-				return nil, fmt.Errorf("insert of rows failed")
+				return nil, errorrepo.NewError("DB000030")
 			}
 		}
 	}
@@ -846,22 +850,27 @@ func scanRow(row pgx.Row, cols int) ([]any, error) {
 
 func scanStruct(row pgx.Row, insert *common.Entries) ([]any, error) {
 	typeInfo := common.CreateInterface(insert.DataStruct, insert.Returning)
-	copy, values, scanValues := typeInfo.CreateQueryValues()
+	// copy, values, scanValues := typeInfo.CreateQueryValues()
+	vd, err := typeInfo.CreateQueryValues()
+	if err != nil {
+		log.Log.Debugf("Error during value query: %v", err)
+		return nil, err
+	}
 	log.Log.Debugf("Parse columns row -> flen=%d vlen=%d %T scanVal=%d",
-		len(insert.Returning), len(values), copy, len(scanValues))
-	err := row.Scan(scanValues...)
+		len(insert.Returning), len(vd.Values), vd.Copy, len(vd.ScanValues))
+	err = row.Scan(vd.ScanValues...)
 	if err != nil {
-		log.Log.Debugf("Error during scan of struct: %v/%v", err, copy)
+		log.Log.Debugf("Error during scan of struct: %v/%v", err, vd.Copy)
 		return nil, err
 	}
-	log.Log.Debugf("Scan values %#v", scanValues)
-	err = common.ShiftValues(scanValues, values)
+	log.Log.Debugf("Scan values %#v", vd.ScanValues)
+	err = vd.ShiftValues()
 	if err != nil {
 		return nil, err
 	}
-	log.Log.Debugf("Returning: %#v", copy)
+	log.Log.Debugf("Returning: %#v", vd.Copy)
 	rv := make([]any, 0)
-	rv = append(rv, copy)
+	rv = append(rv, vd.Copy)
 	return rv, nil
 }
 
@@ -882,7 +891,7 @@ func (pg *PostGres) Update(name string, updateInfo *common.Entries) (returning [
 		ctx = pg.ctx
 	}
 	if tx == nil {
-		return nil, 0, fmt.Errorf("nil internal error update")
+		return nil, 0, errorrepo.NewError("DB000031")
 	}
 	var insertFields []string
 	var updateValues [][]any
@@ -891,7 +900,10 @@ func (pg *PostGres) Update(name string, updateInfo *common.Entries) (returning [
 		dynamic := common.CreateInterface(updateInfo.DataStruct, updateInfo.Fields)
 		insertFields = dynamic.RowFields
 		for _, vi := range updateInfo.Values {
-			v := dynamic.CreateValues(vi[0])
+			v, err := dynamic.CreateValues(vi[0])
+			if err != nil {
+				return nil, -1, err
+			}
 			updateValues = append(updateValues, v)
 			log.Log.Debugf("Row   fields: %#v", insertFields)
 			log.Log.Debugf("Value fields: %#v", updateValues)
