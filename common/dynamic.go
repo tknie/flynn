@@ -168,18 +168,19 @@ func (dynamic *typeInterface) generateField(elemValue reflect.Value, scan bool) 
 		d := tag.Get(TagName)
 		tags := strings.Split(d, ":")
 		fieldName := fieldType.Name
-		log.Log.Debugf("%s: kind %v", fieldName, cv.Kind())
+		log.Log.Debugf("%s: kind %v tags = %#v", fieldName, cv.Kind(), tags)
 		if len(tags) > 1 {
 			log.Log.Debugf("Tag for %s = %s", fieldType.Name, tag)
 			if tags[1] == "ignore" {
 				continue
 			}
-			checkField := dynamic.checkFieldSet(fieldType.Name)
-			if checkField {
-				log.Log.Debugf("Tags[1]=%v / %s", tags[1], cv.Type().Name())
-				if tags[1] == SubTypeTag {
-					log.Log.Debugf("is nil = %v scan = %v", cv.IsNil(), scan)
+			log.Log.Debugf("Tags[1]=%v / %s", tags[1], cv.Type().Name())
+			if tags[1] == SubTypeTag {
+				log.Log.Debugf("is nil = %v scan = %v", cv.IsNil(), scan)
+				checkField := dynamic.checkFieldSet(fieldType.Name)
+				if checkField {
 					di := cv.Interface()
+					log.Log.Debugf("Sub interface = %v/%T", di, di)
 					if cd, ok := di.(SubInterface); ok {
 						if scan {
 							x := reflect.Indirect(reflect.New(cv.Type().Elem()))
@@ -195,7 +196,10 @@ func (dynamic *typeInterface) generateField(elemValue reflect.Value, scan bool) 
 						dynamic.ScanValues = append(dynamic.ScanValues, &sql.NullString{})
 						continue
 					}
+					log.Log.Debugf("No sub interface = %v/%T", di, di)
 					return errorrepo.NewError("DB000011", fieldType.Name)
+				} else {
+					continue
 				}
 			}
 		}
@@ -253,12 +257,14 @@ func (dynamic *typeInterface) generateField(elemValue reflect.Value, scan bool) 
 					log.Log.Debugf("Tags[1]=%v / %s", tags[1], cv.Type().Name())
 					if tags[1] == SubTypeTag {
 						di := cv.Interface()
+						log.Log.Debugf("Check sub interface = %v/%T", di, di)
 						if cd, ok := di.(SubInterface); ok {
 							data := cd.Data()
 							dynamic.ValueRefTo = append(dynamic.ValueRefTo, data)
 							dynamic.ScanValues = append(dynamic.ScanValues, &sql.NullString{})
 							continue
 						}
+						log.Log.Debugf("No sub interface = %v/%T", di, di)
 						return errorrepo.NewError("DB000011", fieldType.Name)
 					}
 				}

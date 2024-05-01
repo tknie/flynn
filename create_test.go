@@ -517,5 +517,5 @@ func validateTestResult(t *testing.T, layer, url string) {
 			counter++
 			return nil
 		})
-	assert.Equal(t, 3, counter)
+	assert.Equal(t, 4, counter)
 }
