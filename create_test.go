@@ -233,7 +233,7 @@ func createStruct(t *testing.T, target *target) error {
 		return err
 	}
 	defer unregisterDatabase(t, id)
-	// defer id.DeleteTable(testCreationTableStruct)
+	defer id.DeleteTable(testCreationTableStruct)
 
 	log.Log.Debugf("Delete table: %s", testCreationTableStruct)
 	err = id.DeleteTable(testCreationTableStruct)
@@ -378,7 +378,7 @@ func initTheadTest(t *testing.T, layer, url string, f func(t *testing.T, layer, 
 	atomicInt = 0
 	log.Log.Debugf("Ready waiting for thread wait group %s", layer)
 	//log.Log.Debugf("Deleting table: %s", testCreationTableStruct)
-	//deleteTable(t, id, testCreationTableStruct, target.layer)
+	// deleteTable(t, id, testCreationTableStruct, target.layer)
 	return nil
 }
 

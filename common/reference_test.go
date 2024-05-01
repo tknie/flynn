@@ -99,5 +99,5 @@ func TestReferenceFailuer(t *testing.T) {
 	_, p, err = NewReference("axa@aaxx")
 	assert.Error(t, err)
 	assert.Empty(t, p)
-	assert.Equal(t, "URL parse error (match only 0)", err.Error())
+	assert.Equal(t, "DB000018: URL parse error (match only 0)", err.Error())
 }
