@@ -52,14 +52,14 @@ func Insert(dbsql DBsql, name string, insert *common.Entries) ([][]any, error) {
 			if err != nil {
 				return nil, err
 			}
-			log.Log.Debugf("Row   fields: %#v", insertFields)
-			log.Log.Debugf("Value fields: %#v", insertValues)
 			insertValues = append(insertValues, v)
 		}
 	} else {
 		insertFields = insert.Fields
 		insertValues = insert.Values
 	}
+	log.Log.Debugf("Row   fields: %#v", insertFields)
+	log.Log.Debugf("Value fields: %#v", insertValues)
 	for i, field := range insertFields {
 		if i > 0 {
 			insertCmd += ","
@@ -98,7 +98,7 @@ func Insert(dbsql DBsql, name string, insert *common.Entries) ([][]any, error) {
 		log.Log.Debugf("No transaction, end and close")
 		err = dbsql.EndTransaction(true)
 		if err != nil {
-			log.Log.Debugf("Error transaction %v", err)
+			log.Log.Errorf("Error transaction %v", err)
 			dbsql.Close()
 			return nil, err
 		}

@@ -145,6 +145,8 @@ func (mysql *Mysql) BeginTransaction() error {
 	return nil
 }
 
+// EndTransaction end the transaction and commit if commit parameter is
+// true.
 func (mysql *Mysql) EndTransaction(commit bool) (err error) {
 	if mysql.tx == nil && mysql.ctx == nil {
 		return nil
@@ -153,7 +155,7 @@ func (mysql *Mysql) EndTransaction(commit bool) (err error) {
 	if mysql.IsTransaction() {
 		return nil
 	}
-	log.Log.Debugf("Commit/Rollback transaction %p", mysql.tx)
+	log.Log.Debugf("Commit/Rollback transaction %p commit = %v", mysql.tx, commit)
 	if commit {
 		err = mysql.tx.Commit()
 	} else {
@@ -330,6 +332,8 @@ func (mysql *Mysql) BatchSelectFct(search *common.Query, fct common.ResultFuncti
 	if search.DataStruct == nil {
 		_, err = search.ParseRows(rows, fct)
 	} else {
+		ti := common.CreateInterface(search.DataStruct, search.Fields)
+		search.TypeInfo = ti
 		_, err = search.ParseStruct(rows, fct)
 	}
 	return err

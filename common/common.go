@@ -283,6 +283,10 @@ func (id RegDbID) GetTableColumn(tableName string) ([]string, error) {
 }
 
 func (result *Result) GenerateColumnByStruct(search *Query) (*ValueDefinition, error) {
+	if search.TypeInfo == nil {
+		log.Log.Errorf("internal error using TypeInfo")
+		return nil, fmt.Errorf("internal error using TypeInfo")
+	}
 	ti := search.TypeInfo.(*typeInterface)
 	vd, err := ti.CreateQueryValues()
 	result.Rows = ti.ValueRefTo

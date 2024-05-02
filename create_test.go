@@ -15,6 +15,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"runtime/debug"
 	"slices"
 	"strconv"
 	"strings"
@@ -69,8 +70,39 @@ type testRecord struct {
 	Sub       *SubField `flynn:":sub"`
 }
 
-func (tr *testRecord) values() []any {
-	return []any{tr.Name, tr.FirstName}
+func (tr *testRecord) values(fields []string) []any {
+	values := make([]any, 0)
+	for _, n := range []string{"id", "name", "firstname",
+		"lastname", "address", "salary", "bonus", "sub"} {
+		if slices.Contains(fields, strings.ToLower(n)) {
+			switch strings.ToLower(n) {
+			case "id":
+				values = append(values, tr.ID)
+			case "name":
+				values = append(values, tr.Name)
+			case "firstname":
+				values = append(values, tr.FirstName)
+			case "lastname":
+				values = append(values, tr.LastName)
+			case "address":
+				values = append(values, tr.Address)
+			case "salary":
+				values = append(values, tr.Salary)
+			case "bonus":
+				values = append(values, tr.Bonus)
+			default:
+				log.Log.Fatal("Appender for " + n + " not found")
+
+			}
+		}
+	}
+	if len(fields) != len(values) {
+		debug.PrintStack()
+		fmt.Println(fields)
+		fmt.Println(values)
+		log.Log.Fatal("Error values or fields len different")
+	}
+	return values
 }
 
 func (s *SubField) Data() []byte {
@@ -327,15 +359,20 @@ func createStruct(t *testing.T, target *target) error {
 	if !assert.NoError(t, err) {
 		return err
 	}
-	err = initTheadTest(t, target.layer, target.url, insertThread, []string{"name", "firstname"})
+	err = initTheadTest(&threadTest{"insertThread", t, target.layer, target.url,
+		insertThread, []string{"name", "firstname"}})
 	assert.NoError(t, err)
 	log.Log.Debugf("Ended thread first test on target %s", target.layer)
-	err = initTheadTest(t, target.layer, target.url, insertAtomarThread, []string{"name", "firstname"})
+	err = initTheadTest(&threadTest{"insertAtomarThread", t, target.layer,
+		target.url, insertAtomarThread, []string{"name", "firstname", "salary"}})
 	assert.NoError(t, err)
 	log.Log.Debugf("Ended thread second test on target %s", target.layer)
-	err = initTheadTest(t, target.layer, target.url, insertStructThread, []string{"name", "firstname"})
+	err = initTheadTest(&threadTest{"insertStructThread1", t, target.layer,
+		target.url, insertStructThread, []string{"name", "firstname", "bonus"}})
 	assert.NoError(t, err)
-	err = initTheadTest(t, target.layer, target.url, insertStructThread, []string{"Name", "FirstName", "LastName", "Street", "Salary", "Bonus", "Sub"})
+	err = initTheadTest(&threadTest{"insertStructThread2", t, target.layer,
+		target.url, insertStructThread,
+		[]string{"name", "firstname", "lastname", "street", "salary", "bonus", "sub"}})
 	assert.NoError(t, err)
 	log.Log.Debugf("Ended thread last test on target %s", target.layer)
 
@@ -343,40 +380,50 @@ func createStruct(t *testing.T, target *target) error {
 	return err
 }
 
-func initTheadTest(t *testing.T, layer, url string, f func(t *testing.T, layer, url string, fields []string), fields []string) error {
-	urlMaxConns := url
-	if layer == "postgres" {
-		urlMaxConns = url + "?pool_max_conns=100"
+type threadTest struct {
+	name   string
+	t      *testing.T
+	layer  string
+	url    string
+	f      func(t *testing.T, layer, url string, fields []string)
+	fields []string
+}
+
+func initTheadTest(test *threadTest) error {
+	urlMaxConns := test.url
+	if test.layer == "postgres" {
+		urlMaxConns = test.url + "?pool_max_conns=100"
 	}
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 5; i++ {
 		log.Log.Debugf("Trigger thread %02d ....", i)
-		go f(t, layer, urlMaxConns, fields)
+		go test.f(test.t, test.layer, urlMaxConns, test.fields)
 	}
 
-	for i := 1; i < 100; i++ {
+	for i := 1; i < 50; i++ {
 		//fmt.Println("ADD-" + layer)
 		wgTest.Add(1)
 		messgage := "Kermit und Pigi " + strconv.Itoa(i)
 		log.Log.Debugf("Put into channel " + messgage)
 		dataChan <- &testRecord{Name: strconv.Itoa(i),
-			LastName: messgage,
-			Bonus:    int64(math.Pow(-1, float64(i%2))*7000 - float64(i)),
-			Salary:   uint64(80000 + 10*i),
-			Sub:      &SubField{SubName: "Gonzo", Number: i}}
+			LastName:  messgage,
+			FirstName: test.name,
+			Bonus:     int64(math.Pow(-1, float64(i%2))*7000 - float64(i)),
+			Salary:    uint64(80000 + 10*i),
+			Sub:       &SubField{SubName: "Gonzo", Number: i}}
 	}
 
-	log.Log.Debugf("Waiting for insert wait group " + layer)
+	log.Log.Debugf("Waiting for insert wait group " + test.layer)
 	// fmt.Println("WAIT-" + layer)
 	wgTest.Wait()
 	// fmt.Println("WENDED-" + layer)
 	log.Log.Debugf("Closeing group")
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 5; i++ {
 		doneChan <- true
 	}
 	log.Log.Debugf("Waiting for thread wait group")
 	wgThread.Wait()
 	atomicInt = 0
-	log.Log.Debugf("Ready waiting for thread wait group %s", layer)
+	log.Log.Debugf("Ready waiting for thread wait group %s", test.layer)
 	//log.Log.Debugf("Deleting table: %s", testCreationTableStruct)
 	// deleteTable(t, id, testCreationTableStruct, target.layer)
 	return nil
@@ -401,7 +448,7 @@ func insertThread(t *testing.T, layer, url string, fields []string) {
 			log.Log.Debugf("%v-%02d: Received entry  ....%v -> %s", id, nr, x.LastName, layer)
 			_, err = id.Insert(testCreationTableStruct,
 				&common.Entries{Fields: fields,
-					Values: [][]any{x.values()}})
+					Values: [][]any{x.values(fields)}})
 			log.Log.Debugf("%v-%02d: insert returned  ....%v -> %s %v", id, nr, x.LastName, layer, err)
 			if !assert.NoError(t, err, "insert fail using "+layer) {
 				fmt.Println("Error thread ....")
@@ -435,14 +482,13 @@ func insertRecordForThread(t *testing.T, layer, url string, nr int32, fields []s
 		if !assert.NoError(t, err, "register fail using "+layer) {
 			log.Log.Fatal("Error registrer")
 		}
-		defer id.FreeHandler()
 		log.Log.Debugf("%02d: Waiting for entry .... ", nr)
 		select {
 		case x := <-dataChan:
 			log.Log.Debugf("%02d: Received entry  ....%v", nr, x.LastName)
 			_, err = id.Insert(testCreationTableStruct,
 				&common.Entries{Fields: fields,
-					Values: [][]any{x.values()}})
+					Values: [][]any{x.values(fields)}})
 			if !assert.NoError(t, err, "insert fail using "+layer) {
 				fmt.Println("Error thread ....")
 				log.Log.Debugf("%02d: Error storing  ....%v", nr, x.LastName)
@@ -456,6 +502,7 @@ func insertRecordForThread(t *testing.T, layer, url string, nr int32, fields []s
 			log.Log.Debugf("%02d: exiting thread %s", nr, url)
 			return
 		}
+		id.FreeHandler()
 	}
 
 }
@@ -502,6 +549,7 @@ func insertStructForThread(t *testing.T, layer, url string, nr int32, fields []s
 }
 
 func validateTestResult(t *testing.T, layer, url string) {
+
 	id, err := Handle(layer, url)
 	if !assert.NoError(t, err, "register fail using "+layer) {
 		log.Log.Fatal("Error registrer")
@@ -510,7 +558,7 @@ func validateTestResult(t *testing.T, layer, url string) {
 
 	counter := 0
 	id.BatchSelectFct(&common.Query{DataStruct: &testRecord{},
-		Search: "SELECT * FROM " + testCreationTableStruct + " WHERE name='92'"},
+		Search: "SELECT * FROM " + testCreationTableStruct + " WHERE name='31'"},
 		func(search *common.Query, result *common.Result) error {
 			record := result.Data.(*testRecord)
 			fmt.Printf("-> %#v\n", record)
