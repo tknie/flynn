@@ -59,6 +59,7 @@ func NewInstance(id common.RegDbID, reference *common.Reference, password string
 		reference.Port, reference.Database, o)
 	mysql := &Mysql{common.CommonDatabase{RegDbID: id},
 		nil, url, nil, reference.User, password, nil, nil}
+	log.Log.Debugf("%s: create new instance", mysql.ID().String())
 	return mysql, nil
 }
 
@@ -95,7 +96,7 @@ func (mysql *Mysql) generateURL() string {
 
 func (mysql *Mysql) open() (dbOpen any, err error) {
 	if mysql.openDB == nil {
-		log.Log.Debugf("Open Mysql database to %s", mysql.dbURL)
+		log.Log.Debugf("%s: Open Mysql database to %s", mysql.ID().String(), mysql.dbURL)
 		mysql.openDB, err = sql.Open(layer, mysql.generateURL())
 		if err != nil {
 			return
@@ -109,6 +110,7 @@ func (mysql *Mysql) open() (dbOpen any, err error) {
 func (mysql *Mysql) Open() (dbOpen any, err error) {
 	dbOpen, err = mysql.open()
 	if err != nil {
+		log.Log.Debugf("%s: error open connection", mysql.ID().String(), err)
 		return nil, err
 	}
 	db := dbOpen.(*sql.DB)
@@ -117,11 +119,12 @@ func (mysql *Mysql) Open() (dbOpen any, err error) {
 		mysql.ctx = context.Background()
 		mysql.tx, err = db.BeginTx(mysql.ctx, nil)
 		if err != nil {
+			log.Log.Debugf("%s: error begin transaction", mysql.ID().String(), err)
 			return nil, err
 		}
 
 	}
-	log.Log.Debugf("Open MySQL database %s after transaction", mysql.dbURL)
+	log.Log.Debugf("%s: Open MySQL database %s after transaction", mysql.ID().String(), mysql.dbURL)
 	return db, nil
 }
 
@@ -134,11 +137,13 @@ func (mysql *Mysql) BeginTransaction() error {
 	if mysql.openDB == nil {
 		_, err = mysql.Open()
 		if err != nil {
+			log.Log.Debugf("%s: error open during transaction", mysql.ID().String(), err)
 			return err
 		}
 	}
 	_, _, err = mysql.StartTransaction()
 	if err != nil {
+		log.Log.Debugf("%s: error start transaction", mysql.ID().String(), err)
 		return err
 	}
 	mysql.Transaction = true
@@ -151,32 +156,35 @@ func (mysql *Mysql) EndTransaction(commit bool) (err error) {
 	if mysql.tx == nil && mysql.ctx == nil {
 		return nil
 	}
-	log.Log.Debugf("End transaction %p", mysql.tx)
+	log.Log.Debugf("%s: End transaction %p", mysql.ID().String(), mysql.tx)
 	if mysql.IsTransaction() {
 		return nil
 	}
-	log.Log.Debugf("Commit/Rollback transaction %p commit = %v", mysql.tx, commit)
+	log.Log.Debugf("%s: Commit/Rollback transaction %p commit = %v", mysql.ID().String(), mysql.tx, commit)
 	if commit {
 		err = mysql.tx.Commit()
 	} else {
 		err = mysql.tx.Rollback()
 	}
-	log.Log.Debugf("ET: Reset Tx Transction %p", mysql.tx)
+	log.Log.Debugf("%s: ET: Reset Tx Transction %p", mysql.ID().String(), mysql.tx)
 	mysql.tx = nil
 	mysql.ctx = nil
+	if err != nil {
+		log.Log.Debugf("%s: error end transaction", mysql.ID().String(), err)
+	}
 	return
 }
 
 // Close close the database connection
 func (mysql *Mysql) Close() {
-	log.Log.Debugf("Close MySQL")
+	log.Log.Debugf("%s: Close MySQL", mysql.ID().String())
 	if mysql.ctx != nil {
 		mysql.EndTransaction(false)
 	}
 	if mysql.openDB != nil {
 		mysql.openDB.(*sql.DB).Close()
 		mysql.openDB = nil
-		log.Log.Debugf("Close Tx Transction %p", mysql.tx)
+		log.Log.Debugf("%s: Closed connection and reset transction variables %p", mysql.ID().String(), mysql.tx)
 		mysql.tx = nil
 		mysql.ctx = nil
 	}
@@ -184,6 +192,7 @@ func (mysql *Mysql) Close() {
 
 // FreeHandler don't use the driver anymore
 func (mysql *Mysql) FreeHandler() {
+	log.Log.Debugf("%s: free handler", mysql.ID().String())
 }
 
 // IndexNeeded index needed for the SELECT statement value reference
@@ -216,6 +225,7 @@ func (mysql *Mysql) Maps() ([]string, error) {
 	if mysql.dbTableNames == nil {
 		err := mysql.Ping()
 		if err != nil {
+			log.Log.Debugf("%s: error reading maps", mysql.ID().String(), err)
 			return nil, err
 		}
 	}
@@ -276,6 +286,7 @@ func (mysql *Mysql) Query(search *common.Query, f common.ResultFunction) (*commo
 	log.Log.Debugf("Query: %s", selectCmd)
 	rows, err := db.Query(selectCmd)
 	if err != nil {
+		log.Log.Debugf("%s: error query data", mysql.ID().String(), err)
 		return nil, err
 	}
 	if search.DataStruct == nil {

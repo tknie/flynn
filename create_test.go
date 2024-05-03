@@ -22,6 +22,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/tknie/flynn/common"
 	"github.com/tknie/log"
@@ -444,7 +445,7 @@ func insertThread(t *testing.T, layer, url string, fields []string) {
 	wgThread.Add(1)
 	defer wgThread.Done()
 	for {
-		log.Log.Debugf("%02d: Waiting for entry .... %s", nr, layer)
+		log.Log.Debugf("%02d: Waiting for entry .... with handle %s", nr, id.String())
 		select {
 		case x := <-dataChan:
 			log.Log.Debugf("%v-%02d: Received entry  ....%v -> %s", id, nr, x.LastName, layer)
@@ -484,7 +485,7 @@ func insertRecordForThread(t *testing.T, layer, url string, nr int32, fields []s
 		if !assert.NoError(t, err, "register fail using "+layer) {
 			log.Log.Fatal("Error registrer")
 		}
-		log.Log.Debugf("%02d: Waiting for entry .... ", nr)
+		log.Log.Debugf("%02d: Waiting for entry .... with handle %s", nr, id.String())
 		select {
 		case x := <-dataChan:
 			log.Log.Debugf("%02d: Received entry  ....%v", nr, x.LastName)
@@ -502,6 +503,7 @@ func insertRecordForThread(t *testing.T, layer, url string, nr int32, fields []s
 		case <-doneChan:
 			// fmt.Println("Ready thread ....", nr)
 			log.Log.Debugf("%02d: exiting thread %s", nr, url)
+			id.FreeHandler()
 			return
 		}
 		id.FreeHandler()
@@ -519,30 +521,30 @@ func insertStructThread(t *testing.T, layer, url string, fields []string) {
 }
 
 func insertStructForThread(t *testing.T, layer, url string, nr int32, fields []string) {
+	log.Log.Debugf("%02d: starting thread %s", nr, url)
 	for {
 		id, err := Handle(layer, url)
 		if !assert.NoError(t, err, "register fail using "+layer) {
 			log.Log.Fatal("Error registrer")
 		}
-		log.Log.Debugf("%02d: Waiting for entry .... ", nr)
+		log.Log.Debugf("%02d: Waiting for entry .... with handle %s", nr, id.String())
 		select {
 		case x := <-dataChan:
-			log.Log.Debugf("%02d: Received entry  ....%v", nr, x.LastName)
+			log.Log.Debugf("%02d/%s: Received entry  ....%v - %s", nr, id.String(), x.LastName, x.FirstName)
 			_, err = id.Insert(testCreationTableStruct,
 				&common.Entries{Fields: fields,
 					DataStruct: x,
 					Values:     [][]any{{x}}})
 			if !assert.NoError(t, err, "insert fail using "+layer) {
 				fmt.Println("Error thread ....")
-				log.Log.Debugf("%02d: Error storing  ....%v", nr, x.LastName)
+				log.Log.Debugf("%02d/%s: Error storing  ....%v - %s", nr, id.String(), x.LastName, x.FirstName)
 			} else {
-				log.Log.Debugf("%02d: Entry ready ....", nr)
+				log.Log.Debugf("%02d/%s: Entry ready .... %v - %s", nr, id.String(), x.LastName, x.FirstName)
 			}
-			// fmt.Println("DONEY-" + layer)
 			wgTest.Done()
 		case <-doneChan:
-			// fmt.Println("Ready thread ....", nr)
-			log.Log.Debugf("%02d: exiting thread %s", nr, url)
+			log.Log.Debugf("%02d/%s: exiting thread %s", nr, id.String(), url)
+			id.FreeHandler()
 			return
 		}
 		id.FreeHandler()
@@ -551,7 +553,8 @@ func insertStructForThread(t *testing.T, layer, url string, nr int32, fields []s
 }
 
 func validateTestResult(t *testing.T, layer, url string) {
-
+	time.Sleep(1 * time.Minute)
+	log.Log.Debugf("Validating test results for %s", layer)
 	id, err := Handle(layer, url)
 	if !assert.NoError(t, err, "register fail using "+layer) {
 		log.Log.Fatal("Error registrer")

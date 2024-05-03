@@ -26,6 +26,7 @@ import (
 )
 
 type DBsql interface {
+	ID() common.RegDbID
 	Open() (any, error)
 	StartTransaction() (*sql.Tx, context.Context, error)
 	EndTransaction(bool) error
@@ -37,7 +38,7 @@ type DBsql interface {
 }
 
 func CreateTable(dbsql DBsql, name string, col any) error {
-	log.Log.Debugf("Create SQL table")
+	log.Log.Debugf("%s: Create SQL table", dbsql.ID())
 	layer, url := dbsql.Reference()
 	db, err := sql.Open(layer, url)
 	if err != nil {

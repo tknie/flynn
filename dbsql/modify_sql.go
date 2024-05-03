@@ -25,7 +25,7 @@ import (
 )
 
 func Insert(dbsql DBsql, name string, insert *common.Entries) ([][]any, error) {
-	log.Log.Debugf("Transaction (begin insert): %v", dbsql.IsTransaction())
+	log.Log.Debugf("%s: Transaction (begin insert): %v", dbsql.ID(), dbsql.IsTransaction())
 	tx, ctx, err := dbsql.StartTransaction()
 	if err != nil {
 		return nil, err
