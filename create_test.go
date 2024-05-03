@@ -213,7 +213,7 @@ func TestCreateStringArray(t *testing.T) {
 		}
 		unregisterDatabase(t, id)
 	}
-	finalCheck(t)
+	finalCheck(t, 0)
 }
 
 func unregisterDatabase(t *testing.T, id common.RegDbID) {
@@ -240,7 +240,7 @@ func TestCreateStruct(t *testing.T) {
 		log.Log.Debugf("Work on target %#v", target)
 		err := createStruct(t, target)
 		assert.NoError(t, err)
-		finalCheck(t)
+		finalCheck(t, 0)
 	}
 }
 
@@ -570,6 +570,6 @@ func validateTestResult(t *testing.T, layer, url string) {
 	assert.Equal(t, 4, counter)
 }
 
-func finalCheck(t *testing.T) {
-	assert.Equal(t, 0, common.Databases)
+func finalCheck(t *testing.T, expected int) {
+	assert.Len(t, common.Databases, expected)
 }

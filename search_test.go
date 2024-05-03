@@ -86,7 +86,7 @@ func TestSearchQuery(t *testing.T) {
 		return
 	}
 	assert.Len(t, columns, 11)
-	finalCheck(t)
+	finalCheck(t, 1)
 }
 
 func TestSearchPgRows(t *testing.T) {
@@ -133,7 +133,7 @@ func TestSearchPgRows(t *testing.T) {
 		return nil
 	})
 	assert.NoError(t, err)
-	finalCheck(t)
+	finalCheck(t, 1)
 }
 
 func TestQueryPgFunctions(t *testing.T) {
@@ -181,7 +181,7 @@ func TestQueryPgFunctions(t *testing.T) {
 	for i := len(lenList) - 3; i < len(lenList); i++ {
 		fmt.Println(lenList[i])
 	}
-	finalCheck(t)
+	finalCheck(t, 1)
 }
 
 func TestSearchPgCriteriaRows(t *testing.T) {
@@ -220,7 +220,7 @@ func TestSearchPgCriteriaRows(t *testing.T) {
 		return nil
 	})
 	assert.NoError(t, err)
-	finalCheck(t)
+	finalCheck(t, 1)
 }
 
 type TestString struct {
@@ -292,7 +292,7 @@ func TestSearchPgStruct(t *testing.T) {
 		return nil
 	})
 	assert.NoError(t, err)
-	finalCheck(t)
+	finalCheck(t, 1)
 }
 
 func TestSearchPgPtrStruct(t *testing.T) {
@@ -340,7 +340,7 @@ func TestSearchPgPtrStruct(t *testing.T) {
 	})
 	assert.NoError(t, err)
 	assert.Equal(t, 50, counter)
-	finalCheck(t)
+	finalCheck(t, 1)
 }
 
 func TestSearchPgPtrStructDeep(t *testing.T) {
@@ -384,7 +384,7 @@ func TestSearchPgPtrStructDeep(t *testing.T) {
 	})
 	assert.NoError(t, err)
 	assert.Equal(t, 50, counter)
-	finalCheck(t)
+	finalCheck(t, 1)
 }
 
 func TestSearchPgPtrStructAll(t *testing.T) {
@@ -431,7 +431,7 @@ func TestSearchPgPtrStructAll(t *testing.T) {
 	})
 	assert.NoError(t, err)
 	assert.Equal(t, 50, counter)
-	finalCheck(t)
+	finalCheck(t, 1)
 }
 
 func TestSearchPgPtrPtrStructAll(t *testing.T) {
@@ -480,7 +480,7 @@ func TestSearchPgPtrPtrStructAll(t *testing.T) {
 	})
 	assert.NoError(t, err)
 	assert.Equal(t, 50, counter)
-	finalCheck(t)
+	finalCheck(t, 1)
 }
 
 func TestSearchAdaStruct(t *testing.T) {
@@ -520,7 +520,7 @@ func TestSearchAdaStruct(t *testing.T) {
 	})
 	assert.NoError(t, err)
 	assert.Equal(t, 50, counter)
-	finalCheck(t)
+	finalCheck(t, 1)
 }
 
 type Albums struct {
@@ -565,7 +565,7 @@ func TestSearchAdaPtrStruct(t *testing.T) {
 	})
 	assert.NoError(t, err)
 	assert.Equal(t, 50, counter)
-	finalCheck(t)
+	finalCheck(t, 1)
 }
 
 func TestSearchMariaDBRows(t *testing.T) {
@@ -610,7 +610,7 @@ func TestSearchMariaDBRows(t *testing.T) {
 		return nil
 	})
 	assert.NoError(t, err)
-	finalCheck(t)
+	finalCheck(t, 1)
 }
 
 func TestSearchPgRowsOrdered(t *testing.T) {
