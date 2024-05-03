@@ -59,6 +59,7 @@ func TestBinarySearchPgRows(t *testing.T) {
 		return nil
 	})
 	assert.NoError(t, err)
+	finalCheck(t)
 }
 
 func TestBinarySearchMariaRows(t *testing.T) {
@@ -99,4 +100,5 @@ func TestBinarySearchMariaRows(t *testing.T) {
 		return nil
 	})
 	assert.NoError(t, err)
+	finalCheck(t)
 }

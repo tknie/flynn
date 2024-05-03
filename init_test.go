@@ -175,6 +175,7 @@ func TestInitWrongDatabases(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
+	assert.Len(t, common.Databases, 0)
 	pg := fmt.Sprintf("postgres://%s:%s@%s:%d/%s", "admin", "Test123", "abs", port, "bitgarten")
 	x, err := Handle("postgres", pg)
 	assert.NoError(t, err)

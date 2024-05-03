@@ -80,6 +80,7 @@ func TestInsertInitTestTable(t *testing.T) {
 			return
 		}
 	}
+	finalCheck(t)
 }
 
 func checkTableAvailablefunc(t *testing.T, target *target) error {
@@ -241,5 +242,5 @@ func TestInsertStruct(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
-
+	finalCheck(t)
 }
