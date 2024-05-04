@@ -257,12 +257,14 @@ func sqlDataTypeStructField(baAvailable bool, field reflect.StructField) (string
 					fieldName = tagField[0]
 				}
 				if len(tagField) > 1 && tagField[1] == common.SubTypeTag {
+					log.Log.Debugf("Found sub type tag")
 					return fieldName + " " + common.Bytes.SqlType(baAvailable, 255), nil
 				}
-				if len(tagField) > 2 {
-					switch tagField[2] {
+				if len(tagField) > 1 {
+					switch tagField[1] {
 					case "YAML", "XML", "JSON":
-						return fieldName + " " + common.Bytes.SqlType(baAvailable, sfi.length), nil
+						log.Log.Debugf("Found conversion tag " + tagField[1])
+						return fieldName + " " + common.Bytes.SqlType(baAvailable, 255), nil
 					}
 				}
 			}

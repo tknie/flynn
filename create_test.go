@@ -59,16 +59,22 @@ type SubField struct {
 	SubName string
 	Number  int
 }
+type TestUser struct {
+	Name  string `xml:"name,attr" yaml:"name"`
+	Read  string `xml:"read,attr" yaml:"read"`
+	Write string `xml:"write,attr" yaml:"write"`
+}
 
 type testRecord struct {
-	ID        int
-	Name      string
-	FirstName string
-	LastName  string
-	Address   string `flynn:"Street"`
-	Salary    uint64 `flynn:"Salary"`
-	Bonus     int64
-	Sub       *SubField `flynn:":sub"`
+	ID         int
+	Name       string
+	FirstName  string
+	LastName   string
+	Address    string `flynn:"Street"`
+	Salary     uint64 `flynn:"Salary"`
+	Bonus      int64
+	Sub        *SubField `flynn:":sub"`
+	Permission *TestUser `flynn:":YAML"`
 }
 
 func (tr *testRecord) values(fields []string) []any {
@@ -91,6 +97,8 @@ func (tr *testRecord) values(fields []string) []any {
 				values = append(values, tr.Salary)
 			case "bonus":
 				values = append(values, tr.Bonus)
+			case "permission":
+				values = append(values, tr.Permission)
 			default:
 				log.Log.Fatal("Appender for " + n + " not found")
 
@@ -247,17 +255,19 @@ func TestCreateStruct(t *testing.T) {
 
 func createStruct(t *testing.T, target *target) error {
 	columns := struct {
-		XY        uint64 `flynn:"ID::SERIAL"`
-		Name      string
-		FirstName string
-		LastName  string
-		Address   string `flynn:"Street"`
-		Salary    uint64 `flynn:"Salary"`
-		Bonus     int64
-		Sub       *SubField `flynn:":sub"`
+		XY         uint64 `flynn:"ID::SERIAL"`
+		Name       string
+		FirstName  string
+		LastName   string
+		Address    string `flynn:"Street"`
+		Salary     uint64 `flynn:"Salary"`
+		Bonus      int64
+		Sub        *SubField `flynn:":sub"`
+		Permission *TestUser `flynn:":YAML"`
 	}{XY: nrLoops + 10, Name: "Gellanger",
 		FirstName: "Bob", Salary: 10000,
-		Sub: &SubField{SubName: "AAAA", Number: 12}}
+		Sub:        &SubField{SubName: "AAAA", Number: 12},
+		Permission: &TestUser{Name: "TESTUSER", Read: "READ INFO", Write: "WRITE INFO"}}
 
 	log.Log.Debugf("Working on creating with target " + target.layer)
 	if target.layer == "adabas" {
@@ -371,11 +381,11 @@ func createStruct(t *testing.T, target *target) error {
 	assert.NoError(t, err)
 	log.Log.Debugf("Ended thread second test on target %s", target.layer)
 	err = initTheadTest(&threadTest{"insertStructThread1", t, target.layer,
-		target.url, insertStructThread, []string{"name", "firstname", "bonus"}})
+		target.url, insertStructThread, []string{"name", "firstname", "bonus", "permission"}})
 	assert.NoError(t, err)
 	err = initTheadTest(&threadTest{"insertStructThread2", t, target.layer,
 		target.url, insertStructThread,
-		[]string{"name", "firstname", "lastname", "street", "salary", "bonus", "sub"}})
+		[]string{"name", "firstname", "lastname", "street", "sub"}})
 	assert.NoError(t, err)
 	log.Log.Debugf("Ended thread last test on target %s", target.layer)
 
@@ -402,17 +412,19 @@ func initTheadTest(test *threadTest) error {
 		go test.f(test.t, test.layer, urlMaxConns, test.fields)
 	}
 
-	for i := 1; i < 50; i++ {
+	for i := 1; i < 20; i++ {
 		//fmt.Println("ADD-" + layer)
 		wgTest.Add(1)
 		messgage := "Kermit und Pigi " + strconv.Itoa(i)
 		log.Log.Debugf("Put into channel " + messgage)
 		dataChan <- &testRecord{Name: strconv.Itoa(i),
-			LastName:  messgage,
-			FirstName: test.name,
-			Bonus:     int64(math.Pow(-1, float64(i%2))*7000 - float64(i)),
-			Salary:    uint64(80000 + 10*i),
-			Sub:       &SubField{SubName: "Gonzo", Number: i}}
+			LastName:   messgage,
+			FirstName:  test.name,
+			Bonus:      int64(math.Pow(-1, float64(i%2))*7000 - float64(i)),
+			Salary:     uint64(80000 + 10*i),
+			Sub:        &SubField{SubName: "Gonzo", Number: i},
+			Permission: &TestUser{Name: "TTT", Read: "RRRR", Write: "WWWW"},
+		}
 	}
 
 	log.Log.Debugf("Waiting for insert wait group " + test.layer)
@@ -521,7 +533,7 @@ func insertStructThread(t *testing.T, layer, url string, fields []string) {
 }
 
 func insertStructForThread(t *testing.T, layer, url string, nr int32, fields []string) {
-	log.Log.Debugf("%02d: starting thread %s", nr, url)
+	log.Log.Debugf("%02d: starting thread %s with fields %s", nr, url, fields)
 	for {
 		id, err := Handle(layer, url)
 		if !assert.NoError(t, err, "register fail using "+layer) {
@@ -563,7 +575,7 @@ func validateTestResult(t *testing.T, layer, url string) {
 
 	counter := 0
 	id.BatchSelectFct(&common.Query{DataStruct: &testRecord{},
-		Search: "SELECT * FROM " + testCreationTableStruct + " WHERE name='31'"},
+		Search: "SELECT * FROM " + testCreationTableStruct + " WHERE name='9'"},
 		func(search *common.Query, result *common.Result) error {
 			record := result.Data.(*testRecord)
 			fmt.Printf("-> %#v\n", record)

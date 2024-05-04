@@ -211,8 +211,8 @@ func (dynamic *typeInterface) generateField(elemValue reflect.Value, scan bool) 
 		if cv.Kind() == reflect.Pointer {
 			if !scan && cv.IsNil() {
 				log.Log.Debugf("IsNil pointer = %v -> %s", cv.IsNil(), cv.Type().String())
-				if len(tags) > 2 {
-					switch tags[2] {
+				if len(tags) > 1 {
+					switch tags[1] {
 					case "YAML", "XML", "JSON":
 						dynamic.ValueRefTo = append(dynamic.ValueRefTo, "")
 						continue
@@ -268,8 +268,8 @@ func (dynamic *typeInterface) generateField(elemValue reflect.Value, scan bool) 
 						return errorrepo.NewError("DB000011", fieldType.Name)
 					}
 				}
-				if len(tags) > 2 {
-					switch tags[2] {
+				if len(tags) > 1 {
+					switch tags[1] {
 					case "YAML":
 						out, err := yaml.Marshal(cv.Interface())
 						if err != nil {
@@ -419,9 +419,9 @@ func (dynamic *typeInterface) generateFieldNames(ri reflect.Type) {
 				default:
 				}
 			}
-			if len(s) > 2 {
+			if len(s) > 1 {
 				log.Log.Debugf("Field tag option %s", s[1])
-				switch s[2] {
+				switch s[1] {
 				case "YAML", "XML", "JSON":
 					dynamic.RowFields = append(dynamic.RowFields, fieldName)
 					continue

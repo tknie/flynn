@@ -151,9 +151,9 @@ func TestDataTypeStructBlogs(t *testing.T) {
 		ZInt  string `flynn:"ABC::200"`
 		ZBlob []byte
 		Zstr0 *SubStruct `flynn:"NNN"`
-		Zstr1 *SubStruct `flynn:"YYY::YAML"`
-		Zstr2 *SubStruct `flynn:"XXX::XML"`
-		Zstr3 *SubStruct `flynn:"JJJ::JSON"`
+		Zstr1 *SubStruct `flynn:"YYY:YAML"`
+		Zstr2 *SubStruct `flynn:"XXX:XML"`
+		Zstr3 *SubStruct `flynn:"JJJ:JSON"`
 	}{"aaa", "djfgidjfgi", []byte{1, 9}, nil, nil, nil, nil}
 	s, err = SqlDataType(tSQL.ByteArrayAvailable(), &z)
 	assert.NoError(t, err)
