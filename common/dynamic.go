@@ -251,13 +251,14 @@ func (dynamic *typeInterface) generateField(elemValue reflect.Value, readScan bo
 		case NormalTag, KeyTag, IndexTag:
 			if cv.Kind() == reflect.Pointer {
 				// x := reflect.New(cv.Type().Elem())
-				x := reflect.Indirect(reflect.New(cv.Type().Elem()))
+				/*			x := reflect.Indirect(reflect.New(cv.Type().Elem()))
 
-				err := dynamic.generateField(x, readScan)
-				if err != nil {
-					return err
-				}
-				if readScan {
+							err := dynamic.generateField(x, readScan)
+							if err != nil {
+								return err
+							}*/
+				log.Log.Debugf("Found pointer %T", cv.Interface())
+				if readScan || cv.IsNil() {
 					x := reflect.New(cv.Type().Elem())
 					log.Log.Debugf("Work on pointer %v %s", x, cv.Type().String())
 					cv.Set(x)
