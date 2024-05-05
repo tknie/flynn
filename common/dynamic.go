@@ -50,6 +50,7 @@ type typeInterface struct {
 	FieldSet   map[string]void
 	ValueRefTo []any
 	ScanValues []any
+	TagInfo    []TagInfo
 }
 
 type SubInterface interface {
@@ -129,7 +130,8 @@ func (dynamic *typeInterface) CreateQueryValues() (*ValueDefinition, error) {
 	if err != nil {
 		return nil, err
 	}
-	vd := &ValueDefinition{dynamic, copyValue.Interface(), dynamic.ValueRefTo, dynamic.ScanValues}
+	vd := &ValueDefinition{dynamic, copyValue.Interface(), dynamic.ValueRefTo,
+		dynamic.ScanValues, dynamic.TagInfo}
 	return vd, nil
 }
 
@@ -157,210 +159,233 @@ func (dynamic *typeInterface) CreateValues(value interface{}) ([]any, error) {
 // generateField generate field values for dynamic query.
 // 'scan' is used to consider case for read (field creation out of database) or
 // write (no creation, data is used by application)
-func (dynamic *typeInterface) generateField(elemValue reflect.Value, scan bool) error {
+func (dynamic *typeInterface) generateField(elemValue reflect.Value, readScan bool) error {
 	log.Log.Debugf("Generate field of Struct: %T %s -> scan=%v",
-		elemValue.Interface(), elemValue.Type().Name(), scan)
-	defer log.Log.Debugf("generated field of struct")
+		elemValue.Interface(), elemValue.Type().Name(), readScan)
+	defer log.Log.Debugf("generated field of struct %s", elemValue.Type().Name())
 	for fi := 0; fi < elemValue.NumField(); fi++ {
 		fieldType := elemValue.Type().Field(fi)
 		tag := fieldType.Tag
 		cv := elemValue.Field(fi)
 		d := tag.Get(TagName)
-		tags := strings.Split(d, ":")
+		tagName, tagInfo := TagInfoParse(d)
 		fieldName := fieldType.Name
-		log.Log.Debugf("%s: kind %v tags = %#v", fieldName, cv.Kind(), tags)
-		if len(tags) > 1 {
-			log.Log.Debugf("Tag for %s = %s", fieldType.Name, tag)
-			if tags[1] == "ignore" {
-				continue
-			}
-			log.Log.Debugf("Tags[1]=%v / %s", tags[1], cv.Type().Name())
-			if tags[1] == SubTypeTag {
-				log.Log.Debugf("is nil = %v scan = %v", cv.IsNil(), scan)
-				checkField := dynamic.checkFieldSet(fieldType.Name)
-				if checkField {
-					di := cv.Interface()
-					log.Log.Debugf("Sub interface = %v/%T", di, di)
-					if cd, ok := di.(SubInterface); ok {
-						if scan {
-							x := reflect.Indirect(reflect.New(cv.Type().Elem()))
-							log.Log.Debugf("X = %T", x.Interface())
-							cv.Set(x.Addr())
-							di = cv.Interface()
-							log.Log.Debugf("V = %v/%T", di, di)
-							dynamic.ValueRefTo = append(dynamic.ValueRefTo, di)
-						} else {
-							data := cd.Data()
-							dynamic.ValueRefTo = append(dynamic.ValueRefTo, data)
-						}
-						dynamic.ScanValues = append(dynamic.ScanValues, &sql.NullString{})
-						continue
+		if tagName != "" {
+			fieldName = tagName
+		}
+		log.Log.Debugf("%s: kind %v tags = %s", fieldName, cv.Kind(), tagName)
+		switch tagInfo {
+		case IgnoreTag:
+			continue
+		case SubTag:
+			log.Log.Debugf("is nil = %v scan = %v", cv.IsNil(), readScan)
+			checkField := dynamic.checkFieldSet(fieldType.Name)
+			if checkField {
+				di := cv.Interface()
+				log.Log.Debugf("Sub interface = %v/%T", di, di)
+				if cd, ok := di.(SubInterface); ok {
+					if readScan {
+						x := reflect.Indirect(reflect.New(cv.Type().Elem()))
+						log.Log.Debugf("X = %T", x.Interface())
+						cv.Set(x.Addr())
+						di = cv.Interface()
+						log.Log.Debugf("V = %v/%T", di, di)
+						dynamic.ValueRefTo = append(dynamic.ValueRefTo, di)
+					} else {
+						data := cd.Data()
+						dynamic.ValueRefTo = append(dynamic.ValueRefTo, data)
 					}
-					log.Log.Debugf("No sub interface = %v/%T", di, di)
-					return errorrepo.NewError("DB000011", fieldType.Name)
-				} else {
+					dynamic.ScanValues = append(dynamic.ScanValues, &sql.NullString{})
+					dynamic.TagInfo = append(dynamic.TagInfo, SubTag)
 					continue
 				}
+				log.Log.Debugf("No sub interface = %v/%T", di, di)
+				return errorrepo.NewError("DB000011", fieldType.Name)
+			} else {
+				continue
 			}
-		}
-		if len(tags) > 0 {
-			if tags[0] != "" {
-				fieldName = tags[0]
-			}
-		}
-		if cv.Kind() == reflect.Pointer {
-			if !scan && cv.IsNil() {
-				log.Log.Debugf("IsNil pointer = %v -> %s", cv.IsNil(), cv.Type().String())
-				if len(tags) > 1 {
-					switch tags[1] {
-					case "YAML", "XML", "JSON":
-						dynamic.ValueRefTo = append(dynamic.ValueRefTo, "")
-						continue
+		case YAMLTag, XMLTag, JSONTag:
+			checkField := dynamic.checkFieldSet(fieldType.Name)
+			if checkField {
+				if cv.Kind() == reflect.Pointer {
+					if !readScan {
+						out, err := yaml.Marshal(cv.Interface())
+						if err != nil {
+							return err
+						}
+						dynamic.ValueRefTo = append(dynamic.ValueRefTo, string(out))
+					} else {
+						x := reflect.Indirect(reflect.New(cv.Type().Elem()))
+						cv.Set(x.Addr())
+						di := cv.Interface()
+						log.Log.Debugf("Add YAML,XML,JSON into value %T", di)
+						dynamic.ValueRefTo = append(dynamic.ValueRefTo, di)
+					}
+					dynamic.ScanValues = append(dynamic.ScanValues, &sql.NullString{})
+					switch tagInfo {
+					case YAMLTag:
+						dynamic.TagInfo = append(dynamic.TagInfo, YAMLTag)
+					case XMLTag:
+						dynamic.TagInfo = append(dynamic.TagInfo, XMLTag)
+					case JSONTag:
+						dynamic.TagInfo = append(dynamic.TagInfo, JSONTag)
 					}
 				}
-
+			}
+			continue
+		case NormalTag:
+			if cv.Kind() == reflect.Pointer {
 				// x := reflect.New(cv.Type().Elem())
 				x := reflect.Indirect(reflect.New(cv.Type().Elem()))
 
-				err := dynamic.generateField(x, scan)
+				err := dynamic.generateField(x, readScan)
 				if err != nil {
 					return err
 				}
-				// dynamic.ValueRefTo = append(dynamic.ValueRefTo, nil)
-				continue
-			}
-			if scan {
-				x := reflect.New(cv.Type().Elem())
-				log.Log.Debugf("Work on pointer %v %s", x, cv.Type().String())
-				cv.Set(x)
-				cv = x.Elem()
-			} else {
-				cv = cv.Elem()
-				log.Log.Debugf("Go on pointer %s: kind %v", fieldName, cv.Kind())
-			}
-		}
-		if cv.Kind() == reflect.Struct {
-			log.Log.Debugf("Work on struct %s", fieldType.Name)
-			switch cv.Interface().(type) {
-			case time.Time:
-				checkField := dynamic.checkFieldSet(fieldType.Name)
-				if checkField {
-					ptr := cv.Addr()
-					t := reflect.TypeOf(cv)
-					log.Log.Debugf("Add Time %T %s %s", ptr.Interface(), cv.Type().Name(), t.Name())
-					dynamic.ValueRefTo = append(dynamic.ValueRefTo, ptr.Interface())
-					dynamic.ScanValues = append(dynamic.ScanValues, &sql.NullTime{})
+				if readScan {
+					x := reflect.New(cv.Type().Elem())
+					log.Log.Debugf("Work on pointer %v %s", x, cv.Type().String())
+					cv.Set(x)
+					cv = x.Elem()
+				} else {
+					cv = cv.Elem()
+					log.Log.Debugf("Go on pointer %s: kind %v", fieldName, cv.Kind())
 				}
-				continue
-			default:
-				if len(tags) > 1 {
-					log.Log.Debugf("Tags[1]=%v / %s", tags[1], cv.Type().Name())
-					if tags[1] == SubTypeTag {
+			}
+			if cv.Kind() == reflect.Struct {
+				log.Log.Debugf("Work on struct %s", fieldType.Name)
+				switch cv.Interface().(type) {
+				case time.Time:
+					checkField := dynamic.checkFieldSet(fieldType.Name)
+					if checkField {
+						ptr := cv.Addr()
+						t := reflect.TypeOf(cv)
+						log.Log.Debugf("Add Time %T %s %s", ptr.Interface(), cv.Type().Name(), t.Name())
+						dynamic.ValueRefTo = append(dynamic.ValueRefTo, ptr.Interface())
+						dynamic.ScanValues = append(dynamic.ScanValues, &sql.NullTime{})
+						dynamic.TagInfo = append(dynamic.TagInfo, NormalTag)
+					}
+					continue
+				default:
+					if tagInfo == SubTag {
 						di := cv.Interface()
 						log.Log.Debugf("Check sub interface = %v/%T", di, di)
 						if cd, ok := di.(SubInterface); ok {
 							data := cd.Data()
 							dynamic.ValueRefTo = append(dynamic.ValueRefTo, data)
 							dynamic.ScanValues = append(dynamic.ScanValues, &sql.NullString{})
+							dynamic.TagInfo = append(dynamic.TagInfo, SubTag)
 							continue
 						}
 						log.Log.Debugf("No sub interface = %v/%T", di, di)
 						return errorrepo.NewError("DB000011", fieldType.Name)
 					}
-				}
-				if len(tags) > 1 {
-					switch tags[1] {
-					case "YAML":
-						out, err := yaml.Marshal(cv.Interface())
-						if err != nil {
-							return err
+					switch tagInfo {
+					case YAMLTag:
+						log.Log.Debugf("Go for YAML with scan=%v", readScan)
+						if readScan {
+							log.Log.Fatal("YAML not implemented")
+						} else {
+							out, err := yaml.Marshal(cv.Interface())
+							if err != nil {
+								return err
+							}
+							dynamic.ValueRefTo = append(dynamic.ValueRefTo, string(out))
 						}
-						dynamic.ValueRefTo = append(dynamic.ValueRefTo, string(out))
+						dynamic.ScanValues = append(dynamic.ScanValues, &sql.NullString{})
+						dynamic.TagInfo = append(dynamic.TagInfo, YAMLTag)
 						continue
-					case "XML":
+					case XMLTag:
 						out, err := xml.Marshal(cv.Interface())
 						if err != nil {
 							return err
 						}
 						dynamic.ValueRefTo = append(dynamic.ValueRefTo, string(out))
+						dynamic.ScanValues = append(dynamic.ScanValues, &sql.NullString{})
+						dynamic.TagInfo = append(dynamic.TagInfo, XMLTag)
 						continue
-					case "JSON":
+					case JSONTag:
 						out, err := json.Marshal(cv.Interface())
 						if err != nil {
 							return err
 						}
 						dynamic.ValueRefTo = append(dynamic.ValueRefTo, string(out))
+						dynamic.ScanValues = append(dynamic.ScanValues, &sql.NullString{})
+						dynamic.TagInfo = append(dynamic.TagInfo, JSONTag)
 						continue
 					default:
-						dynamic.ValueRefTo = append(dynamic.ValueRefTo, "")
+						dynamic.generateField(cv, readScan)
+						//							dynamic.ValueRefTo = append(dynamic.ValueRefTo, "")
+						//							dynamic.TagInfo = append(dynamic.TagInfo, NormalTag)
 						continue
-					}
-				}
-				dynamic.generateField(cv, scan)
-			}
-		} else {
-			log.Log.Debugf("Work on field %s -> scan=%v", fieldName, scan)
-			checkField := dynamic.checkFieldSet(fieldName)
-			if checkField {
-				if scan {
-					var ptr reflect.Value
-					if cv.CanAddr() {
-						log.Log.Debugf("Use Addr")
-						ptr = cv.Addr()
-					} else {
-						ptr = reflect.New(cv.Type())
-						log.Log.Debugf("Got Addr pointer %#v", ptr)
-						ptr.Elem().Set(cv)
-					}
-					ptrInt := ptr.Interface()
-					log.Log.Debugf("Add value %T pointer=%p %s %s", ptrInt, ptrInt, fieldName, elemValue.Type().Name())
-					dynamic.ValueRefTo = append(dynamic.ValueRefTo, ptrInt)
-					switch cv.Kind() {
-					case reflect.String:
-						dynamic.ScanValues = append(dynamic.ScanValues, &sql.NullString{})
-					case reflect.Bool:
-						dynamic.ScanValues = append(dynamic.ScanValues, &sql.NullBool{})
-					case reflect.Int8:
-						dynamic.ScanValues = append(dynamic.ScanValues, &sql.NullByte{})
-					case reflect.Int16:
-						dynamic.ScanValues = append(dynamic.ScanValues, &sql.NullInt16{})
-					case reflect.Int32, reflect.Int:
-						dynamic.ScanValues = append(dynamic.ScanValues, &sql.NullInt32{})
-					case reflect.Int64:
-						dynamic.ScanValues = append(dynamic.ScanValues, &sql.NullInt64{})
-					case reflect.Uint64:
-						dynamic.ScanValues = append(dynamic.ScanValues, &sql.NullString{})
-					case reflect.Float32, reflect.Float64:
-						dynamic.ScanValues = append(dynamic.ScanValues, &sql.NullFloat64{})
-					default:
-						log.Log.Debugf("'%s' dynamic Kind not defined for SQL %s", fieldType.Name, cv.Kind().String())
-						dynamic.ScanValues = append(dynamic.ScanValues, ptrInt)
-					}
-				} else {
-					switch cv.Kind() {
-					case reflect.Chan, reflect.Func, reflect.Map, reflect.Pointer,
-						reflect.UnsafePointer, reflect.Interface, reflect.Slice:
-						if cv.IsNil() {
-							dynamic.ValueRefTo = append(dynamic.ValueRefTo, nil)
-						} else {
-							dynamic.ValueRefTo = append(dynamic.ValueRefTo, cv.Interface())
-						}
-					default:
-						if cv.IsValid() {
-							log.Log.Debugf("Add no-scan value type=%T field=%s elemValueName=%s: value=%#v",
-								cv.Interface(), fieldName, elemValue.Type().Name(), cv.Interface())
-							dynamic.ValueRefTo = append(dynamic.ValueRefTo, cv.Interface())
-						} else {
-							log.Log.Debugf("Invalid no-scan field %s", fieldName)
-							dynamic.ValueRefTo = append(dynamic.ValueRefTo, nil)
-						}
 					}
 				}
 			} else {
-				log.Log.Debugf("Skip field not in field set")
+				log.Log.Debugf("Work on field %s -> scan=%v", fieldName, readScan)
+				checkField := dynamic.checkFieldSet(fieldName)
+				if checkField {
+					if readScan {
+						var ptr reflect.Value
+						if cv.CanAddr() {
+							log.Log.Debugf("Use Addr")
+							ptr = cv.Addr()
+						} else {
+							ptr = reflect.New(cv.Type())
+							log.Log.Debugf("Got Addr pointer %#v", ptr)
+							ptr.Elem().Set(cv)
+						}
+						ptrInt := ptr.Interface()
+						log.Log.Debugf("Add value %T pointer=%p %s %s", ptrInt, ptrInt, fieldName, elemValue.Type().Name())
+						dynamic.ValueRefTo = append(dynamic.ValueRefTo, ptrInt)
+						switch cv.Kind() {
+						case reflect.String:
+							dynamic.ScanValues = append(dynamic.ScanValues, &sql.NullString{})
+						case reflect.Bool:
+							dynamic.ScanValues = append(dynamic.ScanValues, &sql.NullBool{})
+						case reflect.Int8:
+							dynamic.ScanValues = append(dynamic.ScanValues, &sql.NullByte{})
+						case reflect.Int16:
+							dynamic.ScanValues = append(dynamic.ScanValues, &sql.NullInt16{})
+						case reflect.Int32, reflect.Int:
+							dynamic.ScanValues = append(dynamic.ScanValues, &sql.NullInt32{})
+						case reflect.Int64:
+							dynamic.ScanValues = append(dynamic.ScanValues, &sql.NullInt64{})
+						case reflect.Uint64:
+							dynamic.ScanValues = append(dynamic.ScanValues, &sql.NullString{})
+						case reflect.Float32, reflect.Float64:
+							dynamic.ScanValues = append(dynamic.ScanValues, &sql.NullFloat64{})
+						default:
+							log.Log.Debugf("'%s' dynamic Kind not defined for SQL %s", fieldType.Name, cv.Kind().String())
+							dynamic.ScanValues = append(dynamic.ScanValues, ptrInt)
+						}
+						dynamic.TagInfo = append(dynamic.TagInfo, NormalTag)
+					} else {
+						switch cv.Kind() {
+						case reflect.Chan, reflect.Func, reflect.Map, reflect.Pointer,
+							reflect.UnsafePointer, reflect.Interface, reflect.Slice:
+							if cv.IsNil() {
+								dynamic.ValueRefTo = append(dynamic.ValueRefTo, nil)
+							} else {
+								dynamic.ValueRefTo = append(dynamic.ValueRefTo, cv.Interface())
+							}
+						default:
+							if cv.IsValid() {
+								log.Log.Debugf("Add no-scan value type=%T field=%s elemValueName=%s: value=%#v",
+									cv.Interface(), fieldName, elemValue.Type().Name(), cv.Interface())
+								dynamic.ValueRefTo = append(dynamic.ValueRefTo, cv.Interface())
+							} else {
+								log.Log.Debugf("Invalid no-scan field %s", fieldName)
+								dynamic.ValueRefTo = append(dynamic.ValueRefTo, nil)
+							}
+						}
+						dynamic.TagInfo = append(dynamic.TagInfo, NormalTag)
+					}
+				} else {
+					log.Log.Debugf("Skip field not in field set")
+				}
 			}
+			log.Log.Debugf("Row values len=%d", len(dynamic.ValueRefTo))
 		}
-		log.Log.Debugf("Row values len=%d", len(dynamic.ValueRefTo))
 	}
 	return nil
 }
@@ -390,43 +415,34 @@ func (dynamic *typeInterface) generateFieldNames(ri reflect.Type) {
 		fieldName := ct.Name
 		log.Log.Debugf("Work on fieldname %s", fieldName)
 		tag := ct.Tag.Get(TagName)
-
-		// If tag is given
-		if tag != "" {
-			log.Log.Debugf("Field tag %s", tag)
-			s := strings.Split(tag, ":")
-			if len(s) > 0 && s[0] != "" {
-				fieldName = s[0]
+		tagName, tagInfo := TagInfoParse(tag)
+		if tagName != "" {
+			fieldName = tagName
+		}
+		log.Log.Debugf("Field tag option %s", tagInfo)
+		switch tagInfo {
+		case KeyTag:
+			dynamic.RowNames["#key"] = []string{fieldName}
+		case IndexTag:
+			dynamic.RowNames["#index"] = []string{fieldName}
+			continue
+		case IgnoreTag:
+			continue
+		case SubTag:
+			log.Log.Debugf("Found sub")
+			ok := dynamic.checkFieldSet(fieldName)
+			if ok {
+				dynamic.RowFields = append(dynamic.RowFields, fieldName)
+				log.Log.Debugf("RowFields: Add field name %s", fieldName)
 			}
-			if len(s) > 1 {
-				log.Log.Debugf("Field tag option %s", s[1])
-				switch s[1] {
-				case "key":
-					dynamic.RowNames["#key"] = []string{fieldName}
-				case "isn":
-					dynamic.RowNames["#index"] = []string{fieldName}
-					continue
-				case "ignore":
-					continue
-				case SubTypeTag:
-					log.Log.Debugf("Found sub")
-					ok := dynamic.checkFieldSet(fieldName)
-					if ok {
-						dynamic.RowFields = append(dynamic.RowFields, fieldName)
-						log.Log.Debugf("RowFields: Add field name %s", fieldName)
-					}
-					continue
-				default:
-				}
+			continue
+		case YAMLTag, XMLTag, JSONTag:
+			ok := dynamic.checkFieldSet(fieldName)
+			if ok {
+				dynamic.RowFields = append(dynamic.RowFields, fieldName)
 			}
-			if len(s) > 1 {
-				log.Log.Debugf("Field tag option %s", s[1])
-				switch s[1] {
-				case "YAML", "XML", "JSON":
-					dynamic.RowFields = append(dynamic.RowFields, fieldName)
-					continue
-				}
-			}
+			continue
+		default:
 		}
 		log.Log.Debugf("Work on final fieldname %s", fieldName)
 		log.Log.Debugf("Add field %s", ct.Name)
@@ -475,61 +491,86 @@ func (dynamic *typeInterface) generateFieldNames(ri reflect.Type) {
 
 func (vd *ValueDefinition) ShiftValues() error {
 	for d, v := range vd.ScanValues {
-		if di, ok := vd.Values[d].(SubInterface); ok {
-
-			log.Log.Debugf("%d. entry is sub interface %v", d, vd.Values[d])
-			ns := v.(*sql.NullString)
-			if ns.Valid {
-				if di == nil || vd.Values[d] == nil {
-					return errorrepo.NewError("DB000032")
+		switch vd.TagInfo[d] {
+		case NormalTag:
+			if _, ok := v.(sqlInterface); ok {
+				vv, err := v.(sqlInterface).Value()
+				if err != nil {
+					log.Log.Errorf("SQL interface error: %v", err)
+					return err
 				}
-				log.Log.Debugf("Found sub data: %s(%v)/%v", ns.String, di, v)
-				return di.ParseData([]byte(ns.String))
-			}
-			return nil
-		}
-		if _, ok := v.(sqlInterface); ok {
-			vv, err := v.(sqlInterface).Value()
-			if err != nil {
-				return err
-			}
-			if vv != nil {
-				log.Log.Debugf("(%d) Found value %T pointer=%p", d, vd.Values[d], vd.Values[d])
-				log.Log.Debugf("Shift values %v", vv)
-				switch vt := vd.Values[d].(type) {
-				case *int:
-					switch vvv := vv.(type) {
-					case int:
-						*vt = int(vvv)
-					case int32:
-						*vt = int(vvv)
-					case int64:
-						*vt = int(vvv)
+				if vv != nil {
+					log.Log.Debugf("(%d) Found value %T pointer=%p", d, vd.Values[d], vd.Values[d])
+					log.Log.Debugf("Shift values %v", vv)
+					switch vt := vd.Values[d].(type) {
+					case *int:
+						switch vvv := vv.(type) {
+						case int:
+							*vt = int(vvv)
+						case int32:
+							*vt = int(vvv)
+						case int64:
+							*vt = int(vvv)
+						default:
+							log.Log.Debugf("Unknown type %T", vv)
+						}
+					case *float32:
+						*vt = vv.(float32)
+					case *float64:
+						*vt = vv.(float64)
+					case *int64:
+						*vt = vv.(int64)
+					case *uint64:
+						v := vv.(string)
+						*vt, err = strconv.ParseUint(v, 0, 64)
+						if err != nil {
+							return err
+						}
+					case *string:
+						*vt = vv.(string)
+					case *time.Time:
+						*vt = vv.(time.Time)
 					default:
-						log.Log.Debugf("Unknown type %T", vv)
+						log.Log.Fatalf("Unknown type for shifting %s at index %d value %T <- %T", vd.dynamic.RowFields[d], d, vd.Values[d], vv)
 					}
-				case *float32:
-					*vt = vv.(float32)
-				case *float64:
-					*vt = vv.(float64)
-				case *int64:
-					*vt = vv.(int64)
-				case *uint64:
-					v := vv.(string)
-					*vt, err = strconv.ParseUint(v, 0, 64)
+				} else {
+					log.Log.Debugf("SQL interface value nil")
+				}
+			}
+		case SubTag:
+			if di, ok := vd.Values[d].(SubInterface); ok {
+
+				log.Log.Debugf("%d. entry is sub interface %v", d, vd.Values[d])
+				ns := v.(*sql.NullString)
+				if ns.Valid {
+					if di == nil || vd.Values[d] == nil {
+						return errorrepo.NewError("DB000032")
+					}
+					log.Log.Debugf("Found sub data: %s(%v)/%v", ns.String, di, v)
+					err := di.ParseData([]byte(ns.String))
 					if err != nil {
 						return err
 					}
-				case *string:
-					*vt = vv.(string)
-				case *time.Time:
-					*vt = vv.(time.Time)
-				default:
-					log.Log.Fatalf("Unknown type for shifting at index %d value %T <- %T", d, vd.Values[d], vv)
 				}
-			} else {
-				log.Log.Debugf("SQL interface value nil")
 			}
+		case YAMLTag:
+			log.Log.Debugf("(%d) Found value %T of %#v", d, vd.Values[d], vd.Values[d])
+			yamlValue := v.(*sql.NullString)
+			if yamlValue.Valid {
+				vv, err := yamlValue.Value()
+				if err != nil {
+					log.Log.Errorf("SQL interface error: %v", err)
+					return err
+				}
+				log.Log.Debugf("-> %#v / %T", vv, vv)
+				err = yaml.Unmarshal([]byte(vv.(string)), vd.Values[d])
+				if err != nil {
+					log.Log.Errorf("Unmarshal error: %v", err)
+					return err
+				}
+			}
+		case XMLTag:
+		case JSONTag:
 		}
 	}
 	return nil

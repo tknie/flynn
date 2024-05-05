@@ -565,8 +565,9 @@ func insertStructForThread(t *testing.T, layer, url string, nr int32, fields []s
 }
 
 func validateTestResult(t *testing.T, layer, url string) {
-	time.Sleep(1 * time.Minute)
-	log.Log.Debugf("Validating test results for %s", layer)
+	fmt.Println("Sleeping one minute")
+	time.Sleep(10 * time.Second)
+	log.Log.Debugf("Validating test results for %s on %s", layer, url)
 	id, err := Handle(layer, url)
 	if !assert.NoError(t, err, "register fail using "+layer) {
 		log.Log.Fatal("Error registrer")
@@ -574,15 +575,22 @@ func validateTestResult(t *testing.T, layer, url string) {
 	defer id.FreeHandler()
 
 	counter := 0
-	id.BatchSelectFct(&common.Query{DataStruct: &testRecord{},
+	permissionCounter := 0
+	err = id.BatchSelectFct(&common.Query{DataStruct: &testRecord{},
 		Search: "SELECT * FROM " + testCreationTableStruct + " WHERE name='9'"},
 		func(search *common.Query, result *common.Result) error {
 			record := result.Data.(*testRecord)
 			fmt.Printf("-> %#v\n", record)
+			fmt.Printf("   %#v\n", record.Permission)
+			if record.Permission.Name == "TTT" {
+				permissionCounter++
+			}
 			counter++
 			return nil
 		})
+	assert.NoError(t, err)
 	assert.Equal(t, 4, counter)
+	assert.Equal(t, 1, permissionCounter)
 }
 
 func finalCheck(t *testing.T, expected int) {

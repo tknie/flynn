@@ -21,6 +21,51 @@ import (
 	"github.com/tknie/log"
 )
 
+type TagInfo byte
+
+const (
+	NormalTag TagInfo = iota
+	IgnoreTag
+	SubTag
+	YAMLTag
+	XMLTag
+	JSONTag
+	IndexTag
+	KeyTag
+)
+
+var tagInfoNames = []string{"Normal", "Ignore", "Sub", "YAML", "XML", "JSON", "Index", "Key"}
+
+func (tagInfo TagInfo) String() string {
+	return tagInfoNames[tagInfo] + " Tag"
+}
+
+func TagInfoParse(info string) (string, TagInfo) {
+	if info == "" {
+		return "", NormalTag
+	}
+	infoSplit := strings.Split(info, ":")
+	if len(infoSplit) > 1 {
+		switch strings.ToLower(infoSplit[1]) {
+		case "ignore":
+			return "", IgnoreTag
+		case "key":
+			return infoSplit[0], KeyTag
+		case "isn":
+			return infoSplit[0], IndexTag
+		case "sub":
+			return infoSplit[0], SubTag
+		case "yaml":
+			return infoSplit[0], YAMLTag
+		case "xml":
+			return infoSplit[0], XMLTag
+		case "json":
+			return infoSplit[0], JSONTag
+		}
+	}
+	return infoSplit[0], NormalTag
+}
+
 type CreateStatus byte
 
 const (
@@ -105,6 +150,7 @@ type ValueDefinition struct {
 	Copy       any
 	Values     []any
 	ScanValues []any
+	TagInfo    []TagInfo
 }
 
 func (cd *CommonDatabase) IsTransaction() bool {

@@ -19,6 +19,7 @@ import (
 	"database/sql"
 	"fmt"
 	"math"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"sync"
@@ -622,7 +623,8 @@ func (pg *PostGres) ParseStruct(search *common.Query, rows pgx.Rows, f common.Re
 		}
 		err := rows.Scan(vd.ScanValues...)
 		if err != nil {
-			log.Log.Debugf("Error during scan of struct: %v/%v", err, vd.Copy)
+			log.Log.Debugf("Error during parse of struct: %v/%v", err, vd.Copy)
+			debug.PrintStack()
 			return nil, err
 		}
 		err = vd.ShiftValues()
