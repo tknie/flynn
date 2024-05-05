@@ -248,25 +248,20 @@ func sqlDataTypeStructField(baAvailable bool, field reflect.StructField) (string
 		if x.Name() == "Time" {
 			return sfi.name + " TIMESTAMP " + sfi.additional, nil
 		}
-		if tagName, ok := field.Tag.Lookup(common.TagName); ok {
-			log.Log.Debugf("Found tag %s for %s", tagName, field.Name)
-			tagField := strings.Split(tagName, ":")
+		if tagValue, ok := field.Tag.Lookup(common.TagName); ok {
+			log.Log.Debugf("Found tag %s for %s", tagValue, field.Name)
+			tagName, tagInfo := common.TagInfoParse(tagValue)
 			fieldName := field.Name
-			if len(tagField) > 1 {
-				if tagField[0] != "" {
-					fieldName = tagField[0]
-				}
-				if len(tagField) > 1 && tagField[1] == common.SubTypeTag {
-					log.Log.Debugf("Found sub type tag")
-					return fieldName + " " + common.Bytes.SqlType(baAvailable, 255), nil
-				}
-				if len(tagField) > 1 {
-					switch tagField[1] {
-					case "YAML", "XML", "JSON":
-						log.Log.Debugf("Found conversion tag " + tagField[1])
-						return fieldName + " " + common.Bytes.SqlType(baAvailable, 255), nil
-					}
-				}
+			if tagName != "" {
+				fieldName = tagName
+			}
+			switch tagInfo {
+			case common.SubTag:
+				log.Log.Debugf("Found sub type tag")
+				return fieldName + " " + common.Bytes.SqlType(baAvailable, 255), nil
+			case common.YAMLTag, common.XMLTag, common.JSONTag:
+				log.Log.Debugf("Found conversion tag %s", tagInfo)
+				return fieldName + " " + common.Alpha.SqlType(255), nil
 			}
 		}
 		var buffer bytes.Buffer

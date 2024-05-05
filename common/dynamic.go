@@ -17,6 +17,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"reflect"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -195,7 +196,7 @@ func (dynamic *typeInterface) generateField(elemValue reflect.Value, readScan bo
 						data := cd.Data()
 						dynamic.ValueRefTo = append(dynamic.ValueRefTo, data)
 					}
-					dynamic.ScanValues = append(dynamic.ScanValues, &sql.NullString{})
+					dynamic.ScanValues = append(dynamic.ScanValues, &NullBytes{})
 					dynamic.TagInfo = append(dynamic.TagInfo, SubTag)
 					continue
 				}
@@ -289,7 +290,7 @@ func (dynamic *typeInterface) generateField(elemValue reflect.Value, readScan bo
 						if cd, ok := di.(SubInterface); ok {
 							data := cd.Data()
 							dynamic.ValueRefTo = append(dynamic.ValueRefTo, data)
-							dynamic.ScanValues = append(dynamic.ScanValues, &sql.NullString{})
+							dynamic.ScanValues = append(dynamic.ScanValues, &NullBytes{})
 							dynamic.TagInfo = append(dynamic.TagInfo, SubTag)
 							continue
 						}
@@ -517,13 +518,14 @@ func (vd *ValueDefinition) ShiftValues() error {
 			if di, ok := vd.Values[d].(SubInterface); ok {
 
 				log.Log.Debugf("%d. entry is sub interface %v", d, vd.Values[d])
-				ns := v.(*sql.NullString)
+				ns := v.(*NullBytes)
 				if ns.Valid {
 					if di == nil || vd.Values[d] == nil {
 						return errorrepo.NewError("DB000032")
 					}
-					log.Log.Debugf("Found sub data: %s(%v)/%v", ns.String, di, v)
-					err := di.ParseData([]byte(ns.String))
+					b := ns.Bytes[:slices.Index(ns.Bytes, 0)]
+					log.Log.Debugf("Found sub data: %s(%v)/%v", b, di, v)
+					err := di.ParseData(b)
 					if err != nil {
 						return err
 					}
@@ -603,7 +605,7 @@ func (vd *ValueDefinition) ShiftTransformContentValues(d int, v any) error {
 			if newValue == "" {
 				clear(vd.Values[d])
 			} else {
-				log.Log.Debugf("-> %#v / %T", vv, vv)
+				log.Log.Debugf("-> %#v / %T unmarshal %s", vv, vv, newValue)
 				switch vd.TagInfo[d] {
 				case YAMLTag:
 					err = yaml.Unmarshal([]byte(newValue), vd.Values[d])
