@@ -30,5 +30,6 @@ DB000029=init of transaction fails
 DB000030=insert of rows failed
 DB000031=nil internal error update
 DB000032=internal error sub element not created
+DB000033=internal error YAML,XML,JSON element not valid
 DB050001=Internal error: {0}
 DB065535=not implemented

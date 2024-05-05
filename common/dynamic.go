@@ -209,16 +209,31 @@ func (dynamic *typeInterface) generateField(elemValue reflect.Value, readScan bo
 			if checkField {
 				if cv.Kind() == reflect.Pointer {
 					if !readScan {
-						out, err := yaml.Marshal(cv.Interface())
-						if err != nil {
-							return err
+						switch tagInfo {
+						case YAMLTag:
+							out, err := yaml.Marshal(cv.Interface())
+							if err != nil {
+								return err
+							}
+							dynamic.ValueRefTo = append(dynamic.ValueRefTo, string(out))
+						case XMLTag:
+							out, err := xml.Marshal(cv.Interface())
+							if err != nil {
+								return err
+							}
+							dynamic.ValueRefTo = append(dynamic.ValueRefTo, string(out))
+						case JSONTag:
+							out, err := json.Marshal(cv.Interface())
+							if err != nil {
+								return err
+							}
+							dynamic.ValueRefTo = append(dynamic.ValueRefTo, string(out))
 						}
-						dynamic.ValueRefTo = append(dynamic.ValueRefTo, string(out))
 					} else {
 						x := reflect.Indirect(reflect.New(cv.Type().Elem()))
 						cv.Set(x.Addr())
 						di := cv.Interface()
-						log.Log.Debugf("Add YAML,XML,JSON into value %T", di)
+						log.Log.Debugf("Add YAML,XML,JSON into value %T %p", di, di)
 						dynamic.ValueRefTo = append(dynamic.ValueRefTo, di)
 					}
 					dynamic.ScanValues = append(dynamic.ScanValues, &sql.NullString{})
@@ -233,7 +248,7 @@ func (dynamic *typeInterface) generateField(elemValue reflect.Value, readScan bo
 				}
 			}
 			continue
-		case NormalTag:
+		case NormalTag, KeyTag, IndexTag:
 			if cv.Kind() == reflect.Pointer {
 				// x := reflect.New(cv.Type().Elem())
 				x := reflect.Indirect(reflect.New(cv.Type().Elem()))
@@ -492,50 +507,10 @@ func (dynamic *typeInterface) generateFieldNames(ri reflect.Type) {
 func (vd *ValueDefinition) ShiftValues() error {
 	for d, v := range vd.ScanValues {
 		switch vd.TagInfo[d] {
-		case NormalTag:
-			if _, ok := v.(sqlInterface); ok {
-				vv, err := v.(sqlInterface).Value()
-				if err != nil {
-					log.Log.Errorf("SQL interface error: %v", err)
-					return err
-				}
-				if vv != nil {
-					log.Log.Debugf("(%d) Found value %T pointer=%p", d, vd.Values[d], vd.Values[d])
-					log.Log.Debugf("Shift values %v", vv)
-					switch vt := vd.Values[d].(type) {
-					case *int:
-						switch vvv := vv.(type) {
-						case int:
-							*vt = int(vvv)
-						case int32:
-							*vt = int(vvv)
-						case int64:
-							*vt = int(vvv)
-						default:
-							log.Log.Debugf("Unknown type %T", vv)
-						}
-					case *float32:
-						*vt = vv.(float32)
-					case *float64:
-						*vt = vv.(float64)
-					case *int64:
-						*vt = vv.(int64)
-					case *uint64:
-						v := vv.(string)
-						*vt, err = strconv.ParseUint(v, 0, 64)
-						if err != nil {
-							return err
-						}
-					case *string:
-						*vt = vv.(string)
-					case *time.Time:
-						*vt = vv.(time.Time)
-					default:
-						log.Log.Fatalf("Unknown type for shifting %s at index %d value %T <- %T", vd.dynamic.RowFields[d], d, vd.Values[d], vv)
-					}
-				} else {
-					log.Log.Debugf("SQL interface value nil")
-				}
+		case NormalTag, KeyTag, IndexTag:
+			err := vd.ShiftNormalValues(d, v)
+			if err != nil {
+				return err
 			}
 		case SubTag:
 			if di, ok := vd.Values[d].(SubInterface); ok {
@@ -553,25 +528,118 @@ func (vd *ValueDefinition) ShiftValues() error {
 					}
 				}
 			}
-		case YAMLTag:
-			log.Log.Debugf("(%d) Found value %T of %#v", d, vd.Values[d], vd.Values[d])
-			yamlValue := v.(*sql.NullString)
-			if yamlValue.Valid {
-				vv, err := yamlValue.Value()
-				if err != nil {
-					log.Log.Errorf("SQL interface error: %v", err)
-					return err
-				}
-				log.Log.Debugf("-> %#v / %T", vv, vv)
-				err = yaml.Unmarshal([]byte(vv.(string)), vd.Values[d])
-				if err != nil {
-					log.Log.Errorf("Unmarshal error: %v", err)
-					return err
-				}
+		case YAMLTag, XMLTag, JSONTag:
+			err := vd.ShiftTransformContentValues(d, v)
+			if err != nil {
+				return err
 			}
-		case XMLTag:
-		case JSONTag:
+
+		case IgnoreTag: // is ignored
 		}
 	}
 	return nil
+}
+
+func (vd *ValueDefinition) ShiftNormalValues(d int, v any) error {
+	if _, ok := v.(sqlInterface); ok {
+		vv, err := v.(sqlInterface).Value()
+		if err != nil {
+			log.Log.Errorf("SQL interface error: %v", err)
+			return err
+		}
+		if vv != nil {
+			log.Log.Debugf("(%d) Found value %T pointer=%p", d, vd.Values[d], vd.Values[d])
+			log.Log.Debugf("Shift values %v", vv)
+			switch vt := vd.Values[d].(type) {
+			case *int:
+				switch vvv := vv.(type) {
+				case int:
+					*vt = int(vvv)
+				case int32:
+					*vt = int(vvv)
+				case int64:
+					*vt = int(vvv)
+				default:
+					log.Log.Debugf("Unknown type %T", vv)
+				}
+			case *float32:
+				*vt = vv.(float32)
+			case *float64:
+				*vt = vv.(float64)
+			case *int64:
+				*vt = vv.(int64)
+			case *uint64:
+				v := vv.(string)
+				*vt, err = strconv.ParseUint(v, 0, 64)
+				if err != nil {
+					return err
+				}
+			case *string:
+				*vt = vv.(string)
+			case *time.Time:
+				*vt = vv.(time.Time)
+			default:
+				log.Log.Fatalf("Unknown type for shifting %s at index %d value %T <- %T", vd.dynamic.RowFields[d], d, vd.Values[d], vv)
+			}
+		} else {
+			log.Log.Debugf("SQL interface value nil")
+		}
+	}
+	return nil
+}
+
+func (vd *ValueDefinition) ShiftTransformContentValues(d int, v any) error {
+	log.Log.Debugf("(%d) Found value %T of %#v", d, vd.Values[d], vd.Values[d])
+	fieldValue := v.(*sql.NullString)
+	if fieldValue.Valid {
+		vv, err := fieldValue.Value()
+		if err != nil {
+			log.Log.Errorf("SQL interface error: %v", err)
+			return err
+		}
+		if newValue, ok := vv.(string); ok {
+
+			if newValue == "" {
+				clear(vd.Values[d])
+			} else {
+				log.Log.Debugf("-> %#v / %T", vv, vv)
+				switch vd.TagInfo[d] {
+				case YAMLTag:
+					err = yaml.Unmarshal([]byte(newValue), vd.Values[d])
+					if err != nil {
+						log.Log.Errorf("Unmarshal error: %v", err)
+						return err
+					}
+				case XMLTag:
+					err = xml.Unmarshal([]byte(newValue), vd.Values[d])
+					if err != nil {
+						log.Log.Errorf("Unmarshal error: %v", err)
+						return err
+					}
+				case JSONTag:
+					err = json.Unmarshal([]byte(newValue), vd.Values[d])
+					if err != nil {
+						log.Log.Errorf("Unmarshal error: %v", err)
+						return err
+					}
+				}
+			}
+		} else {
+			return errorrepo.NewError("DB000033")
+		}
+	} else {
+		log.Log.Debugf("Empty content YAML")
+		/*err := yaml.Unmarshal([]byte(""), vd.Values[d])
+		if err != nil {
+			log.Log.Errorf("Unmarshal error: %v", err)
+			return err
+		}*/
+		clear(vd.Values[d])
+	}
+	return nil
+}
+
+func clear(v interface{}) {
+	p := reflect.ValueOf(v).Elem()
+	p.Set(reflect.Zero(p.Type()))
 }
