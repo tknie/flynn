@@ -523,7 +523,11 @@ func (vd *ValueDefinition) ShiftValues() error {
 					if di == nil || vd.Values[d] == nil {
 						return errorrepo.NewError("DB000032")
 					}
-					b := ns.Bytes[:slices.Index(ns.Bytes, 0)]
+					ni := slices.Index(ns.Bytes, 0)
+					b := ns.Bytes
+					if ni != -1 {
+						b = ns.Bytes[:ni]
+					}
 					log.Log.Debugf("Found sub data: %s(%v)/%v", b, di, v)
 					err := di.ParseData(b)
 					if err != nil {
