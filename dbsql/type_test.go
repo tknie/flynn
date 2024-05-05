@@ -157,7 +157,7 @@ func TestDataTypeStructBlogs(t *testing.T) {
 	}{"aaa", "djfgidjfgi", []byte{1, 9}, nil, nil, nil, nil}
 	s, err = SqlDataType(tSQL.ByteArrayAvailable(), &z)
 	assert.NoError(t, err)
-	assert.Equal(t, "KKK VARCHAR(1024) , ABC VARCHAR(200) , ZBlob BYTEA, ABC VARCHAR(255), Nr INTEGER, Value INTEGER, Doub DECIMAL(10,5), DoIt BIT(1), YYY BYTEA, XXX BYTEA, JJJ BYTEA", s)
+	assert.Equal(t, "KKK VARCHAR(1024) , ABC VARCHAR(200) , ZBlob BYTEA, ABC VARCHAR(255), Nr INTEGER, Value INTEGER, Doub DECIMAL(10,5), DoIt BIT(1), YYY VARCHAR(255), XXX VARCHAR(255), JJJ VARCHAR(255)", s)
 
 	ti := common.CreateInterface(&z, []string{"*"})
 	assert.Equal(t, []string{"KKK", "ABC", "ZBlob", "ABC", "Nr", "Value", "Doub", "DoIt", "YYY", "XXX", "JJJ"}, ti.RowFields)

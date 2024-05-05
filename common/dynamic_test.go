@@ -112,9 +112,9 @@ func TestDynamicQueryAll(t *testing.T) {
 	ni := vd.ScanValues[6].(*sql.NullInt64)
 	ni.Int64 = 2333
 	ni.Valid = true
-	ns = vd.ScanValues[7].(*sql.NullString)
-	ns.String = "abc:2342323"
-	ns.Valid = true
+	nbs := vd.ScanValues[7].(*NullBytes)
+	nbs.Bytes = []byte("abc:2342323")
+	nbs.Valid = true
 	newValue := vd.Copy.(*testRecord)
 	assert.Equal(t, &testRecord{ID: 0, Name: "",
 		FirstName: "", LastName: "", Address: "",
