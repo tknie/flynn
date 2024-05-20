@@ -96,12 +96,17 @@ func (q *Query) Select() (string, error) {
 			if x > 0 {
 				selectCmd.WriteString(",")
 			}
+			x := "ASC"
 			entry := strings.Split(s, ":")
-			if len(entry) != 2 {
+			switch {
+			case len(entry) == 1:
+			case len(entry) == 2:
+				x = strings.ToUpper(entry[1])
+			default:
 				log.Log.Debugf("Split order incorect")
 				return "", errorrepo.NewError("DB000017")
 			}
-			x := strings.ToUpper(entry[1])
+			log.Log.Debugf("Order by: " + x)
 			switch x {
 			case "ASC", "DESC":
 				selectCmd.WriteString(entry[0] + " " + x)
