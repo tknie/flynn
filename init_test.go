@@ -166,6 +166,39 @@ func TestInitDatabases(t *testing.T) {
 	err = x2.FreeHandler()
 	assert.NoError(t, err)
 	assert.Len(t, common.Databases, 0)
+
+	x2, err = Handle(pg2)
+	assert.NoError(t, err)
+	assert.True(t, x2 > 0)
+	assert.Len(t, common.Databases, 1)
+	err = x.FreeHandler()
+	assert.NoError(t, err)
+	assert.Len(t, common.Databases, 0)
+
+	mst, err := mysqlTarget(t)
+	if !assert.NoError(t, err) {
+		return
+	}
+	x2, err = Handle(mst)
+	assert.NoError(t, err)
+	assert.True(t, x2 > 0)
+	assert.Len(t, common.Databases, 1)
+	err = x.FreeHandler()
+	assert.NoError(t, err)
+	assert.Len(t, common.Databases, 0)
+
+	adat, err := adabasTarget(t)
+	if !assert.NoError(t, err) {
+		return
+	}
+	x2, err = Handle(adat)
+	assert.NoError(t, err)
+	assert.True(t, x2 > 0)
+	assert.Len(t, common.Databases, 1)
+	err = x.FreeHandler()
+	assert.NoError(t, err)
+	assert.Len(t, common.Databases, 0)
+
 }
 
 func TestInitWrongDatabases(t *testing.T) {

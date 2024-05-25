@@ -2,12 +2,12 @@
 
 ## Introduction
 
-The `github.com/tknie/flynn` package contains an inbetween layer to access multiple types of databases with the same API. Move to other database types would not lead to change the inbetween layer.
+The `github.com/tknie/flynn` package contains an inbetween layer to access multiple types of databases with the same API. Move to another database types would not lead to change the inbetween layer.
 Copying of data between different database engine should be possible.
 
 There should be no difference if the database is a SQL or a NoSQL database.
 
-A list of data recrods should be able to be inserted or updated in one call. May be as transaction or in an atomic matter.
+A list of data records should be able to be inserted or updated in one call. May be as transaction or in an atomic matter.
 
 In advance real main database functionality should be contained like:
 
@@ -25,7 +25,7 @@ For details have a look at the API documentation. It can be referenced here: <ht
 
 ### Query records in database
 
-#### Using row queries to get out of result records
+#### Using row queries to get data out of result records
 
 ```go
  pg := "postgres://pguser:<pass>@pghost:5432/pgdatabase"
@@ -44,7 +44,7 @@ For details have a look at the API documentation. It can be referenced here: <ht
             })
 ```
 
-#### Using GO struct queries to get data directly in GO structures
+#### Using GO struct queries to get data in GO structures directly
 
 It is possible to use GO structs to query database directly into instance value. The corresponding entry is provided in the `result.Data` field. The corresponding field entry is reused and not recreated for each function call. The query can be restricted to some fields of the structure only using the `Fields` field in the `common.Query` definition. Field names can be overriden using the field tag `flynn:` definition.
 
