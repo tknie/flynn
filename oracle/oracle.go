@@ -67,7 +67,7 @@ func NewInstance(id common.RegDbID, reference *common.Reference, password string
 		panic(err)
 	}
 
-	oracle := &Oracle{common.CommonDatabase{RegDbID: id},
+	oracle := &Oracle{common.NewCommonDatabase(id, "oracle"),
 		nil, "TCP", reference.Host, reference.Port, reference.Database, templateConnectString, nil, reference.User, password, nil, nil}
 	var buffer bytes.Buffer
 	err = t.Execute(&buffer, oracle)
@@ -80,7 +80,7 @@ func NewInstance(id common.RegDbID, reference *common.Reference, password string
 
 // New create new oracle reference instance
 func New(id common.RegDbID, url string) (common.Database, error) {
-	oracle := &Oracle{common.CommonDatabase{RegDbID: id},
+	oracle := &Oracle{common.NewCommonDatabase(id, "oracle"),
 		nil, "TCP", "", 1, "", url, nil, "", "", nil, nil}
 	return oracle, nil
 }

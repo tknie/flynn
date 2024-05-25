@@ -140,6 +140,7 @@ type ResultFunction func(search *Query, result *Result) error
 type StreamFunction func(search *Query, stream *Stream) error
 
 type CommonDatabase struct {
+	Driver      string
 	RegDbID     RegDbID
 	Transaction bool
 	LastUsed    time.Time
@@ -151,6 +152,10 @@ type ValueDefinition struct {
 	Values     []any
 	ScanValues []any
 	TagInfo    []TagInfo
+}
+
+func NewCommonDatabase(id RegDbID, driver string) CommonDatabase {
+	return CommonDatabase{Driver: driver, RegDbID: id}
 }
 
 func (cd *CommonDatabase) IsTransaction() bool {

@@ -94,7 +94,7 @@ func NewInstance(id common.RegDbID, reference *common.Reference, password string
 
 	url := fmt.Sprintf("postgres://%s:"+passwdPlaceholder+"@%s:%d/%s%s", reference.User,
 		reference.Host, reference.Port, reference.Database, reference.OptionString())
-	pg := &PostGres{common.CommonDatabase{RegDbID: id}, nil,
+	pg := &PostGres{common.NewCommonDatabase(id, "postgres"), nil,
 		url, nil, "", password, nil, nil, nil, sync.Mutex{}}
 	log.Log.Debugf("PG Password is empty=%v", password == "")
 	return pg, nil

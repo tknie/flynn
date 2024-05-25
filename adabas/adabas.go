@@ -47,7 +47,7 @@ func syncLog() {
 func NewInstance(id common.RegDbID, reference *common.Reference, password string) (common.Database, error) {
 	url := fmt.Sprintf("acj;map;config=[adatcp://%s:%d,%s]",
 		reference.Host, reference.Port, reference.Database)
-	ada := &Adabas{common.CommonDatabase{RegDbID: id}, url,
+	ada := &Adabas{common.NewCommonDatabase(id, "adabas"), url,
 		nil, nil, reference.User, password}
 	return ada, nil
 }
@@ -57,7 +57,7 @@ func New(id common.RegDbID, url string) (common.Database, error) {
 	if adatypes.Central.Log != log.Log {
 		syncLog()
 	}
-	ada := &Adabas{common.CommonDatabase{RegDbID: id}, url,
+	ada := &Adabas{common.NewCommonDatabase(id, "adabas"), url,
 		nil, nil, "", ""}
 	return ada, nil
 }

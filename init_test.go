@@ -19,6 +19,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/tknie/flynn/common"
+	"github.com/tknie/flynn/postgres"
 )
 
 const postPortNotSet = "Postgres Port not set"
@@ -152,6 +153,7 @@ func TestInitDatabases(t *testing.T) {
 	x, err = Handle("postgres", pg)
 	assert.NoError(t, err)
 	assert.True(t, x > 0)
+
 	pg2, err := postgresTarget(t)
 	if !assert.NoError(t, err) {
 		return
@@ -170,7 +172,12 @@ func TestInitDatabases(t *testing.T) {
 	x2, err = Handle(pg2)
 	assert.NoError(t, err)
 	assert.True(t, x2 > 0)
-	assert.Len(t, common.Databases, 1)
+	if assert.Len(t, common.Databases, 1) {
+		db := common.Databases[0].(*postgres.PostGres)
+
+		assert.Equal(t, "postgres", db.CommonDatabase.Driver)
+
+	}
 	err = x2.FreeHandler()
 	assert.NoError(t, err)
 	assert.Len(t, common.Databases, 0)

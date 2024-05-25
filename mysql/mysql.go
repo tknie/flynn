@@ -57,7 +57,7 @@ func NewInstance(id common.RegDbID, reference *common.Reference, password string
 	o += "parseTime=true"
 	url := fmt.Sprintf("%s:"+passwdPlaceholder+"@tcp(%s:%d)/%s%s", reference.User, reference.Host,
 		reference.Port, reference.Database, o)
-	mysql := &Mysql{common.CommonDatabase{RegDbID: id},
+	mysql := &Mysql{common.NewCommonDatabase(id, "mysql"),
 		nil, url, nil, reference.User, password, nil, nil}
 	log.Log.Debugf("%s: create new instance", mysql.ID().String())
 	return mysql, nil
@@ -65,7 +65,7 @@ func NewInstance(id common.RegDbID, reference *common.Reference, password string
 
 // New create new mysql reference instance
 func New(id common.RegDbID, url string) (common.Database, error) {
-	mysql := &Mysql{common.CommonDatabase{RegDbID: id},
+	mysql := &Mysql{common.NewCommonDatabase(id, "mysql"),
 		nil, url, nil, "", "", nil, nil}
 	return mysql, nil
 }
