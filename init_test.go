@@ -171,7 +171,7 @@ func TestInitDatabases(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, x2 > 0)
 	assert.Len(t, common.Databases, 1)
-	err = x.FreeHandler()
+	err = x2.FreeHandler()
 	assert.NoError(t, err)
 	assert.Len(t, common.Databases, 0)
 
@@ -183,7 +183,7 @@ func TestInitDatabases(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, x2 > 0)
 	assert.Len(t, common.Databases, 1)
-	err = x.FreeHandler()
+	err = x2.FreeHandler()
 	assert.NoError(t, err)
 	assert.Len(t, common.Databases, 0)
 
@@ -195,7 +195,7 @@ func TestInitDatabases(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, x2 > 0)
 	assert.Len(t, common.Databases, 1)
-	err = x.FreeHandler()
+	err = x2.FreeHandler()
 	assert.NoError(t, err)
 	assert.Len(t, common.Databases, 0)
 
