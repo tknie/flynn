@@ -31,7 +31,7 @@ func TestQuery(t *testing.T) {
 	assert.Equal(t, "SELECT * FROM ABC tn", selectCmd)
 
 	q.Fields = []string{"field1", "field2"}
-	q.Limit = 10
+	q.Limit = "10"
 	selectCmd, err = q.Select()
 	assert.NoError(t, err)
 	assert.Equal(t, "SELECT field1,field2 FROM ABC tn LIMIT 10", selectCmd)
@@ -42,7 +42,7 @@ func TestQuery(t *testing.T) {
 	assert.Equal(t, "SELECT field1,field2 FROM ABC tn ORDER BY fieldOrder ASC LIMIT 10", selectCmd)
 
 	q.Search = "id='10'"
-	q.Limit = 0
+	q.Limit = "0"
 	selectCmd, err = q.Select()
 	assert.NoError(t, err)
 	assert.Equal(t, "SELECT field1,field2 FROM ABC tn WHERE id='10' ORDER BY fieldOrder ASC", selectCmd)

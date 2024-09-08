@@ -31,7 +31,7 @@ type Query struct {
 	Order        []string
 	Group        []string
 	Parameters   []any
-	Limit        uint32
+	Limit        string
 	Blocksize    int32
 	Descriptor   bool
 	DataStruct   any
@@ -115,8 +115,8 @@ func (q *Query) Select() (string, error) {
 			}
 		}
 	}
-	if q.Limit > 0 {
-		selectCmd.WriteString(fmt.Sprintf(" LIMIT %d", q.Limit))
+	if q.Limit != "" {
+		selectCmd.WriteString(fmt.Sprintf(" LIMIT %s", q.Limit))
 	}
 	log.Log.Debugf("Final select: %s", selectCmd.String())
 	return selectCmd.String(), nil

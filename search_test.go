@@ -28,6 +28,8 @@ import (
 var logRus = logrus.StandardLogger()
 var once = new(sync.Once)
 
+const testRecords = "22"
+
 func InitLog(t *testing.T) {
 	once.Do(startLog)
 	log.Log.Debugf("TEST: %s", t.Name())
@@ -732,7 +734,7 @@ func TestSearchPgRowsDistinct(t *testing.T) {
 	q := &common.Query{TableName: "Pictures",
 		Search:     "",
 		Descriptor: true,
-		Limit:      22,
+		Limit:      "22",
 		Fields:     []string{"directory"},
 		Order:      []string{"directory:ASC"},
 	}

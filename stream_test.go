@@ -52,7 +52,7 @@ func TestStreamPgPartial(t *testing.T) {
 	q := &common.Query{TableName: "Pictures",
 		Search:     "checksumpicture='02E88E36FF888D0344B633B329AE8C5E'",
 		Descriptor: true,
-		Limit:      1,
+		Limit:      "1",
 		Fields:     []string{"Media"},
 	}
 	counter := 0
@@ -100,7 +100,7 @@ func TestStreamPgAbort(t *testing.T) {
 	q := &common.Query{TableName: "Pictures",
 		Search:     "checksumpicture='02E88E36FF888D0344B633B329AE8C5E'",
 		Descriptor: true,
-		Limit:      1,
+		Limit:      "1",
 		Fields:     []string{"Media"},
 	}
 
@@ -140,7 +140,7 @@ func TestStreamListPgTest(t *testing.T) {
 		q := &common.Query{TableName: "Pictures",
 			Search:     "checksumpicture='" + p.chksum + "'",
 			Descriptor: true,
-			Limit:      1,
+			Limit:      "1",
 			Blocksize:  65536,
 			Fields:     []string{"Media"},
 		}
@@ -192,7 +192,7 @@ func TestStreamListMySQLTest(t *testing.T) {
 		q := &common.Query{TableName: "Pictures",
 			Search:     "checksumpicture='" + p.chksum + "'",
 			Descriptor: true,
-			Limit:      1,
+			Limit:      "1",
 			Blocksize:  65536,
 			Fields:     []string{"Media"},
 		}
@@ -267,7 +267,7 @@ func TestStreamAdabasTest(t *testing.T) {
 	q := &common.Query{TableName: "PictureData",
 		Search:     "Md5='" + md5Query + "'",
 		Descriptor: true,
-		Limit:      1,
+		Limit:      "1",
 		Blocksize:  65536,
 		Fields:     []string{"Media"},
 	}
