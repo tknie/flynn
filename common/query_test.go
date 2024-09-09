@@ -45,11 +45,12 @@ func TestQuery(t *testing.T) {
 	q.Limit = "0"
 	selectCmd, err = q.Select()
 	assert.NoError(t, err)
-	assert.Equal(t, "SELECT field1,field2 FROM ABC tn WHERE id='10' ORDER BY fieldOrder ASC", selectCmd)
+	assert.Equal(t, "SELECT field1,field2 FROM ABC tn WHERE id='10' ORDER BY fieldOrder ASC LIMIT 0", selectCmd)
 
 	q.Order = []string{"aaa:asc", "bbb:asc", "dddd:desc"}
+	q.Limit = "ALL"
 	selectCmd, err = q.Select()
 	assert.NoError(t, err)
-	assert.Equal(t, "SELECT field1,field2 FROM ABC tn WHERE id='10' ORDER BY aaa ASC,bbb ASC,dddd DESC", selectCmd)
+	assert.Equal(t, "SELECT field1,field2 FROM ABC tn WHERE id='10' ORDER BY aaa ASC,bbb ASC,dddd DESC LIMIT ALL", selectCmd)
 
 }
