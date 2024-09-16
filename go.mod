@@ -5,7 +5,7 @@ go 1.22.4
 toolchain go1.23.0
 
 require (
-	github.com/jackc/pgx/v5 v5.7.0
+	github.com/jackc/pgx/v5 v5.7.1
 	github.com/tknie/log v0.0.0-20231006083545-fabe25f4fb0e
 )
 
@@ -15,7 +15,7 @@ require (
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/go-logfmt/logfmt v0.6.0 // indirect
 	github.com/godror/knownpb v0.2.0 // indirect
-	github.com/jackc/puddle/v2 v2.2.1 // indirect
+	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/planetscale/vtprotobuf v0.6.0 // indirect
 	golang.org/x/sync v0.8.0 // indirect
 	google.golang.org/protobuf v1.34.2 // indirect
