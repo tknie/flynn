@@ -62,9 +62,12 @@ func TestOracle(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "user=\"<user>\" password=\"<password>\" connectString=\"(DESCRIPTION =(ADDRESS_LIST =(ADDRESS =(PROTOCOL = TCP)(HOST = abc)(PORT = 12345)))(CONNECT_DATA=(SERVICE_NAME = SchemaXXX))\"", o.URL())
 
-	ref, pwd, err := common.NewReference("oracle://abc:xxx@DESCRIPTION =(ADDRESS_LIST =(ADDRESS =(PROTOCOL = TCP)(HOST = abc)(PORT = 12345)))(CONNECT_DATA=(SERVICE_NAME = SchemaXXX))")
-	assert.NoError(t, err)
-	assert.Equal(t, "xxx", pwd)
+	ref, pwd, err := common.NewReference("oracle://user='admin' password='yppsfdasfds1#' connectstring=@DESCRIPTION =(ADDRESS_LIST =(ADDRESS =(PROTOCOL = TCP)(HOST = abc)(PORT = 12345)))(CONNECT_DATA=(SERVICE_NAME = SchemaXXX))")
+	if !assert.NoError(t, err) {
+		return
+	}
+	assert.Equal(t, "admin", ref.User)
+	assert.Equal(t, "yppsfdasfds1#", pwd)
 	assert.Equal(t, common.OracleType, ref.Driver)
 }
 
