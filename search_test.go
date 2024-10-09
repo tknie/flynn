@@ -28,8 +28,6 @@ import (
 var logRus = logrus.StandardLogger()
 var once = new(sync.Once)
 
-const testRecords = "22"
-
 func InitLog(t *testing.T) {
 	once.Do(startLog)
 	log.Log.Debugf("TEST: %s", t.Name())
