@@ -33,7 +33,7 @@ import (
 // Use configuration URL like 'user="anton" password"secret" connectString="(DESCRIPTION=(ADDRESS_LIST=(ADDRES=(PROTOCOL...))))"'
 
 const (
-	layer             = "godor"
+	layer             = "godror"
 	userPlaceholder   = "<user>"
 	passwdPlaceholder = "<password>"
 )
@@ -64,7 +64,7 @@ const templateConnectString = `user="<user>" password="<password>"` +
 // NewInstance create new oracle reference instance
 func NewInstance(id common.RegDbID, reference *common.Reference, password string) (common.Database, error) {
 	if reference.Driver != common.OracleType {
-		return nil, fmt.Errorf("internal error got wrong internal type")
+		return nil, fmt.Errorf("internal error got wrong internal type %d", reference.Driver)
 	}
 	var oracle *Oracle
 	if len(reference.Options) != 0 {

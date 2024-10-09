@@ -57,7 +57,8 @@ func startLog() {
 
 func TestOracle(t *testing.T) {
 	o, err := NewInstance(common.RegDbID(1),
-		&common.Reference{Host: "abc", Port: 12345, Database: "SchemaXXX"}, "AA")
+		&common.Reference{Driver: common.OracleType, Host: "abc",
+			Port: 12345, Database: "SchemaXXX"}, "AA")
 	assert.NoError(t, err)
 	assert.Equal(t, "user=\"<user>\" password=\"<password>\" connectString=\"(DESCRIPTION =(ADDRESS_LIST =(ADDRESS =(PROTOCOL = TCP)(HOST = abc)(PORT = 12345)))(CONNECT_DATA=(SERVICE_NAME = SchemaXXX))\"", o.URL())
 
@@ -69,6 +70,7 @@ func TestOracle(t *testing.T) {
 
 func oracleTable(t *testing.T) string {
 	url := os.Getenv("ORACLE_URL")
+	// assert.NotEmpty(t, url)
 	return url
 }
 
@@ -81,15 +83,22 @@ func TestOracleMaps(t *testing.T) {
 	}
 	ref, passwd, err := common.NewReference(url)
 	assert.NotEmpty(t, passwd)
-	assert.NoError(t, err)
+	if !assert.NoError(t, err) {
+		return
+	}
 	assert.NotNil(t, ref)
 
 	ora, err := NewInstance(1, ref, passwd)
-	assert.NoError(t, err)
+	if !assert.NoError(t, err) {
+		return
+	}
 	assert.NotNil(t, ora)
 
 	list, err := ora.Maps()
 	assert.NoError(t, err)
+	if !assert.NoError(t, err) {
+		return
+	}
 	assert.True(t, len(list) > 0)
 	fmt.Println("List", list)
 }
