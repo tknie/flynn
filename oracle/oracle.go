@@ -41,17 +41,18 @@ const (
 // Oracle instance for MySQL
 type Oracle struct {
 	common.CommonDatabase
-	openDB       any
-	Protocol     string
-	Host         string
-	Port         int
-	ServiceName  string
-	dbURL        string
-	dbTableNames []string
-	user         string
-	password     string
-	tx           *sql.Tx
-	ctx          context.Context
+	openDB        any
+	Protocol      string
+	connectstring string
+	Host          string
+	Port          int
+	ServiceName   string
+	dbURL         string
+	dbTableNames  []string
+	user          string
+	password      string
+	tx            *sql.Tx
+	ctx           context.Context
 }
 
 const templateConnectString = `user="<user>" password="<password>"` +
@@ -62,26 +63,36 @@ const templateConnectString = `user="<user>" password="<password>"` +
 
 // NewInstance create new oracle reference instance
 func NewInstance(id common.RegDbID, reference *common.Reference, password string) (common.Database, error) {
-	t, err := template.New("oracle").Parse(templateConnectString)
-	if err != nil {
-		panic(err)
+	if reference.Driver != common.OracleType {
+		return nil, fmt.Errorf("internal error got wrong internal type")
 	}
+	var oracle *Oracle
+	if len(reference.Options) != 0 {
+		oracle = &Oracle{common.NewCommonDatabase(id, "oracle"),
+			nil, "", reference.Options[0], reference.Host, 0, "", "", nil, reference.User, password, nil, nil}
+	} else {
 
-	oracle := &Oracle{common.NewCommonDatabase(id, "oracle"),
-		nil, "TCP", reference.Host, reference.Port, reference.Database, templateConnectString, nil, reference.User, password, nil, nil}
-	var buffer bytes.Buffer
-	err = t.Execute(&buffer, oracle)
-	if err != nil {
-		panic(err)
+		t, err := template.New("oracle").Parse(templateConnectString)
+		if err != nil {
+			panic(err)
+		}
+
+		oracle = &Oracle{common.NewCommonDatabase(id, "oracle"),
+			nil, "TCP", "", reference.Host, reference.Port, reference.Database, templateConnectString, nil, reference.User, password, nil, nil}
+		var buffer bytes.Buffer
+		err = t.Execute(&buffer, oracle)
+		if err != nil {
+			panic(err)
+		}
+		oracle.dbURL = buffer.String()
 	}
-	oracle.dbURL = buffer.String()
 	return oracle, nil
 }
 
 // New create new oracle reference instance
 func New(id common.RegDbID, url string) (common.Database, error) {
 	oracle := &Oracle{common.NewCommonDatabase(id, "oracle"),
-		nil, "TCP", "", 1, "", url, nil, "", "", nil, nil}
+		nil, "TCP", "", "", 1, "", url, nil, "", "", nil, nil}
 	return oracle, nil
 }
 

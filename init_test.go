@@ -12,6 +12,7 @@
 package flynn
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strconv"
@@ -30,7 +31,7 @@ func postgresTarget(t *testing.T) (string, error) {
 	postgresPort := os.Getenv("POSTGRES_PORT")
 	postgresPassword := os.Getenv("POSTGRES_PWD")
 	if !assert.NotEmpty(t, postgresHost) {
-		return "", fmt.Errorf(postgresHostNotSet)
+		return "", errors.New(postgresHostNotSet)
 	}
 	assert.NotEmpty(t, postgresPort)
 	port := 5432
@@ -39,7 +40,7 @@ func postgresTarget(t *testing.T) (string, error) {
 		port, err = strconv.Atoi(postgresPort)
 	}
 	if !assert.NoError(t, err) {
-		return "", fmt.Errorf(postPortNotSet)
+		return "", errors.New(postPortNotSet)
 	}
 	pg := fmt.Sprintf("postgres://%s:%s@%s:%d/%s", "admin", postgresPassword, postgresHost, port, "bitgarten")
 
@@ -51,7 +52,7 @@ func postgresTargetInstance(t *testing.T) (*common.Reference, string, error) {
 	postgresPort := os.Getenv("POSTGRES_PORT")
 	postgresPassword := os.Getenv("POSTGRES_PWD")
 	if !assert.NotEmpty(t, postgresHost) {
-		return nil, "", fmt.Errorf(postgresHostNotSet)
+		return nil, "", errors.New(postgresHostNotSet)
 	}
 	assert.NotEmpty(t, postgresPort)
 	port := 5432
@@ -59,7 +60,7 @@ func postgresTargetInstance(t *testing.T) (*common.Reference, string, error) {
 		var err error
 		port, err = strconv.Atoi(postgresPort)
 		if !assert.NoError(t, err) {
-			return nil, "", fmt.Errorf(postPortNotSet)
+			return nil, "", errors.New(postPortNotSet)
 		}
 	}
 	pgInstance := &common.Reference{Driver: common.PostgresType,
@@ -73,12 +74,12 @@ func postgresUserTarget(t *testing.T) (string, error) {
 	postgresHost := os.Getenv("POSTGRES_HOST")
 	postgresPort := os.Getenv("POSTGRES_PORT")
 	if !assert.NotEmpty(t, postgresHost) {
-		return "", fmt.Errorf(postgresHostNotSet)
+		return "", errors.New(postgresHostNotSet)
 	}
 	assert.NotEmpty(t, postgresPort)
 	port, err := strconv.Atoi(postgresPort)
 	if !assert.NoError(t, err) {
-		return "", fmt.Errorf(postPortNotSet)
+		return "", errors.New(postPortNotSet)
 	}
 	pg := fmt.Sprintf("postgres://<user>:<password>@%s:%d/%s",
 		postgresHost, port, "bitgarten")

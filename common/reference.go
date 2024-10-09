@@ -17,6 +17,7 @@ import (
 	"strings"
 
 	"github.com/tknie/errorrepo"
+	"github.com/tknie/log"
 )
 
 const referenceRegexp = `(?m)((\w*)://)?(([\w<>]+)(:(\S+))?@)?(tcp\()?(\w[\w.]*):(\d+)\)?(/(\w+))?\??(.*)`
@@ -46,8 +47,7 @@ type Reference struct {
 	Options  []string
 }
 
-// NewReference new reference of database link
-func NewReference(url string) (*Reference, string, error) {
+func ParseUrl(url string) (*Reference, string, error) {
 	var re = regexp.MustCompile(referenceRegexp)
 
 	match := re.FindStringSubmatch(url)
@@ -64,15 +64,59 @@ func NewReference(url string) (*Reference, string, error) {
 	/*for i, match := range re.FindStringSubmatch(url) {
 		fmt.Println(match, "found at index", i)
 	}*/
-	passwd := match[6]
+	if len(match) == 13 && match[12] != "" {
+		ref.Options = strings.Split(match[12], "&")
+	}
+	return ref, match[6], nil
+}
+
+func Trim(value string) string {
+	cleanedValue := value
+	cleanedValue = strings.Trim(cleanedValue, "'")
+	cleanedValue = strings.Trim(cleanedValue, "\"")
+	return cleanedValue
+}
+
+func parseOracle(url string) (*Reference, string, error) {
+	var re = regexp.MustCompile(`(?m)(\w+)=([^\s]+)`)
+	str := url[9:]
+	log.Log.Debugf("Parse %s", str)
+	match := re.FindAllStringSubmatch(str, -1)
+	log.Log.Debugf("Match %v", match)
+	ref := &Reference{Driver: OracleType}
+	password := ""
+	for _, list := range match {
+		parameterName := strings.ToLower(list[1])
+		switch {
+		case parameterName == "user":
+			ref.User = Trim(list[2])
+		case parameterName == "password":
+			password = Trim(list[2])
+		case parameterName == "connectstring":
+			ref.Options = make([]string, 1)
+			ref.Options[0] = Trim(list[2])
+		}
+	}
+
+	return ref, password, nil
+}
+
+// NewReference new reference of database link
+func NewReference(url string) (*Reference, string, error) {
+	if strings.HasPrefix(url, "oracle://") && strings.Contains(strings.ToLower(url), "connectstring") {
+		log.Log.Debugf("Parse oracle %s", url)
+		return parseOracle(url)
+	}
+	log.Log.Debugf("Parse common %s", url)
+	ref, passwd, err := ParseUrl(url)
+	if err != nil {
+		return nil, "", err
+	}
 	switch {
 	case ref.Driver == NoType && strings.Contains(url, "@tcp("):
 		ref.Driver = MysqlType
 	case ref.Driver == AdabasType && ref.Database == "":
 		ref.Database = "4"
-	}
-	if len(match) == 13 && match[12] != "" {
-		ref.Options = strings.Split(match[12], "&")
 	}
 	return ref, passwd, nil
 }

@@ -90,6 +90,12 @@ func TestReferenceURL(t *testing.T) {
 		User: "admin", Options: []string{"pool_max_conns=10"}}, ref)
 	assert.Equal(t, "axx", p)
 
+	ref, p, err = NewReference("oracle://user='orauser' password='osspaass' CONNECTSTRING=@(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=abc)(PORT=12345)))(CONNECT_DATA=(SERVICE_NAME=SchemaXXX)))")
+	assert.NoError(t, err)
+	assert.Equal(t, &Reference{Driver: OracleType, Host: "", Port: 0, Database: "",
+		User: "orauser", Options: []string{"@(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=abc)(PORT=12345)))(CONNECT_DATA=(SERVICE_NAME=SchemaXXX)))"}}, ref)
+	assert.Equal(t, "osspaass", p)
+
 }
 
 func TestReferenceFailuer(t *testing.T) {
