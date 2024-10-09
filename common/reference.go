@@ -79,7 +79,8 @@ func Trim(value string) string {
 
 func parseOracle(url string) (*Reference, string, error) {
 	var re = regexp.MustCompile(`(?m)(\w+)=([^\s]+)`)
-	str := url[9:]
+	str := url
+	str = strings.TrimPrefix(str, "oracle://")
 	log.Log.Debugf("Parse %s", str)
 	match := re.FindAllStringSubmatch(str, -1)
 	log.Log.Debugf("Match %v", match)
@@ -103,7 +104,7 @@ func parseOracle(url string) (*Reference, string, error) {
 
 // NewReference new reference of database link
 func NewReference(url string) (*Reference, string, error) {
-	if strings.HasPrefix(url, "oracle://") && strings.Contains(strings.ToLower(url), "connectstring") {
+	if strings.Contains(strings.ToLower(url), "connectstring=") {
 		log.Log.Debugf("Parse oracle %s", url)
 		return parseOracle(url)
 	}
