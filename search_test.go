@@ -692,7 +692,7 @@ func TestSearchMySQLRowsOrdered(t *testing.T) {
 		assert.NotNil(t, result)
 		assert.Len(t, result.Fields, 2)
 		ns := (result.Rows[0].(string))
-		ts := result.Rows[1].(*time.Time)
+		ts := result.Rows[1].(time.Time)
 		fmt.Println("RESULT:", ns, ts)
 		counter++
 		switch counter {

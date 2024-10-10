@@ -127,7 +127,7 @@ Feature | Ready-State | Description
  Create table PostgreSQL | :heavy_check_mark: | Draft
  Insert PostgreSQL | :heavy_check_mark: | Draft
  Update PostgreSQL | :heavy_check_mark: | Draft
-  **MySQL**/**Oracle** || 
+  **MySQL** || 
  Query MySQL | :heavy_check_mark: | Draft
  Search MySQL | :heavy_check_mark: | Draft
  Create table MySQL | :heavy_check_mark: | Draft
@@ -139,6 +139,12 @@ Feature | Ready-State | Description
  Create table Adabas | Not possible | 
  Insert Adabas |  | Draft
  Update Adabas |  | Not implemented
+ **Oracle** || 
+ Query Oracle | :heavy_check_mark: | Draft
+ Search Oracle | :heavy_check_mark: | Draft
+ Create table Oracle | :heavy_check_mark: | Draft
+ Insert Oracle | :heavy_check_mark: | Draft
+ Update Oracle | :heavy_check_mark: | Draft
  Work with large objects (LOB) |  | partial done
  Work with database-specific queries |  | planned
  Use Golang structure with query | partial done | MySQL and PostgresSQL
