@@ -590,7 +590,7 @@ func TestSearchMariaDBRows(t *testing.T) {
 		assert.NotNil(t, search)
 		assert.NotNil(t, result)
 		ns := result.Rows[0].(string)
-		ts := result.Rows[1].(*time.Time)
+		ts := result.Rows[1].(time.Time)
 
 		counter++
 		switch counter {

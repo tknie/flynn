@@ -319,7 +319,7 @@ func generateColumnByValues(rows *sql.Rows) ([]any, error) {
 				colsValue = append(colsValue, &s)
 				log.Log.Debugf("Create null time value")
 			} else {
-				n := &time.Time{}
+				n := time.Now()
 				colsValue = append(colsValue, &n)
 				log.Log.Debugf("Create non-null time value")
 			}
