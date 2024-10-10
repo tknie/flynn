@@ -289,17 +289,40 @@ func generateColumnByValues(rows *sql.Rows) ([]any, error) {
 				log.Log.Debugf("Create non-null string value")
 			}
 		case "NUMBER":
+			if nullOk {
+				s := sql.NullFloat64{}
+				colsValue = append(colsValue, &s)
+				log.Log.Debugf("Create null number value")
+			} else {
+				s := float64(0)
+				colsValue = append(colsValue, &s)
+				log.Log.Debugf("Create non-null number value")
+			}
 			s := int64(0)
 			colsValue = append(colsValue, &s)
 		case "BYTEA", "BLOB":
 			s := make([]byte, 0)
 			colsValue = append(colsValue, &s)
 		case "LONG":
-			s := ""
-			colsValue = append(colsValue, &s)
+			if nullOk {
+				s := sql.NullString{}
+				colsValue = append(colsValue, &s)
+				log.Log.Debugf("Create null long value")
+			} else {
+				s := ""
+				colsValue = append(colsValue, &s)
+				log.Log.Debugf("Create non-null long value")
+			}
 		case "DATE", "TIMESTAMP":
-			n := time.Now()
-			colsValue = append(colsValue, &n)
+			if nullOk {
+				s := sql.NullTime{}
+				colsValue = append(colsValue, &s)
+				log.Log.Debugf("Create null time value")
+			} else {
+				n := time.Now()
+				colsValue = append(colsValue, &n)
+				log.Log.Debugf("Create non-null time value")
+			}
 		default:
 			s := sql.NullString{}
 			colsValue = append(colsValue, &s)

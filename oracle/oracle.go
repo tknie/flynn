@@ -68,9 +68,13 @@ func NewInstance(id common.RegDbID, reference *common.Reference, password string
 	}
 	var oracle *Oracle
 	if len(reference.Options) != 0 {
+		log.Log.Debugf("Use oracle connectString %s", reference.Options[0])
 		oracle = &Oracle{common.NewCommonDatabase(id, "oracle"),
 			nil, "", reference.Options[0], reference.Host, 0, "", "", nil, reference.User, password, nil, nil}
+		oracle.dbURL = `user="` + reference.User +
+			`" password="` + password + `" connectString="` + reference.Options[0] + `"`
 	} else {
+		log.Log.Debugf("Use short notation")
 
 		t, err := template.New("oracle").Parse(templateConnectString)
 		if err != nil {

@@ -1,6 +1,7 @@
 package oracle
 
 import (
+	"database/sql"
 	"fmt"
 	"os"
 	"strings"
@@ -119,15 +120,47 @@ func TestOracleRead(t *testing.T) {
 	ref, passwd, err := common.NewReference(url)
 	assert.NotEmpty(t, passwd)
 	assert.NoError(t, err)
-	assert.NotNil(t, ref)
+	if !assert.NotNil(t, ref) {
+		return
+	}
 
 	ora, err := NewInstance(1, ref, passwd)
 	assert.NoError(t, err)
-	assert.NotNil(t, ora)
+	if !assert.NotNil(t, ora) {
+		return
+	}
+	if !assert.NotEmpty(t, ora.(*Oracle).dbURL) {
+		return
+	}
 
 	q := &common.Query{TableName: tablename, Search: search, Fields: fields}
 	_, err = ora.Query(q, func(search *common.Query, result *common.Result) error {
-		fmt.Print(result)
+		for _, d := range result.Rows {
+			switch v := d.(type) {
+			case *sql.NullString:
+				if v.Valid {
+					fmt.Print(v.String)
+				} else {
+					fmt.Print("<nil>")
+				}
+			case *sql.NullInt64:
+				if v.Valid {
+					fmt.Print(v.Int64)
+				} else {
+					fmt.Print("<nil>")
+				}
+			case *sql.NullFloat64:
+				if v.Valid {
+					fmt.Print(v.Float64)
+				} else {
+					fmt.Print("<nil>")
+				}
+			default:
+				fmt.Print(d)
+			}
+			fmt.Print("|")
+		}
+		fmt.Println()
 		return nil
 	})
 	assert.NoError(t, err)
