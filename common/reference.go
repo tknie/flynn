@@ -78,26 +78,66 @@ func Trim(value string) string {
 }
 
 func parseOracle(url string) (*Reference, string, error) {
-	var re = regexp.MustCompile(`(?m)(\w+)=([^\s]+)`)
-	str := url
-	str = strings.TrimPrefix(str, "oracle://")
-	log.Log.Debugf("Parse %s", str)
-	match := re.FindAllStringSubmatch(str, -1)
-	log.Log.Debugf("Match %v", match)
 	ref := &Reference{Driver: OracleType}
+	currentUrl := strings.TrimPrefix(url, "oracle://")
 	password := ""
-	for _, list := range match {
-		parameterName := strings.ToLower(list[1])
+	log.Log.Debugf("Parse Oracle: %s", currentUrl)
+	for {
+		begin := 0
+		end := 0
+		index := strings.IndexAny(currentUrl, "=")
+		parameterName := strings.ToLower(currentUrl[begin:index])
+		currentUrl = currentUrl[index+1:]
+		log.Log.Debugf("REST: %s", currentUrl)
+		quote := 0
+		index = 0
+		switch {
+		case currentUrl[quote] == '"':
+			end = strings.IndexAny(currentUrl[1:], "\"") + 1
+			index = 1
+		case currentUrl[quote] == '\'':
+			end = strings.IndexAny(currentUrl[1:], "'") + 1
+			index = 1
+		default:
+			end = strings.IndexAny(currentUrl, " ")
+			quote = -1
+		}
+		log.Log.Debugf("Part %s:%s", index, end)
+		value := currentUrl[index:end]
 		switch {
 		case parameterName == "user":
-			ref.User = Trim(list[2])
+			ref.User = Trim(value)
 		case parameterName == "password":
-			password = Trim(list[2])
+			password = Trim(value)
 		case parameterName == "connectstring":
 			ref.Options = make([]string, 1)
-			ref.Options[0] = Trim(list[2])
+			ref.Options[0] = Trim(value)
 		}
+		if len(currentUrl) < end+2+quote {
+			break
+		}
+		currentUrl = currentUrl[end+2+quote:]
+		log.Log.Debugf("REST NEXT: %s", currentUrl)
 	}
+
+	// var re = regexp.MustCompile(`(?m)(\w+)=([^\s]+)`)
+	// str := url
+	// str = strings.TrimPrefix(str, "oracle://")
+	// log.Log.Debugf("Parse %s", str)
+	// match := re.FindAllStringSubmatch(str, -1)
+	// log.Log.Debugf("Match %v", match)
+	// for _, list := range match {
+	// 	parameterName := strings.ToLower(list[1])
+	// 	switch {
+	// 	case parameterName == "user":
+	// 		ref.User = Trim(list[2])
+	// 	case parameterName == "password":
+	// 		password = Trim(list[2])
+	// 	case parameterName == "connectstring":
+	// 		ref.Options = make([]string, 1)
+	// 		ref.Options[0] = Trim(list[2])
+	// 	}
+	// }
 
 	return ref, password, nil
 }
