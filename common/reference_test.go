@@ -18,6 +18,8 @@ import (
 )
 
 func TestReferenceURL(t *testing.T) {
+	InitLog(t)
+
 	ref, _, err := NewReference("host:123")
 	assert.NoError(t, err)
 	assert.Equal(t, &Reference{Host: "host", Port: 123, Options: []string(nil)}, ref)
@@ -111,6 +113,8 @@ func TestReferenceURL(t *testing.T) {
 }
 
 func TestReferenceOracleParse(t *testing.T) {
+	InitLog(t)
+
 	ref, p, err := NewReference("oracle://user='orauser' password='osspaass' CONNECTSTRING='(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST= abc)(PORT=12345)))(CONNECT_DATA=(SERVICE_NAME=SchemaXXX)))'")
 	assert.NoError(t, err)
 	assert.Equal(t, &Reference{Driver: OracleType, Host: "", Port: 0, Database: "",
@@ -120,6 +124,8 @@ func TestReferenceOracleParse(t *testing.T) {
 }
 
 func TestReferenceFailuer(t *testing.T) {
+	InitLog(t)
+
 	_, p, err := NewReference("aaxx")
 	assert.Error(t, err)
 	assert.Empty(t, p)

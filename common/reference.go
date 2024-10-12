@@ -112,8 +112,12 @@ func parseOracle(url string) (*Reference, string, error) {
 			end = strings.IndexAny(currentUrl, " ")
 			quote = -1
 		}
-		log.Log.Debugf("Part %s:%s", index, end)
+		if end == -1 {
+			end = len(currentUrl)
+		}
+		log.Log.Debugf("Part %d:%d -> %s", index, end, currentUrl)
 		value := currentUrl[index:end]
+		log.Log.Debugf("Value = %s", value)
 		switch {
 		case parameterName == "user":
 			ref.User = Trim(value)

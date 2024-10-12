@@ -32,7 +32,7 @@ func InitLog(t *testing.T) {
 
 func startLog() {
 	fmt.Println("Init logging")
-	fileName := "db.trace.log"
+	fileName := "common.trace.log"
 	level := os.Getenv("ENABLE_DB_DEBUG")
 	logLevel := logrus.WarnLevel
 	switch level {
