@@ -56,20 +56,21 @@ func startLog() {
 	fmt.Println("Logging running")
 }
 
-func TestOracle(t *testing.T) {
+func TestOracleURL(t *testing.T) {
 	o, err := NewInstance(common.RegDbID(1),
 		&common.Reference{Driver: common.OracleType, Host: "abc",
 			Port: 12345, Database: "SchemaXXX"}, "AA")
 	assert.NoError(t, err)
 	assert.Equal(t, "user=\"<user>\" password=\"<password>\" connectString=\"(DESCRIPTION =(ADDRESS_LIST =(ADDRESS =(PROTOCOL = TCP)(HOST = abc)(PORT = 12345)))(CONNECT_DATA=(SERVICE_NAME = SchemaXXX))\"", o.URL())
 
-	ref, pwd, err := common.NewReference("oracle://user='admin' password='yppsfdasfds1#' connectstring=@DESCRIPTION =(ADDRESS_LIST =(ADDRESS =(PROTOCOL = TCP)(HOST = abc)(PORT = 12345)))(CONNECT_DATA=(SERVICE_NAME = SchemaXXX))")
+	ref, pwd, err := common.NewReference("oracle://user='admin' password='yppsfdasfds1#' connectstring='@DESCRIPTION =(ADDRESS_LIST =(ADDRESS =(PROTOCOL = TCP)(HOST = abc)(PORT = 12345)))(CONNECT_DATA=(SERVICE_NAME = SchemaXXX))'")
 	if !assert.NoError(t, err) {
 		return
 	}
 	assert.Equal(t, "admin", ref.User)
 	assert.Equal(t, "yppsfdasfds1#", pwd)
 	assert.Equal(t, common.OracleType, ref.Driver)
+	assert.Equal(t, "@DESCRIPTION =(ADDRESS_LIST =(ADDRESS =(PROTOCOL = TCP)(HOST = abc)(PORT = 12345)))(CONNECT_DATA=(SERVICE_NAME = SchemaXXX))", ref.Options[0])
 }
 
 func oracleTable(t *testing.T) string {

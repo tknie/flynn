@@ -12,6 +12,7 @@
 package common
 
 import (
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -82,11 +83,20 @@ func parseOracle(url string) (*Reference, string, error) {
 	currentUrl := strings.TrimPrefix(url, "oracle://")
 	password := ""
 	log.Log.Debugf("Parse Oracle: %s", currentUrl)
+	var re = regexp.MustCompile(`(?m)(\w*)`)
 	for {
 		begin := 0
 		end := 0
 		index := strings.IndexAny(currentUrl, "=")
+		if index == -1 {
+			break
+		}
 		parameterName := strings.ToLower(currentUrl[begin:index])
+		match := re.FindAllString(parameterName, -1)
+		if parameterName != match[0] {
+			return nil, "", fmt.Errorf("parameter name error")
+		}
+
 		currentUrl = currentUrl[index+1:]
 		log.Log.Debugf("REST: %s", currentUrl)
 		quote := 0
