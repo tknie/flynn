@@ -24,6 +24,7 @@ import (
 )
 
 type Query struct {
+	Driver       ReferenceType
 	TableName    string
 	Search       string
 	Join         string
@@ -115,11 +116,17 @@ func (q *Query) Select() (string, error) {
 			}
 		}
 	}
+	sqlCmd := selectCmd.String()
 	if q.Limit != "" {
-		selectCmd.WriteString(fmt.Sprintf(" LIMIT %s", q.Limit))
+		switch q.Driver {
+		case OracleType:
+			sqlCmd = fmt.Sprintf("SELECT * FROM (%s) WHERE rownum < %s", sqlCmd, q.Limit)
+		default:
+			sqlCmd += fmt.Sprintf(" LIMIT %s", q.Limit)
+		}
 	}
 	log.Log.Debugf("Final select: %s", selectCmd.String())
-	return selectCmd.String(), nil
+	return sqlCmd, nil
 }
 
 func (search *Query) ParseRows(rows *sql.Rows, f ResultFunction) (result *Result, err error) {

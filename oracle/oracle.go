@@ -291,6 +291,7 @@ func (oracle *Oracle) GetTableColumn(tableName string) ([]string, error) {
 
 // Query query database records with search or SELECT
 func (oracle *Oracle) Query(search *common.Query, f common.ResultFunction) (*common.Result, error) {
+	search.Driver = common.OracleType
 	dbOpen, err := oracle.Open()
 	if err != nil {
 		return nil, err

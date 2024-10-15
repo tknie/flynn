@@ -90,6 +90,7 @@ func (ada *postgres) GetTableColumn(tableName string) ([]string, error) {
 
 // Query query database records with search or SELECT
 func (ada *postgres) Query(search *common.Query, f common.ResultFunction) (*common.Result, error) {
+	search.Driver = common.OracleType
 	return nil, errorrepo.NewError("DB065535")
 }
 

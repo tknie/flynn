@@ -20,7 +20,7 @@ import (
 func TestQuery(t *testing.T) {
 	InitLog(t)
 
-	q := Query{}
+	q := Query{Driver: PostgresType}
 	selectCmd, err := q.Select()
 	assert.Error(t, err)
 	assert.Equal(t, "", selectCmd)
@@ -52,5 +52,12 @@ func TestQuery(t *testing.T) {
 	selectCmd, err = q.Select()
 	assert.NoError(t, err)
 	assert.Equal(t, "SELECT field1,field2 FROM ABC tn WHERE id='10' ORDER BY aaa ASC,bbb ASC,dddd DESC LIMIT ALL", selectCmd)
+
+	q.Driver = OracleType
+	q.Fields = []string{"field1", "field2"}
+	q.Limit = "10"
+	selectCmd, err = q.Select()
+	assert.NoError(t, err)
+	assert.Equal(t, "SELECT * FROM (SELECT field1,field2 FROM ABC tn WHERE id='10' ORDER BY aaa ASC,bbb ASC,dddd DESC) WHERE rownum < 10", selectCmd)
 
 }

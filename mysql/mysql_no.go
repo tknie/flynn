@@ -96,6 +96,7 @@ func (ada *mysql) GetTableColumn(tableName string) ([]string, error) {
 
 // Query query database records with search or SELECT
 func (ada *mysql) Query(search *common.Query, f common.ResultFunction) (*common.Result, error) {
+	search.Driver = common.MysqlType
 	return nil, errorrepo.NewError("DB065535")
 }
 

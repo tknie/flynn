@@ -376,3 +376,26 @@ func TestPostgresInsertStruct(t *testing.T) {
 		}
 	}
 }
+
+func TestPostgresReference(t *testing.T) {
+	InitLog(t)
+
+	ref, p, err := common.NewReference("postgres://admin:axx@localhost:5432/bitgarten?pool_max_conns=10")
+	assert.NoError(t, err)
+
+	db, err := NewInstance(199, ref, p)
+	pg := db.(*PostGres)
+	assert.NoError(t, err)
+	assert.Equal(t, "postgres://admin:<password>@localhost:5432/bitgarten?pool_max_conns=10", pg.dbURL)
+	assert.Equal(t, "postgres://admin:axx@localhost:5432/bitgarten?pool_max_conns=10", pg.generateURL())
+
+	ref, p, err = common.NewReference("postgres://admin:axx@localhost:5432/xxx")
+	assert.NoError(t, err)
+
+	db, err = NewInstance(199, ref, p)
+	pg = db.(*PostGres)
+	assert.NoError(t, err)
+	assert.Equal(t, "postgres://admin:<password>@localhost:5432/xxx", pg.dbURL)
+	assert.Equal(t, "postgres://admin:axx@localhost:5432/xxx", pg.generateURL())
+
+}

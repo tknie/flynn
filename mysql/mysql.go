@@ -272,6 +272,7 @@ func (mysql *Mysql) GetTableColumn(tableName string) ([]string, error) {
 
 // Query query database records with search or SELECT
 func (mysql *Mysql) Query(search *common.Query, f common.ResultFunction) (*common.Result, error) {
+	search.Driver = common.MysqlType
 	dbOpen, err := mysql.Open()
 	if err != nil {
 		return nil, err

@@ -96,6 +96,7 @@ func (ada *Adabas) GetTableColumn(tableName string) ([]string, error) {
 
 // Query query database records with search or SELECT
 func (ada *Adabas) Query(search *common.Query, f common.ResultFunction) (*common.Result, error) {
+	search.Driver = common.AdabasType
 	return nil, errorrepo.NewError("DB065535")
 }
 
