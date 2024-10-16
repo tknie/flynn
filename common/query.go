@@ -45,6 +45,7 @@ type sqlInterface interface {
 }
 
 func (q *Query) Select() (string, error) {
+	log.Log.Debugf("Query select with type %s", q.Driver)
 	var selectCmd bytes.Buffer
 	switch {
 	case q.TableName == "":
@@ -120,6 +121,7 @@ func (q *Query) Select() (string, error) {
 	if q.Limit != "" {
 		switch q.Driver {
 		case OracleType:
+			log.Log.Debugf("Got Oracle limit")
 			sqlCmd = fmt.Sprintf("SELECT * FROM (%s) WHERE rownum < %s", sqlCmd, q.Limit)
 		default:
 			sqlCmd += fmt.Sprintf(" LIMIT %s", q.Limit)
