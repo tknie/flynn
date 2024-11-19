@@ -681,6 +681,41 @@ func (pg *PostGres) CreateTable(name string, col any) error {
 	return nil
 }
 
+// AdaptTable adapt a new table
+func (pg *PostGres) AdaptTable(name string, col any) error {
+	log.Log.Debugf("%s: Adapt SQL table", pg.ID())
+	layer, url := pg.Reference()
+	db, err := sql.Open(layer, url)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	columnCurrent, err := pg.ID().GetTableColumn(name)
+	if err != nil {
+		return err
+	}
+	fmt.Println(columnCurrent)
+	log.Log.Debugf("Got columns: %v", columnCurrent)
+	columStruct, err := dbsql.SqlDataType(false, col, columnCurrent)
+	if err != nil {
+		return err
+	}
+	fmt.Println(columStruct)
+	for _, f := range strings.Split(columStruct, ",") {
+
+		adaptCmd := `ALTER TABLE ` + name + ` ADD ` + f
+		log.Log.Debugf("Create cmd %s", adaptCmd)
+		_, err = db.Query(adaptCmd)
+		if err != nil {
+			log.Log.Errorf("Error returned by SQL: %v", err)
+			return err
+		}
+	}
+	log.Log.Debugf("Table adapted")
+	return nil
+}
+
 // DeleteTable delete a table
 func (pg *PostGres) DeleteTable(name string) error {
 	layer, url := pg.Reference()

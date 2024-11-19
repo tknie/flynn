@@ -109,7 +109,7 @@ func TestDataTypeStructBlogs(t *testing.T) {
 		Int int
 	}{"aaa", 1}
 
-	s, err := SqlDataType(tSQL.ByteArrayAvailable(), &x)
+	s, err := SqlDataType(tSQL.ByteArrayAvailable(), &x, nil)
 	assert.NoError(t, err)
 	assert.Equal(t, "St VARCHAR(255), Int INTEGER", s)
 	y := struct {
@@ -120,28 +120,28 @@ func TestDataTypeStructBlogs(t *testing.T) {
 			Xii uint64
 		}
 	}{"aaa", "fjrpsgj", 1, struct{ Xii uint64 }{2}}
-	s, err = SqlDataType(tSQL.ByteArrayAvailable(), &y)
+	s, err = SqlDataType(tSQL.ByteArrayAvailable(), &y, nil)
 	assert.NoError(t, err)
 	assert.Equal(t, "XSt VARCHAR(255), SBLOB BYTEA, XInt INTEGER, Xii INTEGER", s)
 	global := &GlobStruct{}
-	s, err = SqlDataType(tSQL.ByteArrayAvailable(), global)
+	s, err = SqlDataType(tSQL.ByteArrayAvailable(), global, nil)
 	assert.NoError(t, err)
 	assert.Equal(t, "Test VARCHAR(255), ABC VARCHAR(255), Nr INTEGER, Value INTEGER, Doub DECIMAL(10,5), DoIt BIT(1)", s)
 	global2 := &GlobStruct2{}
-	s, err = SqlDataType(tSQL.ByteArrayAvailable(), global2)
+	s, err = SqlDataType(tSQL.ByteArrayAvailable(), global2, nil)
 	assert.NoError(t, err)
 	assert.Equal(t, "Test VARCHAR(255), ABC VARCHAR(255), Nr INTEGER, Value INTEGER, Doub DECIMAL(10,5), DoIt BIT(1)", s)
 	global3 := &GlobStruct3{}
-	s, err = SqlDataType(tSQL.ByteArrayAvailable(), global3)
+	s, err = SqlDataType(tSQL.ByteArrayAvailable(), global3, nil)
 	assert.NoError(t, err)
 	assert.Equal(t, "Test VARCHAR(255), XYZ VARCHAR(255), UUU VARCHAR(255), ID INTEGER IDENTITY(1, 1), Value INTEGER, Doub DECIMAL(10,5), DoIt BIT(1)", s)
 	slice := &SliceStruct{}
-	s, err = SqlDataType(tSQL.ByteArrayAvailable(), slice)
+	s, err = SqlDataType(tSQL.ByteArrayAvailable(), slice, nil)
 	assert.Error(t, err)
 	assert.Equal(t, "DB000009: Slice types string are not supported used by field Test", err.Error())
 	assert.Equal(t, "", s)
 	arr := &ArrayStruct{}
-	s, err = SqlDataType(tSQL.ByteArrayAvailable(), arr)
+	s, err = SqlDataType(tSQL.ByteArrayAvailable(), arr, nil)
 	assert.Error(t, err)
 	assert.Equal(t, "DB000008: Array types are not supported used by field Test", err.Error())
 	assert.Equal(t, "", s)
@@ -155,7 +155,7 @@ func TestDataTypeStructBlogs(t *testing.T) {
 		Zstr2 *SubStruct `flynn:"XXX:XML"`
 		Zstr3 *SubStruct `flynn:"JJJ:JSON"`
 	}{"aaa", "djfgidjfgi", []byte{1, 9}, nil, nil, nil, nil}
-	s, err = SqlDataType(tSQL.ByteArrayAvailable(), &z)
+	s, err = SqlDataType(tSQL.ByteArrayAvailable(), &z, nil)
 	assert.NoError(t, err)
 	assert.Equal(t, "KKK VARCHAR(1024) , ABC VARCHAR(200) , ZBlob BYTEA, ABC VARCHAR(255), Nr INTEGER, Value INTEGER, Doub DECIMAL(10,5), DoIt BIT(1), YYY VARCHAR(255), XXX VARCHAR(255), JJJ VARCHAR(255)", s)
 
@@ -183,7 +183,7 @@ func TestDataTypeStructTag(t *testing.T) {
 	}{"bbb", "dfsfspdgjsdpgjspdg",
 		1, []int8{1, 2, 3, 4, 5}, [4]byte{'a', 'b', 'c', 'd'}}
 
-	s, err := SqlDataType(tSQL.ByteArrayAvailable(), &zz)
+	s, err := SqlDataType(tSQL.ByteArrayAvailable(), &zz, nil)
 	assert.NoError(t, err)
 	assert.Equal(t, "St VARCHAR(255), AA VARCHAR(6) , Int INTEGER, Ba BYTEA, Ca CHAR(4)", s)
 

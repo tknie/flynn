@@ -109,6 +109,7 @@ type Database interface {
 	Clone() Database
 	GetTableColumn(tableName string) ([]string, error)
 	CreateTable(string, any) error
+	AdaptTable(string, any) error
 	DeleteTable(string) error
 	Open() (any, error)
 	Close()
@@ -199,7 +200,16 @@ func (id RegDbID) CreateTable(tableName string, columns any) error {
 	return driver.CreateTable(tableName, columns)
 }
 
-// CreateTable create a new table
+// AdaptTable create a new table
+func (id RegDbID) AdaptTable(tableName string, columns any) error {
+	driver, err := searchDataDriver(id)
+	if err != nil {
+		return err
+	}
+	return driver.AdaptTable(tableName, columns)
+}
+
+// CreateTableIfNotExists create a new table if not exists
 func (id RegDbID) CreateTableIfNotExists(tableName string, columns any) (CreateStatus, error) {
 	driver, err := searchDataDriver(id)
 	if err != nil {

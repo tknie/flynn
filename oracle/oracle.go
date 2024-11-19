@@ -319,6 +319,11 @@ func (oracle *Oracle) CreateTable(name string, columns any) error {
 	return dbsql.CreateTable(oracle, name, columns)
 }
 
+// AdaptTable adapt a new table
+func (oracle *Oracle) AdaptTable(string, any) error {
+	return errorrepo.NewError("DB065535")
+}
+
 // DeleteTable delete a table
 func (oracle *Oracle) DeleteTable(name string) error {
 	return dbsql.DeleteTable(oracle, name)

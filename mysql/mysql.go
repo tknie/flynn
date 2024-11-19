@@ -267,7 +267,33 @@ func (mysql *Mysql) Delete(name string, remove *common.Entries) (int64, error) {
 
 // GetTableColumn get table columne names
 func (mysql *Mysql) GetTableColumn(tableName string) ([]string, error) {
-	return nil, errorrepo.NewError("DB065535")
+	log.Log.Debugf("Get table column ...")
+	dbOpen, err := mysql.Open()
+	if err != nil {
+		return nil, err
+	}
+	defer mysql.Close()
+
+	db := dbOpen.(*sql.DB)
+	// rows, err := db.Query(`SELECT table_schema, table_name, column_name, data_type
+	// FROM INFORMATION_SCHEMA.COLUMNS
+	rows, err := db.Query(`SELECT column_name FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = '` + strings.ToUpper(tableName) + `'`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	// c, err := rows.Columns()
+	tableRows := make([]string, 0)
+	tableRow := ""
+	for rows.Next() {
+		err = rows.Scan(&tableRow)
+		if err != nil {
+			return nil, err
+		}
+		tableRows = append(tableRows, strings.ToLower(tableRow))
+	}
+
+	return tableRows, nil
 }
 
 // Query query database records with search or SELECT
@@ -299,6 +325,11 @@ func (mysql *Mysql) Query(search *common.Query, f common.ResultFunction) (*commo
 // CreateTable create a new table
 func (mysql *Mysql) CreateTable(name string, columns any) error {
 	return dbsql.CreateTable(mysql, name, columns)
+}
+
+// AdaptTable create a new table
+func (mysql *Mysql) AdaptTable(name string, newStruct any) error {
+	return dbsql.AdaptTable(mysql, name, newStruct)
 }
 
 // DeleteTable delete a table

@@ -32,6 +32,7 @@ import (
 
 const testCreationTable = "TESTTABLE"
 const testCreationTableStruct = "TESTTABLESTRUCT"
+const testCreationAdaptTable = "TESTCREATEADAPTTABLE"
 
 type target struct {
 	layer string
@@ -595,4 +596,101 @@ func validateTestResult(t *testing.T, layer, url string) {
 
 func finalCheck(t *testing.T, expected int) {
 	assert.Len(t, common.Databases, expected)
+}
+
+func TestCreateAndAdapt(t *testing.T) {
+	InitLog(t)
+
+	columns := make([]*common.Column, 0)
+	columns = append(columns, &common.Column{Name: "Id", DataType: common.Alpha, Length: 8})
+	columns = append(columns, &common.Column{Name: "Name", DataType: common.Alpha, Length: 10})
+	columns = append(columns, &common.Column{Name: "FirstName", DataType: common.Alpha, Length: 20})
+	columns = append(columns, &common.Column{Name: "LastName", DataType: common.Alpha, Length: 20})
+
+	for _, target := range getTestTargets(t) {
+		if target.layer == "adabas" {
+			continue
+		}
+		fmt.Println("Working at string creation on target " + target.layer)
+		log.Log.Debugf("Working at string creation on target " + target.layer)
+
+		id, err := Handle(target.layer, target.url)
+		if !assert.NoError(t, err, "register fail using "+target.layer) {
+			return
+		}
+		_, _ = id.Delete(testCreationAdaptTable, &common.Entries{Fields: []string{"%Id"},
+			Values: [][]any{{"TEST%"}}})
+
+		id.DeleteTable(testCreationAdaptTable)
+		err = id.CreateTable(testCreationAdaptTable, columns)
+		if !assert.NoError(t, err, "create fail using "+target.layer) {
+			unregisterDatabase(t, id)
+			return
+		}
+		c, err := id.GetTableColumn(testCreationAdaptTable)
+		if !assert.NoError(t, err, "create fail using "+target.layer) {
+			unregisterDatabase(t, id)
+			return
+		}
+		assert.Equal(t, []string{"id", "name", "firstname", "lastname"}, c)
+
+		count := 1
+		list := make([][]any, 0)
+		list = append(list, []any{"TEST" + strconv.Itoa(count), "Eins", "Ernie", "Sesamstrasse"})
+		for i := 1; i < 10; i++ {
+			count++
+			list = append(list, []any{"TEST" + strconv.Itoa(count), strconv.Itoa(i), "Graf Zahl " + strconv.Itoa(i), "Graf String " + strconv.Itoa(i)})
+		}
+		count++
+		list = append(list, []any{"TEST" + strconv.Itoa(count), "Letztes", "Anton", "X"})
+		_, err = id.Insert(testCreationAdaptTable, &common.Entries{Fields: []string{"Id", "Name", "FirstName", "LastName"},
+			Values: list})
+		if !assert.NoError(t, err, "insert fail using "+target.layer) {
+			return
+		}
+		newStructure := struct {
+			Id        string
+			Name      string
+			FirstName string
+			LastName  string
+			Street    string
+			Home      bool
+			Counter   int
+		}{"ABC", "Müller abc", "Otto", "Walkes", "Sonnenalle", false, 100}
+		err = id.AdaptTable(testCreationAdaptTable, &newStructure)
+		if !assert.NoError(t, err, "Adapt fail using "+target.layer) {
+			return
+		}
+		_, err = id.Insert(testCreationAdaptTable, &common.Entries{Fields: []string{"*"},
+			DataStruct: newStructure,
+			Values:     [][]any{{newStructure}}})
+		if !assert.NoError(t, err, "Insert db fail using "+target.layer) {
+			return
+		}
+		list = make([][]any, 0)
+		for i := 20; i < 30; i++ {
+			count++
+			list = append(list, []any{"TEST" + strconv.Itoa(count), strconv.Itoa(i), "Graf Zahl " + strconv.Itoa(i), "Graf String " + strconv.Itoa(i), "NEW", i%2 == 0, i})
+		}
+		count++
+		list = append(list, []any{"TEST" + strconv.Itoa(count), "Letztes", "Anton", "X", "NEW", true, -1})
+		_, err = id.Insert(testCreationAdaptTable, &common.Entries{Fields: []string{"Id", "Name", "FirstName", "LastName", "Street", "Home", "Counter"},
+			Values: list})
+		if !assert.NoError(t, err, "insert fail using "+target.layer) {
+			return
+		}
+		err = id.BatchSelectFct(&common.Query{DataStruct: struct{ Count int }{1},
+			Search: "SELECT Counter FROM " + testCreationAdaptTable + " WHERE name in ('9','20')"},
+			func(search *common.Query, result *common.Result) error {
+				record := result.Data.(*struct{ Count int })
+				fmt.Printf("-> %#v\n", record.Count)
+				assert.True(t, record.Count == 0 || record.Count == 20)
+				return nil
+			})
+		if !assert.NoError(t, err, "insert fail using "+target.layer) {
+			return
+		}
+		unregisterDatabase(t, id)
+	}
+	finalCheck(t, 0)
 }

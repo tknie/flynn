@@ -105,6 +105,16 @@ func (ada *oracle) CreateTable(string, any) error {
 	return errorrepo.NewError("DB065535")
 }
 
+// CreateTable create a new table
+func (ada *oracle) CreateTable(string, any) error {
+	return errorrepo.NewError("DB065535")
+}
+
+// AdaptTable adapt a new table
+func (ada *oracle) AdaptTable(string, any) error {
+	return errorrepo.NewError("DB065535")
+}
+
 // DeleteTable delete a table
 func (ada *oracle) DeleteTable(string) error {
 	return errorrepo.NewError("DB065535")

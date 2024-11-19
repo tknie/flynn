@@ -23,6 +23,7 @@ import (
 	"github.com/tknie/errorrepo"
 	"github.com/tknie/flynn/common"
 	"github.com/tknie/log"
+	"golang.org/x/exp/slices"
 )
 
 type DBsql interface {
@@ -70,6 +71,42 @@ func CreateTable(dbsql DBsql, name string, col any) error {
 	return nil
 }
 
+// AdaptTable adapt table to new struct
+func AdaptTable(dbsql DBsql, name string, col any) error {
+
+	log.Log.Debugf("%s: Adapt SQL table", dbsql.ID())
+	layer, url := dbsql.Reference()
+	db, err := sql.Open(layer, url)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	columnCurrent, err := dbsql.ID().GetTableColumn(name)
+	if err != nil {
+		return err
+	}
+	fmt.Println(columnCurrent)
+	log.Log.Debugf("Got columns: %v", columnCurrent)
+	columStruct, err := SqlDataType(true, col, columnCurrent)
+	if err != nil {
+		return err
+	}
+	fmt.Println(columStruct)
+	for _, f := range strings.Split(columStruct, ",") {
+
+		adaptCmd := `ALTER TABLE ` + name + ` ADD ` + f
+		log.Log.Debugf("Create cmd %s", adaptCmd)
+		_, err = db.Query(adaptCmd)
+		if err != nil {
+			log.Log.Errorf("Error returned by SQL: %v", err)
+			return err
+		}
+	}
+	log.Log.Debugf("Table adapted")
+	return nil
+}
+
 func DeleteTable(dbsql DBsql, name string) error {
 	layer, url := dbsql.Reference()
 	db, err := sql.Open(layer, url)
@@ -111,7 +148,7 @@ func CreateTableByColumns(baAvailable bool, columns []*common.Column) string {
 
 func CreateTableByStruct(baAvailable bool, columns any) (string, error) {
 	log.Log.Debugf("Create table by structs")
-	return SqlDataType(baAvailable, columns)
+	return SqlDataType(baAvailable, columns, nil)
 }
 
 func Batch(dbsql DBsql, batch string) error {
@@ -208,7 +245,7 @@ func BatchSelectFct(dbsql DBsql, batch *common.Query, fct common.ResultFunction)
 	return nil
 }
 
-func SqlDataType(baAvailable bool, columns any) (string, error) {
+func SqlDataType(baAvailable bool, columns any, ignoreList []string) (string, error) {
 	x := reflect.TypeOf(columns)
 	if x.Kind() == reflect.Pointer {
 		x = x.Elem()
@@ -217,16 +254,21 @@ func SqlDataType(baAvailable bool, columns any) (string, error) {
 	switch x.Kind() {
 	case reflect.Struct:
 		var buffer bytes.Buffer
+		first := false
 		for i := 0; i < x.NumField(); i++ {
-			if i > 0 {
-				buffer.WriteString(", ")
-			}
 			f := x.Field(i)
-			s, err := sqlDataTypeStructField(baAvailable, f)
+			s, err := sqlDataTypeStructField(baAvailable, f, ignoreList)
 			if err != nil {
 				return "", err
 			}
-			buffer.WriteString(s)
+			if s != "" {
+				if i > 0 && first {
+					buffer.WriteString(", ")
+				}
+				buffer.WriteString(s)
+				first = true
+			}
+
 		}
 		log.Log.Debugf("Got for type %s: %s", x.Name(), buffer.String())
 		return buffer.String(), nil
@@ -235,12 +277,18 @@ func SqlDataType(baAvailable bool, columns any) (string, error) {
 	return "", errorrepo.NewError("DB000005", "", fmt.Sprintf("%T", columns))
 }
 
-func sqlDataTypeStructField(baAvailable bool, field reflect.StructField) (string, error) {
+func sqlDataTypeStructField(baAvailable bool, field reflect.StructField,
+	ignoreList []string) (string, error) {
 	x := field.Type
 	if x.Kind() == reflect.Pointer {
 		x = x.Elem()
 	}
 	log.Log.Debugf("Check kind %s/%s %s", x.Kind(), x.Name(), field.Name)
+	fmt.Println("Check", ignoreList, field.Name, slices.Contains(ignoreList, strings.ToLower(field.Name)))
+	// Check ignore list
+	if ignoreList != nil && slices.Contains(ignoreList, strings.ToLower(field.Name)) {
+		return "", nil
+	}
 	switch x.Kind() {
 	case reflect.Struct:
 		log.Log.Debugf("Check struct")
@@ -320,10 +368,11 @@ func sqlDataTypeStructFieldDataType(baAvailable bool, sf reflect.StructField) (s
 		}
 		return sfi.name + " " + common.Decimal.SqlType(sfi.length, 5) + sfi.additional, nil
 	case reflect.Bool:
-		if sfi.length == 0 {
-			sfi.length = 1
-		}
-		return sfi.name + " " + common.Bit.SqlType(sfi.length) + sfi.additional, nil
+		// if sfi.length == 0 {
+		// 	sfi.length = 1
+		// }
+		// sfi.name + " " + common.Bit.SqlType(sfi.length) + sfi.additional, nil
+		return sfi.name + " bool " + sfi.additional, nil
 	case reflect.Complex64, reflect.Complex128:
 		return "", errorrepo.NewError("DB000007")
 	case reflect.Struct:

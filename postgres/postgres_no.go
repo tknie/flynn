@@ -99,6 +99,11 @@ func (ada *postgres) CreateTable(string, any) error {
 	return errorrepo.NewError("DB065535")
 }
 
+// AdaptTable adapt a new table
+func (ada *postgres) AdaptTable(string, any) error {
+	return errorrepo.NewError("DB065535")
+}
+
 // DeleteTable delete a table
 func (ada *postgres) DeleteTable(string) error {
 	return errorrepo.NewError("DB065535")
