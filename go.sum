@@ -72,8 +72,8 @@ github.com/tknie/adabas-go-api v1.7.11-0.20230927173718-c1f8db24a2a8 h1:bMVNOabj
 github.com/tknie/adabas-go-api v1.7.11-0.20230927173718-c1f8db24a2a8/go.mod h1:Mmr1FHFy14iPgMVwt9RY/3i+IFCQ9Di4a+PmQICeTk0=
 github.com/tknie/errorrepo v0.0.0-20240912184714-682ebdc389d9 h1:shVv/rwnRD0bVOVX4z1OdnrqTvhDD9MdOBmJ244V13o=
 github.com/tknie/errorrepo v0.0.0-20240912184714-682ebdc389d9/go.mod h1:lI2i/ZvgnOsoeJnzKbme2Cpa8lIs5ORgKILrtBwZyqk=
-github.com/tknie/log v0.0.0-20231006083545-fabe25f4fb0e h1:aNgWs7XTC4vcIcmzQT496neJexEvjx0Kv2/ho2xUlgo=
-github.com/tknie/log v0.0.0-20231006083545-fabe25f4fb0e/go.mod h1:W67unT0xxqTLc9tyxpdV1lED/JuD0veFgxT/astdxt4=
+github.com/tknie/log v0.0.0-20241117202403-65556e62b83d h1:B2kRbca8940u2AVM9yyU1fMScDqFz04B56rz4WnMNgk=
+github.com/tknie/log v0.0.0-20241117202403-65556e62b83d/go.mod h1:W67unT0xxqTLc9tyxpdV1lED/JuD0veFgxT/astdxt4=
 github.com/yuin/goldmark v1.3.5/go.mod h1:mwnBkeHKe2W/ZEtQ+71ViKU8L12m81fl3OWwC1Zlc8k=
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
 go.uber.org/atomic v1.7.0/go.mod h1:fEN4uk6kAWBTFdckzkM89CLk9XfWZrxpCo0nPH17wJc=
@@ -145,8 +145,8 @@ golang.org/x/tools v0.1.12/go.mod h1:hNGJHUnrk76NpqgfD5Aqm5Crs+Hm0VOH/i9J2+nxYbc
 golang.org/x/xerrors v0.0.0-20190717185122-a985d3407aa7/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
 golang.org/x/xerrors v0.0.0-20191011141410-1b5146add898/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
 golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
-google.golang.org/protobuf v1.35.1 h1:m3LfL6/Ca+fqnjnlqQXNpFPABW1UD7mjh8KO2mKFytA=
-google.golang.org/protobuf v1.35.1/go.mod h1:9fA7Ob0pmnwhb644+1+CVWFRbNajQ6iRojtC/QF5bRE=
+google.golang.org/protobuf v1.35.2 h1:8Ar7bF+apOIoThw1EdZl0p1oWvMqTHmpA2fRTyZO8io=
+google.golang.org/protobuf v1.35.2/go.mod h1:9fA7Ob0pmnwhb644+1+CVWFRbNajQ6iRojtC/QF5bRE=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=

@@ -6,7 +6,7 @@ toolchain go1.23.0
 
 require (
 	github.com/jackc/pgx/v5 v5.7.1
-	github.com/tknie/log v0.0.0-20231006083545-fabe25f4fb0e
+	github.com/tknie/log v0.0.0-20241117202403-65556e62b83d
 )
 
 require github.com/rogpeppe/go-internal v1.9.0 // indirect
@@ -18,7 +18,7 @@ require (
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/planetscale/vtprotobuf v0.6.0 // indirect
 	golang.org/x/sync v0.9.0 // indirect
-	google.golang.org/protobuf v1.35.1 // indirect
+	google.golang.org/protobuf v1.35.2 // indirect
 )
 
 require (
