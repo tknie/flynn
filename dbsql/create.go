@@ -372,7 +372,7 @@ func sqlDataTypeStructFieldDataType(baAvailable bool, sf reflect.StructField) (s
 		// 	sfi.length = 1
 		// }
 		// sfi.name + " " + common.Bit.SqlType(sfi.length) + sfi.additional, nil
-		return sfi.name + " BOOL " + sfi.additional, nil
+		return sfi.name + " BOOL" + sfi.additional, nil
 	case reflect.Complex64, reflect.Complex128:
 		return "", errorrepo.NewError("DB000007")
 	case reflect.Struct:
