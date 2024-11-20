@@ -105,7 +105,7 @@ func TestPostgresInit(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, []string{"albumpictures", "albums",
 		"employees", "picturelocations",
-		"pictures", "teststructtabledata",
+		"pictures", "testcreateadapttable", "teststructtabledata",
 		"teststructuser", "testtabledata"}, m)
 }
 

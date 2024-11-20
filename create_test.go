@@ -32,7 +32,7 @@ import (
 
 const testCreationTable = "TESTTABLE"
 const testCreationTableStruct = "TESTTABLESTRUCT"
-const testCreationAdaptTable = "TESTCREATEADAPTTABLE"
+const CreationAdaptTable = "TestCreateAdaptTable"
 
 type target struct {
 	layer string
@@ -618,16 +618,16 @@ func TestCreateAndAdapt(t *testing.T) {
 		if !assert.NoError(t, err, "register fail using "+target.layer) {
 			return
 		}
-		_, _ = id.Delete(testCreationAdaptTable, &common.Entries{Fields: []string{"%Id"},
+		_, _ = id.Delete(CreationAdaptTable, &common.Entries{Fields: []string{"%Id"},
 			Values: [][]any{{"TEST%"}}})
 
-		id.DeleteTable(testCreationAdaptTable)
-		err = id.CreateTable(testCreationAdaptTable, columns)
+		id.DeleteTable(CreationAdaptTable)
+		err = id.CreateTable(CreationAdaptTable, columns)
 		if !assert.NoError(t, err, "create fail using "+target.layer) {
 			unregisterDatabase(t, id)
 			return
 		}
-		c, err := id.GetTableColumn(testCreationAdaptTable)
+		c, err := id.GetTableColumn(CreationAdaptTable)
 		if !assert.NoError(t, err, "create fail using "+target.layer) {
 			unregisterDatabase(t, id)
 			return
@@ -643,7 +643,7 @@ func TestCreateAndAdapt(t *testing.T) {
 		}
 		count++
 		list = append(list, []any{"TEST" + strconv.Itoa(count), "Letztes", "Anton", "X"})
-		_, err = id.Insert(testCreationAdaptTable, &common.Entries{Fields: []string{"Id", "Name", "FirstName", "LastName"},
+		_, err = id.Insert(CreationAdaptTable, &common.Entries{Fields: []string{"Id", "Name", "FirstName", "LastName"},
 			Values: list})
 		if !assert.NoError(t, err, "insert fail using "+target.layer) {
 			return
@@ -657,11 +657,11 @@ func TestCreateAndAdapt(t *testing.T) {
 			Home      bool
 			Counter   int
 		}{"ABC", "Müller abc", "Otto", "Walkes", "Sonnenalle", false, 100}
-		err = id.AdaptTable(testCreationAdaptTable, &newStructure)
+		err = id.AdaptTable(CreationAdaptTable, &newStructure)
 		if !assert.NoError(t, err, "Adapt fail using "+target.layer) {
 			return
 		}
-		_, err = id.Insert(testCreationAdaptTable, &common.Entries{Fields: []string{"*"},
+		_, err = id.Insert(CreationAdaptTable, &common.Entries{Fields: []string{"*"},
 			DataStruct: newStructure,
 			Values:     [][]any{{newStructure}}})
 		if !assert.NoError(t, err, "Insert db fail using "+target.layer) {
@@ -674,13 +674,13 @@ func TestCreateAndAdapt(t *testing.T) {
 		}
 		count++
 		list = append(list, []any{"TEST" + strconv.Itoa(count), "Letztes", "Anton", "X", "NEW", true, -1})
-		_, err = id.Insert(testCreationAdaptTable, &common.Entries{Fields: []string{"Id", "Name", "FirstName", "LastName", "Street", "Home", "Counter"},
+		_, err = id.Insert(CreationAdaptTable, &common.Entries{Fields: []string{"Id", "Name", "FirstName", "LastName", "Street", "Home", "Counter"},
 			Values: list})
 		if !assert.NoError(t, err, "insert fail using "+target.layer) {
 			return
 		}
 		err = id.BatchSelectFct(&common.Query{DataStruct: struct{ Count int }{1},
-			Search: "SELECT Counter FROM " + testCreationAdaptTable + " WHERE name in ('9','20')"},
+			Search: "SELECT Counter FROM " + CreationAdaptTable + " WHERE name in ('9','20')"},
 			func(search *common.Query, result *common.Result) error {
 				record := result.Data.(*struct{ Count int })
 				fmt.Printf("-> %#v\n", record.Count)
