@@ -81,6 +81,11 @@ func TestSearchQuery(t *testing.T) {
 	}
 	defer x.FreeHandler()
 
+	tables, err := x.Tables()
+	if !assert.NoError(t, err) {
+		return
+	}
+	fmt.Println("TABLES:", tables)
 	columns, err := x.GetTableColumn("Albums")
 	if !assert.NoError(t, err) {
 		return

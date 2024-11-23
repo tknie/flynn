@@ -439,6 +439,16 @@ func (id RegDbID) FreeHandler() error {
 	return errorrepo.NewError("DB000001")
 }
 
+// Tables tables list of an database
+func (id RegDbID) Tables() ([]string, error) {
+	driver, err := searchDataDriver(id)
+	if err != nil {
+		return nil, err
+	}
+	return driver.Maps()
+
+}
+
 func DBHelper() string {
 	if os.Getenv("FLYNN_TRACE_PASSWORD") == "TRUE" {
 
