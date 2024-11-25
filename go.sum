@@ -66,8 +66,8 @@ github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UV
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/stretchr/testify v1.7.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/stretchr/testify v1.8.0/go.mod h1:yNjHg4UonilssWZ8iaSj1OCr/vHnekPRkoO+kdMU+MU=
-github.com/stretchr/testify v1.9.0 h1:HtqpIVDClZ4nwg75+f6Lvsy/wHu+3BoSGCbBAcpTsTg=
-github.com/stretchr/testify v1.9.0/go.mod h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf8C91i36aY=
+github.com/stretchr/testify v1.10.0 h1:Xv5erBjTwe/5IxqUQTdXv5kgmIvbHo3QQyRwhJsOfJA=
+github.com/stretchr/testify v1.10.0/go.mod h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf8C91i36aY=
 github.com/tknie/adabas-go-api v1.7.11-0.20230927173718-c1f8db24a2a8 h1:bMVNOabj1igjI1MPXm1Ht95BN4m9x2981w6yxNbr9WQ=
 github.com/tknie/adabas-go-api v1.7.11-0.20230927173718-c1f8db24a2a8/go.mod h1:Mmr1FHFy14iPgMVwt9RY/3i+IFCQ9Di4a+PmQICeTk0=
 github.com/tknie/errorrepo v0.0.0-20240912184714-682ebdc389d9 h1:shVv/rwnRD0bVOVX4z1OdnrqTvhDD9MdOBmJ244V13o=
