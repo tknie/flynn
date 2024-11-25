@@ -24,7 +24,7 @@ require (
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-sql-driver/mysql v1.8.1
-	github.com/godror/godror v0.45.1
+	github.com/godror/godror v0.45.2
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
