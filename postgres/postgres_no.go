@@ -70,7 +70,7 @@ func (ada *postgres) Close() {
 
 // Insert insert record into table
 func (ada *postgres) Insert(name string, insert *common.Entries) ([][]any, error) {
-	return errorrepo.NewError("DB065535")
+	return nil, errorrepo.NewError("DB065535")
 }
 
 // Update update record in table

@@ -22,6 +22,7 @@ import (
 )
 
 type Adabas struct {
+	common.CommonDatabase
 }
 
 // NewInstance create new postgres reference instance
@@ -32,6 +33,10 @@ func NewInstance(id common.RegDbID, reference *common.Reference, password string
 // New create new postgres reference instance
 func New(id common.RegDbID, url string) (common.Database, error) {
 	return nil, errorrepo.NewError("DB065535")
+}
+
+// FreeHandler don't use the driver anymore
+func (ada *Adabas) FreeHandler() {
 }
 
 func (ada *Adabas) Clone() common.Database {

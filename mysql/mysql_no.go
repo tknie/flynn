@@ -22,6 +22,7 @@ import (
 )
 
 type mysql struct {
+	common.CommonDatabase
 }
 
 // NewInstance create new postgres reference instance
@@ -34,9 +35,13 @@ func New(id common.RegDbID, url string) (common.Database, error) {
 	return nil, errorrepo.NewError("DB065535")
 }
 
-func (mysql *mysql) Clone() common.Database {
+// FreeHandler don't use the driver anymore
+func (ada *mysql) FreeHandler() {
+}
+
+func (ada *mysql) Clone() common.Database {
 	newMy := &mysql{}
-	*newMy = *mysql
+	*newMy = *ada
 	return newMy
 }
 
@@ -76,7 +81,7 @@ func (ada *mysql) Close() {
 
 // Insert insert record into table
 func (ada *mysql) Insert(name string, insert *common.Entries) ([][]any, error) {
-	return errorrepo.NewError("DB065535")
+	return nil, errorrepo.NewError("DB065535")
 }
 
 // Update update record in table

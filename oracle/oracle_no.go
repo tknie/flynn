@@ -22,6 +22,7 @@ import (
 )
 
 type oracle struct {
+	common.CommonDatabase
 }
 
 // NewInstance create new postgres reference instance
@@ -34,14 +35,18 @@ func New(id common.RegDbID, url string) (common.Database, error) {
 	return nil, errorrepo.NewError("DB065535")
 }
 
+// FreeHandler don't use the driver anymore
+func (ada *oracle) FreeHandler() {
+}
+
 // SetCredentials set credentials to connect to database
 func (ada *oracle) SetCredentials(user, password string) error {
 	return errorrepo.NewError("DB065535")
 }
 
-func (oracle *oracle) Clone() common.Database {
+func (ada *oracle) Clone() common.Database {
 	newOc := &oracle{}
-	*newOc = *oracle
+	*newOc = *ada
 	return newOc
 }
 
@@ -76,7 +81,7 @@ func (ada *oracle) Close() {
 
 // Insert insert record into table
 func (ada *oracle) Insert(name string, insert *common.Entries) ([][]any, error) {
-	return errorrepo.NewError("DB065535")
+	return nil, errorrepo.NewError("DB065535")
 }
 
 // Update update record in table
@@ -98,11 +103,6 @@ func (ada *oracle) GetTableColumn(tableName string) ([]string, error) {
 func (ada *oracle) Query(search *common.Query, f common.ResultFunction) (*common.Result, error) {
 	search.Driver = common.OracleType
 	return nil, errorrepo.NewError("DB065535")
-}
-
-// CreateTable create a new table
-func (ada *oracle) CreateTable(string, any) error {
-	return errorrepo.NewError("DB065535")
 }
 
 // CreateTable create a new table
