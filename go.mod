@@ -6,7 +6,7 @@ toolchain go1.23.0
 
 require (
 	github.com/jackc/pgx/v5 v5.7.1
-	github.com/tknie/log v0.0.0-20241117202403-65556e62b83d
+	github.com/tknie/log v0.1.0
 )
 
 require github.com/rogpeppe/go-internal v1.9.0 // indirect
@@ -30,10 +30,10 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.10.0
-	github.com/tknie/adabas-go-api v1.7.11-0.20230927173718-c1f8db24a2a8
-	github.com/tknie/errorrepo v0.0.0-20240912184714-682ebdc389d9
+	github.com/tknie/adabas-go-api v1.7.11
+	github.com/tknie/errorrepo v0.1.0
 	golang.org/x/crypto v0.30.0 // indirect
-	golang.org/x/exp v0.0.0-20241204233417-43b7b7cde48d
+	golang.org/x/exp v0.0.0-20241210172134-14434422244c
 	golang.org/x/sys v0.28.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1

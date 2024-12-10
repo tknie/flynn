@@ -22,7 +22,7 @@ BIN                = $(CURDIR)/bin/$(GOOS)_$(GOARCH)
 BINTOOLS           = $(CURDIR)/bin/tools/$(GOOS)_$(GOARCH)
 BINTESTS           = $(CURDIR)/bin/tests/$(GOOS)_$(GOARCH)
 
-VERSION            = v0.5
+VERSION            = v0.6
 
 OBJECTS            = *.go postgres/*.go mysql/*.go adabas/*.go common/*.go
 
