@@ -16,6 +16,7 @@ require (
 	github.com/go-logfmt/logfmt v0.6.0 // indirect
 	github.com/godror/knownpb v0.2.0 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
+	github.com/kr/text v0.2.0 // indirect
 	github.com/planetscale/vtprotobuf v0.6.0 // indirect
 	golang.org/x/sync v0.10.0 // indirect
 	google.golang.org/protobuf v1.35.2 // indirect
@@ -24,7 +25,7 @@ require (
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-sql-driver/mysql v1.8.1
-	github.com/godror/godror v0.45.2
+	github.com/godror/godror v0.46.0
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
