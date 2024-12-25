@@ -120,10 +120,13 @@ func TestSearchPgRows(t *testing.T) {
 		fmt.Println("RESULT:", result.Rows)
 		ns := result.Rows[0].(string)
 		ts := result.Rows[1].(time.Time)
+		ti := result.GetRowValueByName("title")
+		assert.Equal(t, ts, ti)
 		counter++
 		switch counter {
 		case 1:
 			assert.Equal(t, "1.Hälfte Sommerferien 2019 sind vorbei", ns)
+			assert.Equal(t, "1.Hälfte Sommerferien 2019 sind vorbei", ti)
 			assert.Equal(t, "2023-03-15 14:54:51.305585 +0000 UTC", ts.String())
 		case 10:
 			assert.Equal(t, "Fasching 2019", ns)

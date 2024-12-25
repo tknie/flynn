@@ -460,3 +460,13 @@ func DBHelper() string {
 	}
 	return "-"
 }
+
+func (result *Result) GetRowValueByName(name string) any {
+	searchName := strings.ToLower(name)
+	for i := 0; i < len(result.Fields); i++ {
+		if strings.ToLower(result.Fields[i]) == searchName {
+			return result.Rows[i]
+		}
+	}
+	return nil
+}
