@@ -121,7 +121,7 @@ func TestSearchPgRows(t *testing.T) {
 		ns := result.Rows[0].(string)
 		ts := result.Rows[1].(time.Time)
 		ti := result.GetRowValueByName("title")
-		assert.Equal(t, ts, ti)
+		assert.Equal(t, ns, ti)
 		counter++
 		switch counter {
 		case 1:
