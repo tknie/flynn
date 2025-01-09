@@ -1084,6 +1084,9 @@ func (pg *PostGres) BatchSelectFct(search *common.Query, fct common.ResultFuncti
 	ctx := context.Background()
 	defer pg.Close()
 	selectCmd := search.Search
+	if selectCmd == "" {
+		return errorrepo.NewError("DB000034")
+	}
 	log.Log.Debugf("Query: %s Parameters: %#v", selectCmd, search.Parameters)
 	rows, err := db.Query(ctx, selectCmd, search.Parameters...)
 	if err != nil {
