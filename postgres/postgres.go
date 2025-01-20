@@ -535,7 +535,7 @@ func (pg *PostGres) GetTableColumn(tableName string) ([]string, error) {
 
 // Query query database records with search or SELECT
 func (pg *PostGres) Query(search *common.Query, f common.ResultFunction) (*common.Result, error) {
-	search.Driver = common.AdabasType
+	search.Driver = common.PostgresType
 	log.Log.Debugf("%s Query postgres database", pg.ID().String())
 	dbOpen, err := pg.Open()
 	if err != nil {

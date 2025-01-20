@@ -283,8 +283,10 @@ func sqlDataTypeStructField(baAvailable bool, field reflect.StructField,
 	if x.Kind() == reflect.Pointer {
 		x = x.Elem()
 	}
-	log.Log.Debugf("Check kind %s/%s %s", x.Kind(), x.Name(), field.Name)
-	fmt.Println("Check", ignoreList, field.Name, slices.Contains(ignoreList, strings.ToLower(field.Name)))
+	if log.IsDebugLevel() {
+		log.Log.Debugf("Check kind %s/%s %s", x.Kind(), x.Name(), field.Name)
+		log.Log.Debugf("Check %v %s %v", ignoreList, field.Name, slices.Contains(ignoreList, strings.ToLower(field.Name)))
+	}
 	// Check ignore list
 	if ignoreList != nil && slices.Contains(ignoreList, strings.ToLower(field.Name)) {
 		return "", nil
