@@ -23,6 +23,11 @@ import (
 
 const referenceRegexp = `(?m)((\w*)://)?(([\w<>]+)(:(\S+))?@)?(tcp\()?(\w[\w.]*):(\d+)\)?(/(\w+))?\??(.*)`
 
+const (
+	userPlaceholder   = "<user>"
+	passwdPlaceholder = "<password>"
+)
+
 type ReferenceType byte
 
 const (
@@ -65,10 +70,20 @@ func ParseUrl(url string) (*Reference, string, error) {
 	/*for i, match := range re.FindStringSubmatch(url) {
 		fmt.Println(match, "found at index", i)
 	}*/
+	if ref.User == userPlaceholder {
+		ref.User = ""
+	}
+	passwd := match[6]
+	if passwd == passwdPlaceholder {
+		passwd = ""
+	}
+	if match[3] == "postgres://@" {
+		passwd = ""
+	}
 	if len(match) == 13 && match[12] != "" {
 		ref.Options = strings.Split(match[12], "&")
 	}
-	return ref, match[6], nil
+	return ref, passwd, nil
 }
 
 func Trim(value string) string {
