@@ -47,7 +47,7 @@ func TestReferenceURL(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, &Reference{Driver: PostgresType, Host: "localhost", Port: 5432, User: "admin",
 		Database: "bitgarten", Options: []string(nil)}, ref)
-	assert.Equal(t, "<password>", p)
+	assert.Equal(t, "", p)
 	ref, p, err = NewReference("jdbc:mysql://localhost:3306/sonoo")
 	assert.NoError(t, err)
 	assert.Equal(t, &Reference{Driver: MysqlType, Host: "localhost", Port: 3306, Database: "sonoo"}, ref)
@@ -64,8 +64,8 @@ func TestReferenceURL(t *testing.T) {
 	ref, p, err = NewReference("postgres://<user>:<password>@lion:5432/bitgarten")
 	assert.NoError(t, err)
 	assert.Equal(t, &Reference{Driver: PostgresType, Host: "lion", Port: 5432, Database: "bitgarten",
-		User: "<user>"}, ref)
-	assert.Equal(t, "<password>", p)
+		User: ""}, ref)
+	assert.Equal(t, "", p)
 	ref, p, err = NewReference("postgres://admin:axx@localhost:5432/bitgarten?sslmode=require")
 	assert.NoError(t, err)
 	assert.Equal(t, &Reference{Driver: PostgresType, Host: "localhost", Port: 5432, Database: "bitgarten",
@@ -84,8 +84,8 @@ func TestReferenceURL(t *testing.T) {
 	ref, p, err = NewReference("oracle://<user>:<password>@xaaaa:99989/schema")
 	assert.NoError(t, err)
 	assert.Equal(t, &Reference{Driver: OracleType, Host: "xaaaa", Port: 99989, Database: "schema",
-		User: "<user>"}, ref)
-	assert.Equal(t, "<password>", p)
+		User: ""}, ref)
+	assert.Equal(t, "", p)
 	ref, p, err = NewReference("postgres://admin:axx@localhost:5432/bitgarten?pool_max_conns=10")
 	assert.NoError(t, err)
 	assert.Equal(t, &Reference{Driver: PostgresType, Host: "localhost", Port: 5432, Database: "bitgarten",
