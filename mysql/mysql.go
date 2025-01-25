@@ -37,10 +37,9 @@ const (
 // Mysql instance for MySQL
 type Mysql struct {
 	common.CommonDatabase
-	openDB       any
-	dbURL        string
+	openDB any
+	// dbURL        string
 	dbTableNames []string
-	user         string
 	password     string
 	tx           *sql.Tx
 	ctx          context.Context
@@ -48,25 +47,31 @@ type Mysql struct {
 
 // NewInstance create new mysql reference instance
 func NewInstance(id common.RegDbID, reference *common.Reference, password string) (common.Database, error) {
-	o := reference.OptionString()
-	if o == "" {
-		o = "?"
-	} else {
-		o += "&"
-	}
-	o += "parseTime=true"
-	url := fmt.Sprintf("%s:"+passwdPlaceholder+"@tcp(%s:%d)/%s%s", reference.User, reference.Host,
-		reference.Port, reference.Database, o)
+	// o := reference.OptionString()
+	// if o == "" {
+	// 	o = "?"
+	// } else {
+	// 	o += "&"
+	// }
+	// o += "parseTime=true"
+	// url := fmt.Sprintf("%s:"+passwdPlaceholder+"@tcp(%s:%d)/%s%s", reference.User, reference.Host,
+	// 	reference.Port, reference.Database, o)
 	mysql := &Mysql{common.NewCommonDatabase(id, "mysql"),
-		nil, url, nil, reference.User, password, nil, nil}
+		nil, nil, password, nil, nil}
+	mysql.ConRef = reference
 	log.Log.Debugf("%s: create new instance", mysql.ID().String())
 	return mysql, nil
 }
 
 // New create new mysql reference instance
 func New(id common.RegDbID, url string) (common.Database, error) {
+	ref, p, err := common.ParseUrl(url)
+	if err != nil {
+		return nil, err
+	}
 	mysql := &Mysql{common.NewCommonDatabase(id, "mysql"),
-		nil, url, nil, "", "", nil, nil}
+		nil, nil, p, nil, nil}
+	mysql.ConRef = ref
 	return mysql, nil
 }
 
@@ -78,15 +83,16 @@ func (mysql *Mysql) Clone() common.Database {
 
 // SetCredentials set credentials to connect to database
 func (mysql *Mysql) SetCredentials(user, password string) error {
-	mysql.user = user
+	mysql.ConRef.User = user
+	// mysql.user = user
 	mysql.password = password
 	return nil
 }
 
 func (mysql *Mysql) generateURL() string {
-	url := mysql.dbURL
-	if mysql.user != "" {
-		url = strings.Replace(url, userPlaceholder, mysql.user, -1)
+	url := mysql.URL()
+	if mysql.ConRef.User != "" {
+		url = strings.Replace(url, userPlaceholder, mysql.ConRef.User, -1)
 	}
 	if mysql.password != "" {
 		url = strings.Replace(url, passwdPlaceholder, mysql.password, -1)
@@ -96,7 +102,7 @@ func (mysql *Mysql) generateURL() string {
 
 func (mysql *Mysql) open() (dbOpen any, err error) {
 	if mysql.openDB == nil {
-		log.Log.Debugf("%s: Open Mysql database to %s", mysql.ID().String(), mysql.dbURL)
+		log.Log.Debugf("%s: Open Mysql database to %s", mysql.ID().String(), mysql.URL())
 		mysql.openDB, err = sql.Open(layer, mysql.generateURL())
 		if err != nil {
 			return
@@ -124,7 +130,7 @@ func (mysql *Mysql) Open() (dbOpen any, err error) {
 		}
 
 	}
-	log.Log.Debugf("%s: Open MySQL database %s after transaction", mysql.ID().String(), mysql.dbURL)
+	log.Log.Debugf("%s: Open MySQL database %s after transaction", mysql.ID().String(), mysql.URL())
 	return db, nil
 }
 
@@ -217,7 +223,17 @@ func (mysql *Mysql) ID() common.RegDbID {
 
 // URL current URL used
 func (mysql *Mysql) URL() string {
-	return mysql.dbURL
+	reference := mysql.ConRef
+	o := reference.OptionString()
+	if o == "" {
+		o = "?"
+	} else {
+		o += "&"
+	}
+	o += "parseTime=true"
+	url := fmt.Sprintf("%s:"+passwdPlaceholder+"@tcp(%s:%d)/%s%s", reference.User, reference.Host,
+		reference.Port, reference.Database, o)
+	return url
 }
 
 // Maps database maps, tables or views
