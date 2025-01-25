@@ -44,11 +44,8 @@ const (
 // PostGres instane for PostgresSQL
 type PostGres struct {
 	common.CommonDatabase
-	openDB *pgxpool.Conn
-	// pool         *pgxpool.Pool
-	dbURL        string
+	openDB       *pgxpool.Conn
 	dbTableNames []string
-	user         string
 	password     string
 	tx           pgx.Tx
 	ctx          context.Context
@@ -92,10 +89,9 @@ func (p *pool) DecUsage() uint64 {
 // NewInstance create new postgres reference instance using reference structure
 func NewInstance(id common.RegDbID, reference *common.Reference, password string) (common.Database, error) {
 
-	url := fmt.Sprintf("postgres://%s:"+passwdPlaceholder+"@%s:%d/%s%s", reference.User,
-		reference.Host, reference.Port, reference.Database, reference.OptionString())
 	pg := &PostGres{common.NewCommonDatabase(id, "postgres"), nil,
-		url, nil, "", password, nil, nil, nil, sync.Mutex{}}
+		nil, password, nil, nil, nil, sync.Mutex{}}
+	pg.ConRef = reference
 	log.Log.Debugf("PG Password is empty=%v", password == "")
 	return pg, nil
 }
@@ -121,23 +117,17 @@ func New(id common.RegDbID, url string) (common.Database, error) {
 
 // SetCredentials set credentials to connect to database
 func (pg *PostGres) SetCredentials(user, password string) error {
-	pg.user = user
+	pg.ConRef.User = user
 	pg.password = password
 	log.Log.Debugf("Store credentials")
 	return nil
 }
 
 func (pg *PostGres) generateURL() string {
-	url := pg.dbURL
-	if pg.user != "" {
-		log.Log.Debugf("Replace URL user")
-		url = strings.Replace(url, userPlaceholder, pg.user, -1)
-
-	}
-	if pg.password != "" {
-		log.Log.Debugf("Replace URL password")
-		url = strings.Replace(url, passwdPlaceholder, pg.password, -1)
-	}
+	reference := pg.ConRef
+	user := pg.ConRef.User
+	url := fmt.Sprintf("postgres://%s:%s@%s:%d/%s%s", user, pg.password,
+		reference.Host, reference.Port, reference.Database, reference.OptionString())
 	return url
 }
 
@@ -163,7 +153,9 @@ func (pg *PostGres) ID() common.RegDbID {
 
 // URL current URL used
 func (pg *PostGres) URL() string {
-	return pg.dbURL
+	reference := pg.ConRef
+	return fmt.Sprintf("postgres://%s:"+passwdPlaceholder+"@%s:%d/%s%s", reference.User,
+		reference.Host, reference.Port, reference.Database, reference.OptionString())
 }
 
 // Maps database maps, tables or views
@@ -187,7 +179,7 @@ func (pg *PostGres) getPool() (*pool, error) {
 		if pl.pool == nil {
 			config, err := pgxpool.ParseConfig(pg.generateURL())
 			if err != nil {
-				log.Log.Debugf("Error parsing url: %s", pg.dbURL)
+				log.Log.Debugf("Error parsing url: %s", pg.URL())
 				return nil, err
 			}
 			pg.defineContext()
@@ -219,12 +211,12 @@ func (pg *PostGres) getPool() (*pool, error) {
 		//config, err := pgxpool.ParseConfig(pg.generateURL() + "?pool_max_conns=100")
 		config, err := pgxpool.ParseConfig(pg.generateURL())
 		if err != nil {
-			log.Log.Debugf("Error parsing url: %s", pg.dbURL)
+			log.Log.Debugf("Error parsing url: %s", pg.URL())
 			return nil, err
 		}
 		// config.Tracer = tracer
 		// pg.ctx = context.Background()
-		log.Log.Debugf("%s Create pool for Postgres database to %s", pg.ID().String(), pg.dbURL)
+		log.Log.Debugf("%s Create pool for Postgres database to %s", pg.ID().String(), pg.URL())
 		p := &pool{url: url, ctx: pg.ctx}
 		p.lock.Lock()
 		defer p.lock.Unlock()
@@ -285,7 +277,7 @@ func (pg *PostGres) open() (dbOpen *pgxpool.Conn, err error) {
 		return nil, err
 	}
 
-	log.Log.Debugf("%s Acquire Postgres (%p) database to %s: db=%p", pg.ID().String(), pg, pg.dbURL, dbOpen)
+	log.Log.Debugf("%s Acquire Postgres (%p) database to %s: db=%p", pg.ID().String(), pg, pg.URL(), dbOpen)
 	log.Log.Debugf("%s Opened postgres database", pg.ID().String())
 	if dbOpen == nil {
 		return nil, errorrepo.NewError("DB000025")
@@ -315,7 +307,7 @@ func (pg *PostGres) Open() (dbOpen any, err error) {
 
 	}
 	log.Log.Debugf("%s Opened database %s after transaction (pg=%p,db=%p)", pg.ID().String(),
-		pg.dbURL, pg, db)
+		pg.URL(), pg, db)
 	return db, nil
 }
 

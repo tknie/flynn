@@ -623,12 +623,12 @@ func TestSearchMariaDBRows(t *testing.T) {
 
 func TestSearchPgRowsOrdered(t *testing.T) {
 	InitLog(t)
-	pg, err := postgresUserTarget(t)
+	pgUrl, err := postgresUserTarget(t)
 	if !assert.NoError(t, err) {
 		return
 	}
-	pg += "?pool_max_conns=10"
-	x, err := Handle("postgres", pg)
+	pgUrl += "?pool_max_conns=10"
+	x, err := Handle("postgres", pgUrl)
 	if !assert.NoError(t, err) {
 		return
 	}

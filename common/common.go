@@ -145,6 +145,7 @@ type CommonDatabase struct {
 	RegDbID     RegDbID
 	Transaction bool
 	LastUsed    time.Time
+	ConRef      *Reference
 }
 
 type ValueDefinition struct {
