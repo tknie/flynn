@@ -258,15 +258,16 @@ func TestCreateStruct(t *testing.T) {
 
 func createStruct(t *testing.T, target *target) error {
 	columns := struct {
-		XY         uint64 `flynn:"ID::SERIAL"`
-		Name       string
-		FirstName  string
-		LastName   string
-		Address    string `flynn:"Street"`
-		Salary     uint64 `flynn:"Salary"`
-		Bonus      int64
-		Sub        *SubField `flynn:":sub"`
-		Permission *TestUser `flynn:":YAML"`
+		XY          uint64 `flynn:"ID::SERIAL"`
+		Name        string
+		FirstName   string
+		LastName    string
+		Address     string `flynn:"Street"`
+		Salary      uint64 `flynn:"Salary"`
+		Bonus       int64
+		IgnoreField int64     `flynn:":ignore"`
+		Sub         *SubField `flynn:":sub"`
+		Permission  *TestUser `flynn:":YAML"`
 	}{XY: nrLoops + 10, Name: "Gellanger",
 		FirstName: "Bob", Salary: 10000,
 		Sub:        &SubField{SubName: "AAAA", Number: 12},
@@ -296,6 +297,11 @@ func createStruct(t *testing.T, target *target) error {
 
 	_, err = id.BatchSelect("SELECT Sub FROM " + testCreationTableStruct)
 	if !assert.NoError(t, err) {
+		return err
+	}
+
+	_, err = id.BatchSelect("SELECT IgnoreField FROM " + testCreationTableStruct)
+	if !assert.Error(t, err) {
 		return err
 	}
 

@@ -250,7 +250,9 @@ func SqlDataType(baAvailable bool, columns any, ignoreList []string) (string, er
 	if x.Kind() == reflect.Pointer {
 		x = x.Elem()
 	}
-	log.Log.Debugf("Go through data type %s", x.Name())
+	log.Log.Debugf("Go through data type %s ==>", x.Name())
+	defer log.Log.Debugf("Go through data type %s <==", x.Name())
+
 	switch x.Kind() {
 	case reflect.Struct:
 		var buffer bytes.Buffer
@@ -295,6 +297,9 @@ func sqlDataTypeStructField(baAvailable bool, field reflect.StructField,
 	case reflect.Struct:
 		log.Log.Debugf("Check struct")
 		sfi := evaluateName(field, x)
+		if sfi.skip {
+			return "", nil
+		}
 		if x.Name() == "Time" {
 			return sfi.name + " TIMESTAMP " + sfi.additional, nil
 		}
@@ -336,6 +341,9 @@ func sqlDataTypeStructField(baAvailable bool, field reflect.StructField,
 func sqlDataTypeStructFieldDataType(baAvailable bool, sf reflect.StructField) (string, error) {
 	t := sf.Type
 	sfi := evaluateName(sf, t)
+	if sfi.skip {
+		return "", nil
+	}
 	if sfi.info != "" {
 		return sfi.info, nil
 	}
@@ -417,11 +425,12 @@ type structFieldInfo struct {
 	info       string
 	kind       string
 	length     int
+	skip       bool
 }
 
 // evaluateName evaluate name of type given (extract tags and info)
 func evaluateName(sf reflect.StructField, tsf reflect.Type) *structFieldInfo {
-	sfi := &structFieldInfo{name: sf.Name}
+	sfi := &structFieldInfo{name: sf.Name, skip: false}
 	log.Log.Debugf("Found name " + sfi.name)
 	if tagName, ok := sf.Tag.Lookup(common.TagName); ok {
 		tagField := strings.Split(tagName, ":")
@@ -429,6 +438,10 @@ func evaluateName(sf reflect.StructField, tsf reflect.Type) *structFieldInfo {
 			sfi.name = tagField[0]
 		}
 		if len(tagField) > 1 {
+			if tagField[1] == "ignore" {
+				sfi.skip = true
+				return sfi
+			}
 			sfi.additional = " " + tagField[1]
 			sfi.kind = tagField[1]
 		}
