@@ -512,6 +512,7 @@ func (vd *ValueDefinition) ShiftValues() error {
 		case NormalTag, KeyTag, IndexTag:
 			err := vd.ShiftNormalValues(d, v)
 			if err != nil {
+				log.Log.Debugf("Error in shift normal values: %v", err)
 				return err
 			}
 		case SubTag:
@@ -531,6 +532,7 @@ func (vd *ValueDefinition) ShiftValues() error {
 					log.Log.Debugf("Found sub data: %s(%v)/%v", b, di, v)
 					err := di.ParseData(b)
 					if err != nil {
+						log.Log.Debugf("Parse error in shift: %v", err)
 						return err
 					}
 				}
@@ -591,6 +593,8 @@ func (vd *ValueDefinition) ShiftNormalValues(d int, v any) error {
 		} else {
 			log.Log.Debugf("SQL interface value nil")
 		}
+	} else {
+		log.Log.Debugf("Error sql interface: %T", v)
 	}
 	return nil
 }

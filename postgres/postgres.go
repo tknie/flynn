@@ -622,11 +622,13 @@ func (pg *PostGres) ParseStruct(search *common.Query, rows pgx.Rows, f common.Re
 		}
 		err = vd.ShiftValues()
 		if err != nil {
+			log.Log.Debugf("Error during shift values of struct: %v/%v", err, vd.Copy)
 			return nil, err
 		}
 		result.Data = vd.Copy
 		err = f(search, result)
 		if err != nil {
+			log.Log.Debugf("Error in function call: %v/%v", err, vd.Copy)
 			return nil, err
 		}
 	}
