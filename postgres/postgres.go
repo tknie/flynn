@@ -613,6 +613,7 @@ func (pg *PostGres) ParseStruct(search *common.Query, rows pgx.Rows, f common.Re
 			for _, f := range rows.FieldDescriptions() {
 				result.Fields = append(result.Fields, f.Name)
 			}
+			log.Log.Debugf("Fields: %v", result.Fields)
 		}
 		err := rows.Scan(vd.ScanValues...)
 		if err != nil {
@@ -632,7 +633,7 @@ func (pg *PostGres) ParseStruct(search *common.Query, rows pgx.Rows, f common.Re
 			return nil, err
 		}
 	}
-	log.Log.Debugf("Parse of structure finished")
+	log.Log.Debugf("Parse of structure finished, counter=%d", result.Counter)
 	return
 }
 
