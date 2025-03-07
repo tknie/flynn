@@ -218,6 +218,12 @@ func (search *Query) ParseRows(rows *sql.Rows, f ResultFunction) (result *Result
 				} else {
 					result.Rows[i] = nil
 				}
+			case *sql.NullFloat64:
+				if n.Valid {
+					result.Rows[i] = n.Float64
+				} else {
+					result.Rows[i] = nil
+				}
 			default:
 				result.Rows[i] = r
 			}
