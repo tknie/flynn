@@ -1,8 +1,7 @@
 module github.com/tknie/flynn
 
 go 1.22.4
-
-toolchain go1.23.0
+toolchain go1.24.1
 
 require (
 	github.com/jackc/pgx/v5 v5.7.2
@@ -18,14 +17,14 @@ require (
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/planetscale/vtprotobuf v0.6.0 // indirect
-	golang.org/x/sync v0.11.0 // indirect
+	golang.org/x/sync v0.12.0 // indirect
 	google.golang.org/protobuf v1.36.5 // indirect
 )
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-sql-driver/mysql v1.9.0
-	github.com/godror/godror v0.47.0
+	github.com/godror/godror v0.47.1
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
