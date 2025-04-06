@@ -814,10 +814,11 @@ func TestMultipleOpenClose(t *testing.T) {
 }
 
 type Employee struct {
-	FirstName  string `flynn:"first_name"`
-	Name       string `flynn:"last_name"`
-	Department string
-	Birth      time.Time
+	FirstName   string `flynn:"first_name"`
+	Name        string `flynn:"last_name"`
+	Department  string
+	ignoreField string
+	Birth       time.Time
 }
 
 func TestReadmeQuery(t *testing.T) {

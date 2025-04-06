@@ -172,6 +172,10 @@ func (dynamic *typeInterface) generateField(elemValue reflect.Value, readScan bo
 		d := tag.Get(TagName)
 		tagName, tagInfo := TagInfoParse(d)
 		fieldName := fieldType.Name
+		if fieldName == "" || !unicode.IsUpper([]rune(fieldName)[0]) {
+			log.Log.Debugf("Field skip because lowercase name %c of %s", []rune(fieldName)[0], fieldName)
+			continue
+		}
 		if tagName != "" {
 			fieldName = tagName
 		}
@@ -431,15 +435,15 @@ func (dynamic *typeInterface) generateFieldNames(ri reflect.Type) {
 	for fi := 0; fi < ri.NumField(); fi++ {
 		ct := ri.Field(fi)
 		fieldName := ct.Name
+		if fieldName == "" || !unicode.IsUpper([]rune(fieldName)[0]) {
+			log.Log.Debugf("Field skip because lowercase name %c of %s", []rune(fieldName)[0], fieldName)
+			continue
+		}
 		log.Log.Debugf("Work on fieldname %s", fieldName)
 		tag := ct.Tag.Get(TagName)
 		tagName, tagInfo := TagInfoParse(tag)
 		if tagName != "" {
 			fieldName = tagName
-		}
-		if fieldName == "" || !unicode.IsUpper([]rune(fieldName)[0]) {
-			log.Log.Debugf("Field skip because lowercase name")
-			continue
 		}
 		log.Log.Debugf("Field tag option %s", tagInfo)
 		switch tagInfo {

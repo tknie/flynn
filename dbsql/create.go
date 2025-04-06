@@ -19,6 +19,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"unicode"
 
 	"github.com/tknie/errorrepo"
 	"github.com/tknie/flynn/common"
@@ -307,6 +308,10 @@ func sqlDataTypeStructField(baAvailable bool, field reflect.StructField,
 			log.Log.Debugf("Found tag %s for %s", tagValue, field.Name)
 			tagName, tagInfo := common.TagInfoParse(tagValue)
 			fieldName := field.Name
+			if fieldName == "" || !unicode.IsUpper([]rune(fieldName)[0]) {
+				log.Log.Debugf("Field skip because lowercase name %c of %s", []rune(fieldName)[0], fieldName)
+				return "", nil
+			}
 			if tagName != "" {
 				fieldName = tagName
 			}
@@ -340,6 +345,11 @@ func sqlDataTypeStructField(baAvailable bool, field reflect.StructField,
 
 func sqlDataTypeStructFieldDataType(baAvailable bool, sf reflect.StructField) (string, error) {
 	t := sf.Type
+	fieldName := t.Name()
+	if fieldName == "" || !unicode.IsUpper([]rune(fieldName)[0]) {
+		log.Log.Debugf("Field skip because lowercase name %c of %s", []rune(fieldName)[0], fieldName)
+		return "", nil
+	}
 	sfi := evaluateName(sf, t)
 	if sfi.skip {
 		return "", nil
