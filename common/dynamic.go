@@ -21,6 +21,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/tknie/errorrepo"
 	"github.com/tknie/log"
@@ -68,7 +69,7 @@ func CreateInterface(i interface{}, createFields []string) *typeInterface {
 	if ri.Kind() == reflect.Ptr {
 		ri = ri.Elem()
 	}
-	log.Log.Debugf("Create dynamic interface with fields %#v", fields)
+	log.Log.Debugf("Create dynamic interface for type %T with fields %#v", i, fields)
 	set := make(map[string]void) // New empty set
 	dynamic := &typeInterface{DataType: i, RowNames: make(map[string][]string),
 		RowFields: make([]string, 0), FieldSet: set}
@@ -436,6 +437,10 @@ func (dynamic *typeInterface) generateFieldNames(ri reflect.Type) {
 		if tagName != "" {
 			fieldName = tagName
 		}
+		if fieldName == "" || !unicode.IsUpper([]rune(fieldName)[0]) {
+			log.Log.Debugf("Field skip because lowercase name")
+			continue
+		}
 		log.Log.Debugf("Field tag option %s", tagInfo)
 		switch tagInfo {
 		case KeyTag:
@@ -444,6 +449,7 @@ func (dynamic *typeInterface) generateFieldNames(ri reflect.Type) {
 			dynamic.RowNames["#index"] = []string{fieldName}
 			continue
 		case IgnoreTag:
+			log.Log.Debugf("Field skip because ignore tag")
 			continue
 		case SubTag:
 			log.Log.Debugf("Found sub")
