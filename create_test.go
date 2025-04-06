@@ -247,6 +247,7 @@ func TestCreateStruct(t *testing.T) {
 	targets := strings.Split(targetsEnv, ",")
 	for _, target := range getTestTargets(t) {
 		if targetsEnv != "" && !slices.Contains(targets, target.layer) {
+			log.Log.Debugf("Skip target...")
 			continue
 		}
 		log.Log.Debugf("Work on target %#v", target)

@@ -345,11 +345,6 @@ func sqlDataTypeStructField(baAvailable bool, field reflect.StructField,
 
 func sqlDataTypeStructFieldDataType(baAvailable bool, sf reflect.StructField) (string, error) {
 	t := sf.Type
-	fieldName := t.Name()
-	if fieldName == "" || !unicode.IsUpper([]rune(fieldName)[0]) {
-		log.Log.Debugf("Field skip because lowercase name %c of %s", []rune(fieldName)[0], fieldName)
-		return "", nil
-	}
 	sfi := evaluateName(sf, t)
 	if sfi.skip {
 		return "", nil
