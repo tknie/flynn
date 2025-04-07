@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/tknie/flynn/common"
+	"github.com/tknie/flynn/dbsql"
 	"github.com/tknie/log"
 
 	"github.com/stretchr/testify/assert"
@@ -726,4 +727,18 @@ func testAdapt(t *testing.T, target *target, columns []*common.Column) {
 		return
 	}
 	unregisterDatabase(t, id)
+}
+
+func TestCreateMap(t *testing.T) {
+	columns := make(map[string]interface{})
+	columns["char"] = "abc"
+	columns["num"] = 123
+	columns["fffl"] = float64(0.1)
+
+	cr := dbsql.CreateTableByMaps(true, columns)
+	// "fffl  DECIMAL(10,5), char  VARCHAR(255), num  INTEGER",
+	assert.Contains(t, cr, "fffl DECIMAL(10,5)")
+	assert.Contains(t, cr, "har VARCHAR(255)")
+	assert.Contains(t, cr, "num INTEGER")
+
 }

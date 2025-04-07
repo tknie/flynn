@@ -147,6 +147,26 @@ func CreateTableByColumns(baAvailable bool, columns []*common.Column) string {
 	return buffer.String()
 }
 
+func CreateTableByMaps(baAvailable bool, columns map[string]interface{}) string {
+	var buffer bytes.Buffer
+
+	i := 0
+	for n, v := range columns {
+		if i > 0 {
+			buffer.WriteString(", ")
+		}
+		t := reflect.TypeOf(v)
+		f := reflect.StructField{Type: t, Name: n}
+		x, err := sqlDataTypeStructFieldDataType(baAvailable, f)
+		if err != nil {
+			return "-------- error field " + n
+		}
+		buffer.WriteString(x)
+		i++
+	}
+	return buffer.String()
+}
+
 func CreateTableByStruct(baAvailable bool, columns any) (string, error) {
 	log.Log.Debugf("Create table by structs")
 	return SqlDataType(baAvailable, columns, nil)

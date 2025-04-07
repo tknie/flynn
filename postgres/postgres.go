@@ -651,6 +651,8 @@ func (pg *PostGres) CreateTable(name string, col any) error {
 	switch columns := col.(type) {
 	case []*common.Column:
 		createCmd += dbsql.CreateTableByColumns(pg.ByteArrayAvailable(), columns)
+	case map[string]interface{}:
+		createCmd += dbsql.CreateTableByMaps(pg.ByteArrayAvailable(), columns)
 	default:
 		c, err := dbsql.CreateTableByStruct(pg.ByteArrayAvailable(), col)
 		if err != nil {
