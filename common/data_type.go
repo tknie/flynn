@@ -29,6 +29,7 @@ const (
 	Text
 	Unicode
 	Integer
+	BigInteger
 	Decimal
 	Number
 	Bit
@@ -39,8 +40,8 @@ const (
 	Character
 )
 
-var sqlTypes = []string{"", "VARCHAR(%d)", "TEXT", "UNICODE(%d)", "INTEGER",
-	"DECIMAL(%d,%d)", "NUMERIC(%d)", "BIT(%d)", "BINARY(%d)",
+var sqlTypes = []string{"", "VARCHAR(%d)", "TEXT", "UNICODE(%d)", "INTEGER", "bigint",
+	"DECIMAL(%d,%d)", "NUMERIC(%d,%d)", "BIT(%d)", "BINARY(%d)",
 	"TIMESTAMP(%s)", "DATE", "BLOB(%d)", "CHAR(%d)"}
 
 func (dt DataType) SqlType(arg ...any) string {
