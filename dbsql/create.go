@@ -349,6 +349,9 @@ func sqlDataTypeStructField(baAvailable bool, field reflect.StructField,
 
 func sqlDataTypeStructFieldDataType(baAvailable bool, sf reflect.StructField) (string, error) {
 	t := sf.Type
+	if t.Kind() == reflect.Pointer {
+		t = t.Elem()
+	}
 	sfi := evaluateName(sf, t)
 	if sfi.skip {
 		return "", nil
