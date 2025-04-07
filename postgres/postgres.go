@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"math"
 	"runtime/debug"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -732,8 +733,13 @@ func (pg *PostGres) DeleteTable(name string) error {
 
 // Insert insert record into table
 func (pg *PostGres) Insert(name string, insert *common.Entries) (returning [][]any, err error) {
+	if insert == nil || len(insert.Values) == 0 {
+		return nil, errorrepo.NewError("DB000029")
+	}
+
 	var ctx context.Context
 	var tx pgx.Tx
+
 	transaction := pg.IsTransaction()
 	log.Log.Debugf("%s Transaction (begin insert): %v", pg.ID().String(), transaction)
 	if !transaction {
@@ -767,23 +773,24 @@ func (pg *PostGres) Insert(name string, insert *common.Entries) (returning [][]a
 	indexNeed := pg.IndexNeeded()
 	var insertValues [][]any
 	var insertFields []string
-	if insert.DataStruct != nil {
-		insertValues = make([][]any, 0)
-		dynamic := common.CreateInterface(insert.DataStruct, insert.Fields)
-		insertFields = dynamic.RowFields
-		for _, vi := range insert.Values {
-			v, err := dynamic.CreateValues(vi[0])
-			if err != nil {
-				return nil, err
-			}
-			log.Log.Debugf("Row   fields: %#v", insertFields)
-			log.Log.Debugf("Value fields: %#v", insertValues)
-			insertValues = append(insertValues, v)
+	_, isMap := insert.Values[0][0].(map[string]interface{})
+	switch {
+	case insert.DataStruct != nil:
+		insertFields, insertValues, err = createDynamic(insert)
+		if err != nil {
+			return nil, err
 		}
-	} else {
+
+	case isMap:
+		insertFields, insertValues, err = createMaps(insert)
+		if err != nil {
+			return nil, err
+		}
+	default:
 		insertFields = insert.Fields
 		insertValues = insert.Values
 	}
+
 	log.Log.Debugf("Final values: %#v", insertValues)
 	for i, field := range insertFields {
 		if i > 0 {
@@ -862,6 +869,48 @@ func (pg *PostGres) Insert(name string, insert *common.Entries) (returning [][]a
 		pg.Close()
 	}
 	return returning, nil
+}
+
+func createDynamic(insert *common.Entries) ([]string, [][]any, error) {
+	insertValues := make([][]any, 0)
+	dynamic := common.CreateInterface(insert.DataStruct, insert.Fields)
+	insertFields := dynamic.RowFields
+	for _, vi := range insert.Values {
+		v, err := dynamic.CreateValues(vi[0])
+		if err != nil {
+			return nil, nil, err
+		}
+		log.Log.Debugf("Row   fields: %#v", insertFields)
+		log.Log.Debugf("Value fields: %#v", insertValues)
+		insertValues = append(insertValues, v)
+	}
+	return insertFields, insertValues, nil
+}
+
+func createMaps(insert *common.Entries) ([]string, [][]any, error) {
+	insertFields := insert.Fields
+	insertValues := make([][]any, 0)
+	if slices.Contains(insert.Fields, "*") {
+		insertFields = make([]string, 0)
+		for n, _ := range insert.Values[0][0].(map[string]interface{}) {
+			insertFields = append(insertFields, n)
+		}
+	}
+	for _, vals := range insert.Values[0] {
+		m := vals.(map[string]interface{})
+		rv := make([]any, 0)
+		for _, f := range insertFields {
+			if slices.Contains(insert.Fields, f) {
+				if v, ok := m[f]; ok {
+					rv = append(rv, v)
+				} else {
+					rv = append(rv, nil)
+				}
+			}
+		}
+		insertValues = append(insertValues, rv)
+	}
+	return insertFields, insertValues, nil
 }
 
 func scanRow(row pgx.Row, cols int) ([]any, error) {

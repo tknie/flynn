@@ -244,3 +244,48 @@ func TestInsertStruct(t *testing.T) {
 	}
 	finalCheck(t, 1)
 }
+
+func TestInsertMap(t *testing.T) {
+	InitLog(t)
+
+	url, _ := postgresTarget(t)
+	target := &target{"postgres", url}
+	x, err := Handle(target.layer, target.url)
+	if !assert.NoError(t, err) {
+		return
+	}
+	defer x.FreeHandler()
+	nameValue := time.Now().Format("20060102150405")
+	m1 := make(map[string]interface{})
+	m2 := make(map[string]interface{})
+	m1["ID"] = "i-" + nameValue + "-1"
+	m2["ID"] = "i-" + nameValue + "-2"
+	m1["Name"] = "a"
+	m2["Name"] = "x"
+	list := [][]any{{m1, m2}}
+	input := &common.Entries{Fields: []string{"ID", "Name", "account"},
+		Update: []string{"ID", "Name"},
+		Values: list}
+	_, err = x.Insert(testStructTable, input)
+	if !assert.NoError(t, err) {
+		return
+	}
+	nameValue = time.Now().Format("20060102150405")
+	m1 = make(map[string]interface{})
+	m2 = make(map[string]interface{})
+	m1["ID"] = "o-" + nameValue + "-1"
+	m2["ID"] = "o-" + nameValue + "-2"
+	m1["Name"] = "adkjfsjf"
+	m2["Name"] = "x30ie03i"
+	m1["account"] = 123
+	m2["account"] = 33
+	list = [][]any{{m1, m2}}
+	input = &common.Entries{Fields: []string{"ID", "Name", "account"},
+		Update: []string{"ID", "Name"},
+		Values: list}
+	_, err = x.Insert(testStructTable, input)
+	if !assert.NoError(t, err) {
+		return
+	}
+	finalCheck(t, 1)
+}

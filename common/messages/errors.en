@@ -32,5 +32,6 @@ DB000031=nil internal error update
 DB000032=internal error sub element not created
 DB000033=internal error YAML,XML,JSON element not valid
 DB000034=search SQL command is empty
+DB000035=insert values not provided
 DB050001=Internal error: {0}
 DB065535=not implemented
