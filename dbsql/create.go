@@ -260,6 +260,10 @@ func SqlDataType(baAvailable bool, columns any, ignoreList []string) (string, er
 		first := false
 		for i := 0; i < x.NumField(); i++ {
 			f := x.Field(i)
+			fieldName := f.Name
+			if fieldName == "" || unicode.IsLower([]rune(fieldName)[0]) {
+				continue
+			}
 			s, err := sqlDataTypeStructField(baAvailable, f, ignoreList)
 			if err != nil {
 				return "", err
@@ -308,7 +312,7 @@ func sqlDataTypeStructField(baAvailable bool, field reflect.StructField,
 			log.Log.Debugf("Found tag %s for %s", tagValue, field.Name)
 			tagName, tagInfo := common.TagInfoParse(tagValue)
 			fieldName := field.Name
-			if fieldName == "" || !unicode.IsUpper([]rune(fieldName)[0]) {
+			if fieldName == "" || unicode.IsLower([]rune(fieldName)[0]) {
 				log.Log.Debugf("Field skip because lowercase name %c of %s", []rune(fieldName)[0], fieldName)
 				return "", nil
 			}
