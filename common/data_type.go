@@ -40,7 +40,7 @@ const (
 )
 
 var sqlTypes = []string{"", "VARCHAR(%d)", "TEXT", "UNICODE(%d)", "INTEGER",
-	"DECIMAL(%d,%d)", "INTEGER", "BIT(%d)", "BINARY(%d)",
+	"DECIMAL(%d,%d)", "NUMERIC(%d)", "BIT(%d)", "BINARY(%d)",
 	"TIMESTAMP(%s)", "DATE", "BLOB(%d)", "CHAR(%d)"}
 
 func (dt DataType) SqlType(arg ...any) string {

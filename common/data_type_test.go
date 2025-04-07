@@ -68,7 +68,7 @@ func TestDataType(t *testing.T) {
 	InitLog(t)
 	log.Log.Debugf("TEST: %s", t.Name())
 
-	assert.Equal(t, "INTEGER", Number.SqlType())
+	assert.Equal(t, "NUMBER(0)", Number.SqlType(0))
 	assert.Equal(t, "TEXT", Text.SqlType())
 	assert.Equal(t, "VARCHAR(19)", Alpha.SqlType(19))
 	assert.Equal(t, "INTEGER", Integer.SqlType())

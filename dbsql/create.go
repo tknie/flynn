@@ -381,9 +381,10 @@ func sqlDataTypeStructFieldDataType(baAvailable bool, sf reflect.StructField) (s
 	case reflect.Int, reflect.Int8, reflect.Int16,
 		reflect.Int32, reflect.Int64:
 		return sfi.name + " " + common.Integer.SqlType() + sfi.additional, nil
-	case reflect.Uint, reflect.Uint8, reflect.Uint16,
-		reflect.Uint32, reflect.Uint64:
+	case reflect.Uint, reflect.Uint8, reflect.Uint16:
 		return sfi.name + " " + common.Integer.SqlType() + sfi.additional, nil
+	case reflect.Uint32, reflect.Uint64:
+		return sfi.name + " " + common.Number.SqlType(0) + sfi.additional, nil
 	case reflect.Float32, reflect.Float64:
 		if sfi.length == 0 {
 			sfi.length = 10
