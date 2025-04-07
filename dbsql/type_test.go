@@ -122,19 +122,19 @@ func TestDataTypeStructBlogs(t *testing.T) {
 	}{"aaa", "fjrpsgj", 1, struct{ Xii uint64 }{2}}
 	s, err = SqlDataType(tSQL.ByteArrayAvailable(), &y, nil)
 	assert.NoError(t, err)
-	assert.Equal(t, "XSt VARCHAR(255), SBLOB BYTEA, XInt INTEGER, Xii INTEGER", s)
+	assert.Equal(t, "XSt VARCHAR(255), SBLOB BYTEA, XInt INTEGER, Xii NUMERIC(20,0)", s)
 	global := &GlobStruct{}
 	s, err = SqlDataType(tSQL.ByteArrayAvailable(), global, nil)
 	assert.NoError(t, err)
-	assert.Equal(t, "Test VARCHAR(255), ABC VARCHAR(255), Nr INTEGER, Value INTEGER, Doub DECIMAL(10,5), DoIt BOOL", s)
+	assert.Equal(t, "Test VARCHAR(255), ABC VARCHAR(255), Nr NUMERIC(20,0), Value INTEGER, Doub DECIMAL(10,5), DoIt BOOL", s)
 	global2 := &GlobStruct2{}
 	s, err = SqlDataType(tSQL.ByteArrayAvailable(), global2, nil)
 	assert.NoError(t, err)
-	assert.Equal(t, "Test VARCHAR(255), ABC VARCHAR(255), Nr INTEGER, Value INTEGER, Doub DECIMAL(10,5), DoIt BOOL", s)
+	assert.Equal(t, "Test VARCHAR(255), ABC VARCHAR(255), Nr NUMERIC(20,0), Value INTEGER, Doub DECIMAL(10,5), DoIt BOOL", s)
 	global3 := &GlobStruct3{}
 	s, err = SqlDataType(tSQL.ByteArrayAvailable(), global3, nil)
 	assert.NoError(t, err)
-	assert.Equal(t, "Test VARCHAR(255), XYZ VARCHAR(255), UUU VARCHAR(255), ID INTEGER IDENTITY(1, 1), Value INTEGER, Doub DECIMAL(10,5), DoIt BOOL", s)
+	assert.Equal(t, "Test VARCHAR(255), XYZ VARCHAR(255), UUU VARCHAR(255), ID NUMERIC(20,0) IDENTITY(1, 1), Value INTEGER, Doub DECIMAL(10,5), DoIt BOOL", s)
 	slice := &SliceStruct{}
 	s, err = SqlDataType(tSQL.ByteArrayAvailable(), slice, nil)
 	assert.Error(t, err)
@@ -157,7 +157,7 @@ func TestDataTypeStructBlogs(t *testing.T) {
 	}{"aaa", "djfgidjfgi", []byte{1, 9}, nil, nil, nil, nil}
 	s, err = SqlDataType(tSQL.ByteArrayAvailable(), &z, nil)
 	assert.NoError(t, err)
-	assert.Equal(t, "KKK VARCHAR(1024) , ABC VARCHAR(200) , ZBlob BYTEA, ABC VARCHAR(255), Nr INTEGER, Value INTEGER, Doub DECIMAL(10,5), DoIt BOOL, YYY VARCHAR(255), XXX VARCHAR(255), JJJ VARCHAR(255)", s)
+	assert.Equal(t, "KKK VARCHAR(1024) , ABC VARCHAR(200) , ZBlob BYTEA, ABC VARCHAR(255), Nr NUMERIC(20,0), Value INTEGER, Doub DECIMAL(10,5), DoIt BOOL, YYY VARCHAR(255), XXX VARCHAR(255), JJJ VARCHAR(255)", s)
 
 	ti := common.CreateInterface(&z, []string{"*"})
 	assert.Equal(t, []string{"KKK", "ABC", "ZBlob", "ABC", "Nr", "Value", "Doub", "DoIt", "YYY", "XXX", "JJJ"}, ti.RowFields)
