@@ -703,7 +703,7 @@ func (pg *PostGres) AdaptTable(name string, col any) error {
 			buffer.WriteString(` ADD COLUMN `)
 			dbsql.CreateTableByColumn(&buffer, pg.ByteArrayAvailable(), c)
 		}
-		fmt.Println(buffer.String())
+		log.Log.Debugf(buffer.String())
 		_, err = db.Query(buffer.String())
 		if err != nil {
 			log.Log.Errorf("Error returned by SQL: %v", err)
@@ -720,15 +720,21 @@ func (pg *PostGres) AdaptTable(name string, col any) error {
 	if err != nil {
 		return err
 	}
+	var buffer bytes.Buffer
+	buffer.WriteString(`ALTER TABLE ` + name)
+	i := 0
 	for _, f := range strings.Split(columStruct, ",") {
-
-		adaptCmd := `ALTER TABLE ` + name + ` ADD ` + f
-		log.Log.Debugf("Create cmd %s", adaptCmd)
-		_, err = db.Query(adaptCmd)
-		if err != nil {
-			log.Log.Errorf("Error returned by SQL: %v", err)
-			return err
+		if i > 0 {
+			buffer.WriteString(",")
 		}
+		i++
+		buffer.WriteString(` ADD COLUMN ` + f)
+	}
+
+	_, err = db.Query(buffer.String())
+	if err != nil {
+		log.Log.Errorf("Error returned by SQL: %v", err)
+		return err
 	}
 	log.Log.Debugf("Table adapted")
 	return nil
