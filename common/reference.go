@@ -67,9 +67,6 @@ func ParseUrl(url string) (*Reference, string, error) {
 	}
 	ref := &Reference{Driver: ParseTypeName(match[2]),
 		Host: match[8], Port: p, User: match[4], Database: match[11]}
-	/*for i, match := range re.FindStringSubmatch(url) {
-		fmt.Println(match, "found at index", i)
-	}*/
 	if ref.User == userPlaceholder {
 		ref.User = ""
 	}

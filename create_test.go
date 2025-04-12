@@ -653,6 +653,7 @@ func testAdapt(t *testing.T, target *target, columns []*common.Column) {
 		unregisterDatabase(t, id)
 		return
 	}
+	fmt.Println(columns)
 	err = id.CreateTable(CreationAdaptTable, columns)
 	if !assert.NoError(t, err, "create fail using "+target.layer) {
 		unregisterDatabase(t, id)
@@ -723,6 +724,22 @@ func testAdapt(t *testing.T, target *target, columns []*common.Column) {
 			assert.True(t, record.Count == 0 || record.Count == 20)
 			return nil
 		})
+	if !assert.NoError(t, err, "insert fail using "+target.layer) {
+		return
+	}
+	addColumns := make([]*common.Column, 0)
+	addColumns = append(addColumns, &common.Column{Name: "adaptId", DataType: common.Alpha, Length: 8})
+	addColumns = append(addColumns, &common.Column{Name: "adaptName", DataType: common.Alpha, Length: 10})
+	addColumns = append(addColumns, &common.Column{Name: "adaptFirstName", DataType: common.Alpha, Length: 20})
+	err = id.AdaptTable(CreationAdaptTable, addColumns)
+	if !assert.NoError(t, err, "adapt columns failed") {
+		return
+	}
+
+	list = make([][]any, 0)
+	list = append(list, []any{"TEST" + strconv.Itoa(count), "TEST" + strconv.Itoa(count), "Letztes", "Anton", "X", "NEW", true, -1})
+	_, err = id.Insert(CreationAdaptTable, &common.Entries{Fields: []string{"id", "adaptId", "adaptName", "adaptFirstName", "LastName", "Street", "Home", "Counter"},
+		Values: list})
 	if !assert.NoError(t, err, "insert fail using "+target.layer) {
 		return
 	}

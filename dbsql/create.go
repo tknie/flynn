@@ -87,13 +87,17 @@ func AdaptTable(dbsql DBsql, name string, col any) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(columnCurrent)
+	if columns, ok := col.([]*common.Column); ok {
+		adaptCmd := `ADAPT TABLE ` + name + ` ADD `
+		adaptCmd += CreateTableByColumns(dbsql.ByteArrayAvailable(), columns)
+		fmt.Println(adaptCmd)
+		return nil
+	}
 	log.Log.Debugf("Got columns: %v", columnCurrent)
 	columStruct, err := SqlDataType(true, col, columnCurrent)
 	if err != nil {
 		return err
 	}
-	fmt.Println(columStruct)
 	for _, f := range strings.Split(columStruct, ",") {
 
 		adaptCmd := `ALTER TABLE ` + name + ` ADD ` + f
@@ -131,20 +135,24 @@ func CreateTableByColumns(baAvailable bool, columns []*common.Column) string {
 		if i > 0 {
 			buffer.WriteString(", ")
 		}
-		buffer.WriteString(c.Name + " ")
-		switch c.DataType {
-		case common.Alpha, common.Bit:
-			buffer.WriteString(c.DataType.SqlType(c.Length))
-		case common.Decimal:
-			buffer.WriteString(c.DataType.SqlType(c.Length, c.Digits))
-		case common.Bytes:
-			buffer.WriteString(c.DataType.SqlType(baAvailable,
-				c.Length))
-		default:
-			buffer.WriteString(c.DataType.SqlType())
-		}
+		CreateTableByColumn(&buffer, baAvailable, c)
 	}
 	return buffer.String()
+}
+
+func CreateTableByColumn(buffer *bytes.Buffer, baAvailable bool, c *common.Column) {
+	buffer.WriteString(c.Name + " ")
+	switch c.DataType {
+	case common.Alpha, common.Bit:
+		buffer.WriteString(c.DataType.SqlType(c.Length))
+	case common.Decimal:
+		buffer.WriteString(c.DataType.SqlType(c.Length, c.Digits))
+	case common.Bytes:
+		buffer.WriteString(c.DataType.SqlType(baAvailable,
+			c.Length))
+	default:
+		buffer.WriteString(c.DataType.SqlType())
+	}
 }
 
 func CreateTableByMaps(baAvailable bool, columns map[string]interface{}) string {

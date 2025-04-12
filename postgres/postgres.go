@@ -15,6 +15,7 @@
 package postgres
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"fmt"
@@ -689,17 +690,36 @@ func (pg *PostGres) AdaptTable(name string, col any) error {
 	}
 	defer db.Close()
 
+	if columns, ok := col.([]*common.Column); ok {
+		var buffer bytes.Buffer
+
+		buffer.WriteString(`ALTER TABLE ` + name)
+		i := 0
+		for _, c := range columns {
+			if i > 0 {
+				buffer.WriteString(",")
+			}
+			i++
+			buffer.WriteString(` ADD COLUMN `)
+			dbsql.CreateTableByColumn(&buffer, pg.ByteArrayAvailable(), c)
+		}
+		fmt.Println(buffer.String())
+		_, err = db.Query(buffer.String())
+		if err != nil {
+			log.Log.Errorf("Error returned by SQL: %v", err)
+			return err
+		}
+		return nil
+	}
 	columnCurrent, err := pg.ID().GetTableColumn(name)
 	if err != nil {
 		return err
 	}
-	fmt.Println(columnCurrent)
 	log.Log.Debugf("Got columns: %v", columnCurrent)
 	columStruct, err := dbsql.SqlDataType(false, col, columnCurrent)
 	if err != nil {
 		return err
 	}
-	fmt.Println(columStruct)
 	for _, f := range strings.Split(columStruct, ",") {
 
 		adaptCmd := `ALTER TABLE ` + name + ` ADD ` + f
