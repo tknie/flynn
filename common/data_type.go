@@ -12,6 +12,7 @@
 package common
 
 import (
+	"bytes"
 	"database/sql"
 	"database/sql/driver"
 	"fmt"
@@ -40,9 +41,9 @@ const (
 	Character
 )
 
-var sqlTypes = []string{"", "VARCHAR(%d)", "TEXT", "UNICODE(%d)", "INTEGER", "bigint",
-	"DECIMAL(%d,%d)", "NUMERIC(%d,%d)", "BIT(%d)", "BINARY(%d)",
-	"TIMESTAMP(%s)", "DATE", "BLOB(%d)", "CHAR(%d)"}
+var sqlTypes = []string{"", "VARCHAR", "TEXT", "UNICODE", "INTEGER", "bigint",
+	"DECIMAL", "NUMERIC", "BIT", "BINARY",
+	"TIMESTAMP", "DATE", "BLOB", "CHAR"}
 
 func (dt DataType) SqlType(arg ...any) string {
 	if dt == Bytes {
@@ -52,7 +53,29 @@ func (dt DataType) SqlType(arg ...any) string {
 			return fmt.Sprintf("BINARY(%d)", arg[1:]...)
 		}
 	}
-	return fmt.Sprintf(sqlTypes[dt], arg...)
+	var buffer bytes.Buffer
+	buffer.WriteString(sqlTypes[dt])
+	args := false
+	for i, a := range arg {
+		if i == 0 {
+			buffer.WriteString("(")
+		} else {
+			buffer.WriteString(",")
+		}
+		args = true
+		switch v := a.(type) {
+		case int, int32, int16:
+			buffer.WriteString(fmt.Sprintf("%d", v))
+		case string:
+			buffer.WriteString(v)
+		default:
+			buffer.WriteString(fmt.Sprintf("%v", v))
+		}
+	}
+	if args {
+		buffer.WriteString(")")
+	}
+	return buffer.String()
 }
 
 func SqlDataType(sqlType string) DataType {
