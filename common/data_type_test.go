@@ -75,4 +75,7 @@ func TestDataType(t *testing.T) {
 	assert.Equal(t, "DATE", Date.SqlType())
 	assert.Equal(t, "BINARY(10)", Bytes.SqlType(false, 10))
 	assert.Equal(t, "BYTEA", Bytes.SqlType(true, 10))
+	assert.Equal(t, "NUMERIC(1)", Number.SqlType(1))
+	assert.Equal(t, "TIMESTAMP", CurrentTimestamp.SqlType())
+	assert.Equal(t, "TIMESTAMP(8)", CurrentTimestamp.SqlType(8))
 }
