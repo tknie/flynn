@@ -143,9 +143,9 @@ func CreateTableByColumns(baAvailable bool, columns []*common.Column) string {
 func CreateTableByColumn(buffer *bytes.Buffer, baAvailable bool, c *common.Column) {
 	buffer.WriteString(c.Name + " ")
 	switch c.DataType {
-	case common.Alpha, common.Bit:
+	case common.Alpha, common.Bit, common.CurrentTimestamp:
 		buffer.WriteString(c.DataType.SqlType(c.Length))
-	case common.Decimal:
+	case common.Decimal, common.Number:
 		buffer.WriteString(c.DataType.SqlType(c.Length, c.Digits))
 	case common.Bytes:
 		buffer.WriteString(c.DataType.SqlType(baAvailable,

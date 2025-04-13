@@ -682,7 +682,7 @@ func (pg *PostGres) CreateTable(name string, col any) error {
 
 // AdaptTable adapt a new table
 func (pg *PostGres) AdaptTable(name string, col any) error {
-	log.Log.Debugf("%s: Adapt SQL table", pg.ID())
+	log.Log.Debugf("%s: Adapt SQL table of type %T", pg.ID(), col)
 	layer, url := pg.Reference()
 	db, err := sql.Open(layer, url)
 	if err != nil {
@@ -691,6 +691,7 @@ func (pg *PostGres) AdaptTable(name string, col any) error {
 	defer db.Close()
 
 	if columns, ok := col.([]*common.Column); ok {
+		log.Log.Debugf("%s: Found %d SQL columns", pg.ID(), len(columns))
 		var buffer bytes.Buffer
 
 		buffer.WriteString(`ALTER TABLE ` + name)
@@ -715,7 +716,7 @@ func (pg *PostGres) AdaptTable(name string, col any) error {
 	if err != nil {
 		return err
 	}
-	log.Log.Debugf("Got columns: %v", columnCurrent)
+	log.Log.Debugf("Got struct and new columns: %v", columnCurrent)
 	columStruct, err := dbsql.SqlDataType(false, col, columnCurrent)
 	if err != nil {
 		return err
