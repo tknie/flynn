@@ -3,7 +3,7 @@ module github.com/tknie/flynn
 go 1.23.0
 
 require (
-	github.com/jackc/pgx/v5 v5.7.4
+	github.com/jackc/pgx/v5 v5.7.5
 	github.com/tknie/log v0.1.0
 )
 
