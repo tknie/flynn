@@ -26,6 +26,7 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -543,15 +544,18 @@ func (pg *PostGres) Query(search *common.Query, f common.ResultFunction) (*commo
 	if err != nil {
 		return nil, err
 	}
-	log.Log.Debugf("Query: %s (%p)", selectCmd, db)
+	log.Log.Debugf("Postgres Query: %s (%p)", selectCmd, db)
+	startTime := time.Now()
 	rows, err := db.Query(ctx, selectCmd)
+	used := time.Since(startTime)
 	if err != nil {
-		log.Log.Debugf("Query error: %v (%p)", err, db)
+		log.Log.Infof("Postgres Query error (%v): %v (%p)", used, err, db)
 		if err.Error() == "conn busy" {
 			pg.Close()
 		}
 		return nil, err
 	}
+	log.Log.Infof("Postgres Query used %v", used)
 	defer rows.Close()
 	if search.DataStruct == nil {
 		return pg.ParseRows(search, rows, f)
