@@ -555,7 +555,7 @@ func (pg *PostGres) Query(search *common.Query, f common.ResultFunction) (*commo
 		}
 		return nil, err
 	}
-	log.Log.Infof("Postgres Query used %v", used)
+	log.Log.Debugf("Postgres Query used %v", used)
 	defer rows.Close()
 	if search.DataStruct == nil {
 		return pg.ParseRows(search, rows, f)
