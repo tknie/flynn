@@ -287,5 +287,18 @@ func TestInsertMap(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
+
+	query := &common.Query{Fields: []string{"ID", "Name", "account"},
+		Search: "ID = '" + m1["ID"].(string) + "' OR ID = '" + m2["ID"].(string) + "'"}
+	count := 0
+	_, err = x.Query(query, func(search *common.Query, result *common.Result) error {
+		fmt.Println(result.Rows...)
+		count++
+		return nil
+	})
+	if !assert.NoError(t, err) {
+		return
+	}
+	assert.Equal(t, 2, count)
 	finalCheck(t, 1)
 }
