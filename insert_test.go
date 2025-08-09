@@ -289,7 +289,8 @@ func TestInsertMap(t *testing.T) {
 	}
 
 	query := &common.Query{Fields: []string{"ID", "Name", "account"},
-		Search: "ID = '" + m1["ID"].(string) + "' OR ID = '" + m2["ID"].(string) + "'"}
+		TableName: testStructTable,
+		Search:    "ID = '" + m1["ID"].(string) + "' OR ID = '" + m2["ID"].(string) + "'"}
 	count := 0
 	_, err = x.Query(query, func(search *common.Query, result *common.Result) error {
 		fmt.Println(result.Rows...)
