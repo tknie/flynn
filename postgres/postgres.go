@@ -65,6 +65,7 @@ type pool struct {
 }
 
 var poolMap sync.Map
+var postgresPool sync.Pool = sync.Pool{New: PostgresNew}
 
 // var poolLock sync.Mutex
 
@@ -89,18 +90,30 @@ func (p *pool) DecUsage() uint64 {
 	return c
 }
 
+func PostgresNew() any {
+	return &PostGres{common.CommonDatabase{}, nil,
+		nil, "", nil, nil, nil, sync.Mutex{}}
+}
+
+func (pg *PostGres) reset() {
+	pg.CommonDatabase.RegDbID = 0
+	pg.openDB = nil
+	pg.password = ""
+	pg.lock = sync.Mutex{}
+}
+
 // NewInstance create new postgres reference instance using reference structure
 func NewInstance(id common.RegDbID, reference *common.Reference, password string) (common.Database, error) {
-
-	pg := &PostGres{common.NewCommonDatabase(id, "postgres"), nil,
-		nil, password, nil, nil, nil, sync.Mutex{}}
+	pg := postgresPool.Get().(*PostGres)
+	pg.CommonDatabase = common.NewCommonDatabase(id, "postgres")
+	pg.password = password
 	pg.ConRef = reference
 	log.Log.Debugf("PG Password is empty=%v", password == "")
 	return pg, nil
 }
 
 func (pg *PostGres) Clone() common.Database {
-	newPg := &PostGres{}
+	newPg := postgresPool.Get().(*PostGres)
 	*newPg = *pg
 	newPg.ctx = nil
 	newPg.openDB = nil
@@ -400,6 +413,8 @@ func (pg *PostGres) Close() {
 func (pg *PostGres) FreeHandler() {
 	log.Log.Debugf("%s free postgres handler", pg.ID().String())
 	pg.lock.Lock()
+	defer postgresPool.Put(pg)
+	defer pg.reset()
 	defer pg.lock.Unlock()
 	if pg.openDB != nil {
 		log.Log.Debugf("%s Free handler release entry %p(pg=%p/tx=%p)", pg.ID().String(), pg.openDB, pg, pg.tx)
