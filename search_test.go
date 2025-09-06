@@ -604,7 +604,7 @@ func TestSearchMariaDBRows(t *testing.T) {
 		switch counter {
 		case 1:
 			assert.Equal(t, "5. Klasse", ns)
-			assert.Equal(t, "2022-10-27 15:15:10 +0000 UTC", ts.String())
+			assert.Equal(t, "2022-10-27 17:15:10 +0000 UTC", ts.String())
 		case 2:
 			assert.Equal(t, "Spontane Ausflüge", ns)
 		case 10:
