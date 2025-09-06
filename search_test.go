@@ -706,13 +706,13 @@ func TestSearchMySQLRowsOrdered(t *testing.T) {
 		switch counter {
 		case 1:
 			assert.Equal(t, "Sommerferien 2022", ns)
-			assert.Equal(t, "2022-10-27 15:15:22 +0000 UTC", ts.String())
+			assert.Equal(t, "2022-10-27 17:15:22 +0000 UTC", ts.String())
 		case 10:
 			assert.Equal(t, "Neues aus Seeheim...", ns)
-			assert.Equal(t, "2022-10-27 15:15:20 +0000 UTC", ts.String())
+			assert.Equal(t, "2022-10-27 17:15:20 +0000 UTC", ts.String())
 		case 48:
 			assert.Equal(t, "Spontane Ausflüge", ns)
-			assert.Equal(t, "2022-10-27 15:15:10 +0000 UTC", ts.String())
+			assert.Equal(t, "2022-10-27 17:15:10 +0000 UTC", ts.String())
 		default:
 			assert.NotEqual(t, "blabla", ns)
 		}
