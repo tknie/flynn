@@ -826,7 +826,7 @@ func TestReadmeQuery(t *testing.T) {
 
 	employee := &Employee{}
 
-	userURL := "postgres://admin:abc@bear:5432/bitgarten"
+	userURL := "postgres://admin:abc@postgresql:5432/bitgarten"
 	userDbRef, _, err := common.NewReference(userURL)
 	if !assert.NoError(t, err) {
 		return
