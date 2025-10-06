@@ -1,8 +1,6 @@
 module github.com/tknie/flynn
 
-go 1.24.0
-
-toolchain go1.24.5
+go 1.23.0
 
 require (
 	github.com/jackc/pgx/v5 v5.7.6
