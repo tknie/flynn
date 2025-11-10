@@ -110,6 +110,10 @@ func TestReferenceURL(t *testing.T) {
 		User: "orauser", Options: []string{"(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST= abc)(PORT=12345)))(CONNECT_DATA=(SERVICE_NAME=SchemaXXX)))"}}, ref)
 	assert.Equal(t, "osspaass", p)
 
+	ref, p, err = NewReference("postgres://admin:@photodb:5432/bitgarten?sslmode=require&sslrootcert=files/root.crt")
+	assert.NoError(t, err)
+	assert.Empty(t, p)
+	assert.Equal(t, ref.Driver, PostgresType)
 }
 
 func TestReferenceOracleParse(t *testing.T) {
