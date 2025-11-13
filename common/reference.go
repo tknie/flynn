@@ -21,7 +21,7 @@ import (
 	"github.com/tknie/log"
 )
 
-const referenceRegexp = `(?m)((\w*)://)?(([\w<>]+)(:(\S+))?@)?(tcp\()?(\w[\w.]*):(\d+)\)?(/(\w+))?\??(.*)`
+const referenceRegexp = `(?m)((\w*)://)?(([\w<>]+)(:(\S*))?@)?(tcp\()?(\w[\w.]*):(\d+)\)?(/(\w+))?\??(.*)`
 
 const (
 	userPlaceholder   = "<user>"
