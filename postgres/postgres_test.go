@@ -106,7 +106,7 @@ func TestPostgresInit(t *testing.T) {
 	assert.Equal(t, []string{"albumpictures", "albums",
 		"employees", "picturelocations",
 		"pictures", "testcreateadapttable", "teststructtabledata",
-		"teststructuser", "testtabledata"}, m)
+		"teststructuser", "testtable", "testtabledata"}, m)
 }
 
 func TestPostgresTableColumns(t *testing.T) {
