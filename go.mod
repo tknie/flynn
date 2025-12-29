@@ -3,7 +3,7 @@ module github.com/tknie/flynn
 go 1.24.0
 
 require (
-	github.com/jackc/pgx/v5 v5.7.6
+	github.com/jackc/pgx/v5 v5.8.0
 	github.com/tknie/log v0.1.0
 )
 
@@ -16,6 +16,7 @@ require (
 	github.com/godror/knownpb v0.3.0 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/kr/text v0.2.0 // indirect
+	golang.org/x/net v0.47.0 // indirect
 	golang.org/x/sync v0.18.0 // indirect
 	google.golang.org/protobuf v1.36.10 // indirect
 )
@@ -31,7 +32,6 @@ require (
 	github.com/stretchr/testify v1.11.1
 	github.com/tknie/adabas-go-api v1.7.12
 	github.com/tknie/errorrepo v0.1.0
-	golang.org/x/crypto v0.45.0 // indirect
 	golang.org/x/exp v0.0.0-20251023183803-a4bb9ffd2546
 	golang.org/x/sys v0.38.0 // indirect
 	golang.org/x/text v0.31.0 // indirect
