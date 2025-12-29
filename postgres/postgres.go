@@ -932,6 +932,7 @@ func createDynamic(insert *common.Entries) ([]string, [][]any, error) {
 		log.Log.Debugf("Value fields: %#v", insertValues)
 		insertValues = append(insertValues, v)
 	}
+	log.Log.Debugf("Final number records %d", len(insertValues))
 	return insertFields, insertValues, nil
 }
 

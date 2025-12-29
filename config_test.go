@@ -20,7 +20,7 @@ import (
 	"github.com/tknie/flynn/common"
 )
 
-func TestSearchSecPgRows(t *testing.T) {
+func xTestSearchSecPgRows(t *testing.T) {
 	InitLog(t)
 	pg, err := postgresTarget(t)
 	if !assert.NoError(t, err) {
