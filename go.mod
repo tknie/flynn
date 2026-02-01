@@ -32,8 +32,8 @@ require (
 	github.com/stretchr/testify v1.11.1
 	github.com/tknie/adabas-go-api v1.7.12
 	github.com/tknie/errorrepo v0.1.0
-	golang.org/x/exp v0.0.0-20251219203646-944ab1f22d93
+	golang.org/x/exp v0.0.0-20260112195511-716be5621a96
 	golang.org/x/sys v0.38.0 // indirect
-	golang.org/x/text v0.32.0 // indirect
+	golang.org/x/text v0.33.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1
 )
