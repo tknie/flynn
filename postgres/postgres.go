@@ -546,7 +546,8 @@ func (pg *PostGres) GetTableColumn(tableName string) ([]string, error) {
 // Query query database records with search or SELECT
 func (pg *PostGres) Query(search *common.Query, f common.ResultFunction) (*common.Result, error) {
 	search.Driver = common.PostgresType
-	log.Log.Debugf("%s Query postgres database", pg.ID().String())
+	log.Log.Debugf("%s Query of postgres database", pg.ID().String())
+	defer log.Log.Debugf("%s Query ended for postgres database", pg.ID().String())
 	dbOpen, err := pg.Open()
 	if err != nil {
 		return nil, err
@@ -781,9 +782,11 @@ func (pg *PostGres) DeleteTable(name string) error {
 
 // Insert insert record into table
 func (pg *PostGres) Insert(name string, insert *common.Entries) (returning [][]any, err error) {
+	log.Log.Debugf("%s: Insert in posgres database", pg.ID().String())
 	if insert == nil || len(insert.Values) == 0 {
 		return nil, errorrepo.NewError("DB000029")
 	}
+	defer log.Log.Debugf("%s: Insert ended for posgres database", pg.ID().String())
 
 	var ctx context.Context
 	var tx pgx.Tx
@@ -1007,6 +1010,8 @@ func scanStruct(row pgx.Row, insert *common.Entries) ([]any, error) {
 
 // Update update record in table
 func (pg *PostGres) Update(name string, updateInfo *common.Entries) (returning [][]any, rowsAffected int64, err error) {
+	log.Log.Debugf("%s: Update in posgres database", pg.ID().String())
+	defer log.Log.Debugf("%s: Update ended for posgres database", pg.ID().String())
 	transaction := pg.IsTransaction()
 	var ctx context.Context
 	var tx pgx.Tx
@@ -1167,7 +1172,7 @@ func (pg *PostGres) BatchSelect(batch string) ([][]interface{}, error) {
 
 // BatchSelectFct batch SQL query in table with fct called
 func (pg *PostGres) BatchSelectFct(search *common.Query, fct common.ResultFunction) error {
-	log.Log.Debugf("Query postgres database")
+	log.Log.Debugf("%s: Query posgres database", pg.ID().String())
 	dbOpen, err := pg.Open()
 	if err != nil {
 		return err
@@ -1180,12 +1185,13 @@ func (pg *PostGres) BatchSelectFct(search *common.Query, fct common.ResultFuncti
 	if selectCmd == "" {
 		return errorrepo.NewError("DB000034")
 	}
-	log.Log.Debugf("Query: %s Parameters: %#v", selectCmd, search.Parameters)
+	log.Log.Debugf("%s: Query: %s Parameters: %#v", pg.ID().String(), selectCmd, search.Parameters)
 	rows, err := db.Query(ctx, selectCmd, search.Parameters...)
 	if err != nil {
-		log.Log.Debugf("Query error: %v", err)
+		log.Log.Debugf("%s: Query error: %v", pg.ID().String(), err)
 		return err
 	}
+	log.Log.Debugf("%s: Query executed", pg.ID().String())
 	defer rows.Close()
 	if search.DataStruct == nil {
 		_, err = pg.ParseRows(search, rows, fct)
@@ -1193,6 +1199,8 @@ func (pg *PostGres) BatchSelectFct(search *common.Query, fct common.ResultFuncti
 		search.TypeInfo = common.CreateInterface(search.DataStruct, search.Fields)
 		_, err = pg.ParseStruct(search, rows, fct)
 	}
+	log.Log.Debugf("%s: Query parsed", pg.ID().String())
+
 	return err
 }
 
