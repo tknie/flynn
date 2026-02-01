@@ -157,6 +157,7 @@ func getTestTargets(t *testing.T) (targets []*target) {
 
 func TestCreateStringArray(t *testing.T) {
 	InitLog(t)
+	finalCheck(t, 0)
 
 	columns := make([]*common.Column, 0)
 	columns = append(columns, &common.Column{Name: "Id", DataType: common.Alpha, Length: 8})
@@ -243,6 +244,7 @@ func deleteTable(t *testing.T, id common.RegDbID, name, layer string) {
 
 func TestCreateStruct(t *testing.T) {
 	InitLog(t)
+	finalCheck(t, 0)
 	log.Log.Debugf("TEST: %s", t.Name())
 	targetsEnv := os.Getenv("TEST_FILTER_TARGETS")
 	targets := strings.Split(targetsEnv, ",")
