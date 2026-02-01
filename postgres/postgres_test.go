@@ -22,6 +22,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/tknie/flynn/common"
@@ -399,4 +400,23 @@ func TestPostgresReference(t *testing.T) {
 	assert.Equal(t, pg.ConRef, ref)
 	assert.Equal(t, "postgres://admin:axx@localhost:5432/xxx", pg.generateURL())
 
+}
+
+func TestPostgresBTemp(t *testing.T) {
+	InitLog(t)
+
+	url := "postgres://admin:test123@10.10.50.201:5432/photodb"
+	pg, err := New(1, url)
+	assert.NoError(t, err)
+	if !assert.NotNil(t, pg) {
+		return
+	}
+
+	err = pg.BatchSelectFct(&common.Query{Search: "select * from vsearchpicdoublikates"},
+		func(q *common.Query, result *common.Result) error {
+			fmt.Printf("Result %#v %v\n", result.Rows[0], result.Rows[1].(pgtype.Numeric).Int)
+			return nil
+		})
+
+	assert.NoError(t, err)
 }

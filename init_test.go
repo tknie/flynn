@@ -20,7 +20,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/tknie/flynn/common"
-	"github.com/tknie/flynn/postgres"
 )
 
 const postPortNotSet = "Postgres Port not set"
@@ -146,7 +145,7 @@ func TestInitDatabases(t *testing.T) {
 	x, err := Handle("postgres", pg)
 	assert.NoError(t, err)
 	assert.True(t, x > 0)
-	assert.Len(t, common.Databases, 1)
+	assert.Len(t, common.NrRegistered(), 1)
 	err = x.FreeHandler()
 	if !assert.NoError(t, err) {
 		return
@@ -162,26 +161,23 @@ func TestInitDatabases(t *testing.T) {
 	x2, err := Handle("postgres", pg2)
 	assert.NoError(t, err)
 	assert.True(t, x2 > 0)
-	assert.Len(t, common.Databases, 2)
+	assert.Len(t, common.NrRegistered(), 2)
 	err = x.FreeHandler()
 	assert.NoError(t, err)
-	assert.Len(t, common.Databases, 1)
+	assert.Len(t, common.NrRegistered(), 1)
 	err = x2.FreeHandler()
 	assert.NoError(t, err)
-	assert.Len(t, common.Databases, 0)
+	assert.Len(t, common.NrRegistered(), 0)
 
 	x2, err = Handle(pg2)
 	assert.NoError(t, err)
 	assert.True(t, x2 > 0)
-	if assert.Len(t, common.Databases, 1) {
-		db := common.Databases[0].(*postgres.PostGres)
-
-		assert.Equal(t, "postgres", db.CommonDatabase.Driver)
-
+	if !assert.Len(t, common.NrRegistered(), 1) {
+		return
 	}
 	err = x2.FreeHandler()
 	assert.NoError(t, err)
-	assert.Len(t, common.Databases, 0)
+	assert.Len(t, common.NrRegistered(), 0)
 
 	mst, err := mysqlTarget(t)
 	if !assert.NoError(t, err) {
@@ -190,10 +186,10 @@ func TestInitDatabases(t *testing.T) {
 	x2, err = Handle(mst)
 	assert.NoError(t, err)
 	assert.True(t, x2 > 0)
-	assert.Len(t, common.Databases, 1)
+	assert.Len(t, common.NrRegistered(), 1)
 	err = x2.FreeHandler()
 	assert.NoError(t, err)
-	assert.Len(t, common.Databases, 0)
+	assert.Len(t, common.NrRegistered(), 0)
 
 	adat, err := adabasTarget(t)
 	if !assert.NoError(t, err) {
@@ -202,10 +198,10 @@ func TestInitDatabases(t *testing.T) {
 	x2, err = Handle(adat)
 	assert.NoError(t, err)
 	assert.True(t, x2 > 0)
-	assert.Len(t, common.Databases, 1)
+	assert.Len(t, common.NrRegistered(), 1)
 	err = x2.FreeHandler()
 	assert.NoError(t, err)
-	assert.Len(t, common.Databases, 0)
+	assert.Len(t, common.NrRegistered(), 0)
 
 }
 
@@ -216,7 +212,7 @@ func TestInitWrongDatabases(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
-	assert.Len(t, common.Databases, 0)
+	assert.Len(t, common.NrRegistered(), 0)
 	pg := fmt.Sprintf("postgres://%s:%s@%s:%d/%s", "admin", "Test123", "abs", port, "bitgarten")
 	x, err := Handle("postgres", pg)
 	defer x.FreeHandler()
@@ -224,5 +220,5 @@ func TestInitWrongDatabases(t *testing.T) {
 	assert.NotEqual(t, common.RegDbID(0), x)
 	err = x.Ping()
 	assert.Error(t, err)
-	assert.Len(t, common.Databases, 1)
+	assert.Len(t, common.NrRegistered(), 1)
 }

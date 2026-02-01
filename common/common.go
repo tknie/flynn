@@ -409,7 +409,8 @@ func RegisterDbClient(db Database) {
 	defer handlerLock.Unlock()
 	defer log.Log.Debugf("Unlock common")
 
-	Databases = append(Databases, db)
+	databases.Store(db.ID(), db)
+	log.Log.Debugf("%s RegisterDbClient db before state of (%s): %v", db.ID(), db.ID(), DBHelper())
 }
 
 // FreeHandler unregister registry id for the driver
@@ -418,25 +419,17 @@ func (id RegDbID) FreeHandler() error {
 	handlerLock.Lock()
 	defer handlerLock.Unlock()
 	defer log.Log.Debugf("Unlock common (unregister)")
-	log.Log.Debugf("%s FreeHandler db before state of (%d,%s): %v", id, len(Databases), id, DBHelper())
-	for i, d := range Databases {
-		if d.ID() == id {
-			log.Log.Debugf("%s FreeHandler db", d.ID())
-			d.Close()
-			d.FreeHandler()
-			newDatabases := make([]Database, 0)
-			if i > 0 {
-				newDatabases = append(newDatabases, Databases[0:i]...)
-			}
-			if len(Databases)-1 > i {
-				newDatabases = append(newDatabases, Databases[i+1:]...)
-			}
-			Databases = newDatabases
-			log.Log.Debugf("%s FreeHandler db=%p of (len=%d): %v", id, d, len(Databases), DBHelper())
-			return nil
-		}
+	log.Log.Debugf("%s FreeHandler db before state of (%s): %v", id, id, DBHelper())
+
+	if v, ok := databases.Load(id); ok {
+		d := v.(Database)
+		log.Log.Debugf("%s FreeHandler db", d.ID())
+		d.Close()
+		d.FreeHandler()
+		log.Log.Debugf("%s FreeHandler db=%p of: %v", id, d, DBHelper())
+		return nil
 	}
-	log.Log.Debugf("%s FreeHandler db error of (len=%d): %v", id, len(Databases), DBHelper())
+	log.Log.Debugf("%s FreeHandler db error of : %v", id, DBHelper())
 	return errorrepo.NewError("DB000001")
 }
 
@@ -454,9 +447,11 @@ func DBHelper() string {
 	if os.Getenv("FLYNN_TRACE_PASSWORD") == "TRUE" {
 
 		dbs := make([]RegDbID, 0)
-		for _, d := range Databases {
+		databases.Range(func(key, value any) bool {
+			d := value.(Database)
 			dbs = append(dbs, d.ID())
-		}
+			return true
+		})
 		return fmt.Sprintf("%v", dbs)
 	}
 	return "-"
@@ -470,4 +465,31 @@ func (result *Result) GetRowValueByName(name string) any {
 		}
 	}
 	return nil
+}
+
+// Maps database tables,views and/or maps usable for queries
+func Maps() []string {
+	databaseMaps := make([]string, 0)
+	databases.Range(func(key, value any) bool {
+		db := value.(Database)
+		database := db.Clone()
+		log.Log.Debugf("Map found " + database.URL())
+		subMaps, err := database.Maps()
+		if err != nil {
+			log.Log.Errorf("%s Error reading sub maps: %v", database.ID().String(), err)
+			return true
+		}
+		databaseMaps = append(databaseMaps, subMaps...)
+		return true
+	})
+	return databaseMaps
+}
+
+func NrRegistered() int {
+	count := 0
+	databases.Range(func(key, value any) bool {
+		count++
+		return true
+	})
+	return count
 }

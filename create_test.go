@@ -605,14 +605,11 @@ func validateTestResult(t *testing.T, layer, url string) {
 }
 
 func finalCheck(t *testing.T, expected int) {
-	if len(common.Databases) != expected {
+	dbLen := common.NrRegistered()
+	if dbLen != expected {
 		fmt.Println("More databases active as expected")
-		for _, d := range common.Databases {
-			fmt.Println(d.ID().URL())
-
-		}
 	}
-	assert.True(t, len(common.Databases) <= expected)
+	assert.True(t, dbLen <= expected)
 }
 
 func TestCreateAndAdapt(t *testing.T) {
