@@ -425,6 +425,7 @@ func (id RegDbID) FreeHandler() error {
 		d := v.(Database)
 		log.Log.Debugf("%s FreeHandler db", d.ID())
 		d.Close()
+		databases.Delete(id)
 		d.FreeHandler()
 		log.Log.Debugf("%s FreeHandler db=%p of: %v", id, d, DBHelper())
 		return nil
@@ -492,4 +493,14 @@ func NrRegistered() int {
 		return true
 	})
 	return count
+}
+
+func IDs() []string {
+	databaseMaps := make([]string, 0)
+	databases.Range(func(key, value any) bool {
+		d := value.(Database)
+		databaseMaps = append(databaseMaps, fmt.Sprintf("%d-%s", d.ID(), d.URL()))
+		return true
+	})
+	return databaseMaps
 }

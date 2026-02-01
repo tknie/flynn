@@ -608,6 +608,7 @@ func finalCheck(t *testing.T, expected int) {
 	dbLen := common.NrRegistered()
 	if dbLen != expected {
 		fmt.Println("More databases active as expected")
+		fmt.Printf("%v\n", common.IDs())
 	}
 	assert.True(t, dbLen <= expected)
 }
