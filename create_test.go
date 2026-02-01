@@ -176,6 +176,7 @@ func TestCreateStringArray(t *testing.T) {
 			_, err := id.Delete(testCreationTable, &common.Entries{Fields: []string{"%Id"},
 				Values: [][]any{{"TEST%"}}})
 			if !assert.NoError(t, err, "DELETE") {
+				id.Close()
 				return
 			}
 		}
