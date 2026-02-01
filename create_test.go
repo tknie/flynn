@@ -177,6 +177,7 @@ func TestCreateStringArray(t *testing.T) {
 				Values: [][]any{{"TEST%"}}})
 			if !assert.NoError(t, err, "DELETE") {
 				id.Close()
+				unregisterDatabase(t, id)
 				return
 			}
 		}
