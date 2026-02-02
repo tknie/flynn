@@ -183,12 +183,10 @@ func (id RegDbID) SetCredentials(user, password string) error {
 
 // Query query database records with search or SELECT
 func (id RegDbID) Query(query *Query, f ResultFunction) (*Result, error) {
-
 	driver, err := searchDataDriver(id)
 	if err != nil {
 		return nil, err
 	}
-	log.Log.Debugf("Driver %T", driver)
 	return driver.Query(query, f)
 }
 
@@ -313,7 +311,6 @@ func (id RegDbID) Insert(name string, insert *Entries) ([][]any, error) {
 	if id != driver.ID() {
 		log.Log.Fatal("ID mismatch")
 	}
-	log.Log.Debugf("Driver %d == %d-> %p", id, driver.ID(), driver)
 	return driver.Insert(name, insert)
 }
 

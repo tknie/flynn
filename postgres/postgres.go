@@ -71,7 +71,6 @@ var postgresPool sync.Pool = sync.Pool{New: PostgresNew}
 
 func (p *pool) IncUsage() uint64 {
 	used := atomic.AddUint64(&p.useCounter, 1)
-	log.Log.Debugf("Inc usage = %d", used)
 	return used
 }
 
@@ -79,7 +78,6 @@ func (p *pool) DecUsage() uint64 {
 	p.lock.Lock()
 	defer p.lock.Unlock()
 	c := atomic.AddUint64(&p.useCounter, ^uint64(0))
-	log.Log.Debugf("Dec usage = %d", c)
 	if c == 0 {
 		log.Log.Debugf("Pool closing %p", p.pool)
 		p.pool.Close()
@@ -188,7 +186,6 @@ func (pg *PostGres) Maps() ([]string, error) {
 func (pg *PostGres) getPool() (*pool, error) {
 	url := pg.generateURL()
 	if p, ok := poolMap.Load(url); ok {
-		log.Log.Debugf("%s pool entry found", pg.ID().String())
 		pl := p.(*pool)
 		pl.lock.Lock()
 		defer pl.lock.Unlock()
@@ -230,6 +227,7 @@ func (pg *PostGres) getPool() (*pool, error) {
 			log.Log.Debugf("Error parsing url: %s", pg.URL())
 			return nil, err
 		}
+		config.MaxConns = 32
 		// config.Tracer = tracer
 		// pg.ctx = context.Background()
 		log.Log.Debugf("%s Create pool for Postgres database to %s", pg.ID().String(), pg.URL())
@@ -247,20 +245,6 @@ func (pg *PostGres) getPool() (*pool, error) {
 		p.IncUsage()
 		return p, nil
 	}
-
-	// TODO: handle timeout
-	// ctx, cancelfunc := context.WithTimeout(context.Background(), 5*time.Second)
-	// defer cancelfunc()
-	// conn, err := di.db.Conn(ctx)
-	// if err != nil {
-	// 	return 0, err
-	// }
-	// conn.Raw(func(driverConn any) error {
-	// 	c := driverConn.(*stdlib.Conn).Conn()
-	// 	pgxdecimal.Register(c.TypeMap())
-	// 	return nil
-	// })
-
 }
 
 func (pg *PostGres) open() (dbOpen *pgxpool.Conn, err error) {
@@ -293,7 +277,7 @@ func (pg *PostGres) open() (dbOpen *pgxpool.Conn, err error) {
 		return nil, err
 	}
 
-	log.Log.Debugf("%s Acquire Postgres (%p) database to %s: db=%p", pg.ID().String(), pg, pg.URL(), dbOpen)
+	log.Log.Debugf("%s Acquired Postgres (%p) database to %s: db=%p", pg.ID().String(), pg, pg.URL(), dbOpen)
 	log.Log.Debugf("%s Opened postgres database", pg.ID().String())
 	if dbOpen == nil {
 		return nil, errorrepo.NewError("DB000025")
@@ -329,6 +313,9 @@ func (pg *PostGres) Open() (dbOpen any, err error) {
 
 // BeginTransaction begin transaction the database connection
 func (pg *PostGres) BeginTransaction() error {
+	log.LogFunctionStarts(pg.ID().String())
+	defer log.LogFunctionEnds(time.Now(), pg.ID().String())
+
 	if pg.tx != nil && pg.ctx != nil {
 		return nil
 	}
@@ -545,6 +532,8 @@ func (pg *PostGres) GetTableColumn(tableName string) ([]string, error) {
 
 // Query query database records with search or SELECT
 func (pg *PostGres) Query(search *common.Query, f common.ResultFunction) (*common.Result, error) {
+	log.LogFunctionStarts(pg.ID().String())
+	defer log.LogFunctionEnds(time.Now(), pg.ID().String())
 	search.Driver = common.PostgresType
 	log.Log.Debugf("%s Query of postgres database", pg.ID().String())
 	defer log.Log.Debugf("%s Query ended for postgres database", pg.ID().String())
@@ -580,7 +569,9 @@ func (pg *PostGres) Query(search *common.Query, f common.ResultFunction) (*commo
 }
 
 func (pg *PostGres) ParseRows(search *common.Query, rows pgx.Rows, f common.ResultFunction) (result *common.Result, err error) {
-	log.Log.Debugf("Parse rows ....")
+	log.LogFunctionStarts(pg.ID().String())
+	defer log.LogFunctionEnds(time.Now(), pg.ID().String())
+	log.Log.Debugf("%s Parse rows ....", pg.ID().String())
 	result = &common.Result{}
 	result.Data = search.DataStruct
 	result.Fields = make([]string, 0)
@@ -589,13 +580,13 @@ func (pg *PostGres) ParseRows(search *common.Query, rows pgx.Rows, f common.Resu
 		result.Header = append(result.Header, &common.Column{Name: f.Name,
 			Length: uint16(f.DataTypeSize)})
 	}
-	log.Log.Debugf("Go through rows ... fields=%d header=%d desc=%d",
+	log.Log.Debugf("%s Go through rows ... fields=%d header=%d desc=%d", pg.ID().String(),
 		len(result.Fields), len(result.Header), len(rows.FieldDescriptions()))
 	currentCounter := uint64(0)
 	for rows.Next() {
 		currentCounter++
 		result.Counter = currentCounter
-		log.Log.Debugf("Checking row %d...", currentCounter)
+		log.Log.Debugf("%s Checking row %d...", pg.ID().String(), currentCounter)
 
 		result.Rows, err = rows.Values()
 		if err != nil {
@@ -606,7 +597,7 @@ func (pg *PostGres) ParseRows(search *common.Query, rows pgx.Rows, f common.Resu
 			return nil, err
 		}
 	}
-	log.Log.Debugf("Finishing row...")
+	log.Log.Debugf("%s Finishing row...", pg.ID().String())
 	if err = rows.Err(); err != nil {
 		log.Log.Debugf("Error found: %v", err)
 		return nil, err
@@ -782,6 +773,8 @@ func (pg *PostGres) DeleteTable(name string) error {
 
 // Insert insert record into table
 func (pg *PostGres) Insert(name string, insert *common.Entries) (returning [][]any, err error) {
+	log.LogFunctionStarts(pg.ID().String())
+	defer log.LogFunctionEnds(time.Now(), pg.ID().String())
 	log.Log.Debugf("%s: Insert in posgres database", pg.ID().String())
 	if insert == nil || len(insert.Values) == 0 {
 		return nil, errorrepo.NewError("DB000029")
@@ -816,14 +809,13 @@ func (pg *PostGres) Insert(name string, insert *common.Entries) (returning [][]a
 		return nil, errorrepo.NewError("DB000029")
 	}
 
-	log.Log.Debugf("%s Insert SQL record", pg.ID().String())
-
 	insertCmd := "INSERT INTO " + name + " ("
 	values := "("
 
 	indexNeed := pg.IndexNeeded()
 	var insertValues [][]any
 	var insertFields []string
+	log.Log.Debugf("%s Insert SQL record.. preparing values", pg.ID().String())
 	_, isMap := insert.Values[0][0].(map[string]interface{})
 	switch {
 	case insert.DataStruct != nil:
@@ -1010,6 +1002,8 @@ func scanStruct(row pgx.Row, insert *common.Entries) ([]any, error) {
 
 // Update update record in table
 func (pg *PostGres) Update(name string, updateInfo *common.Entries) (returning [][]any, rowsAffected int64, err error) {
+	log.LogFunctionStarts(pg.ID().String())
+	defer log.LogFunctionEnds(time.Now(), pg.ID().String())
 	log.Log.Debugf("%s: Update in posgres database", pg.ID().String())
 	defer log.Log.Debugf("%s: Update ended for posgres database", pg.ID().String())
 	transaction := pg.IsTransaction()
@@ -1211,6 +1205,8 @@ func (pg *PostGres) defineContext() {
 
 // StartTransaction start transaction
 func (pg *PostGres) StartTransaction() (pgx.Tx, context.Context, error) {
+	log.LogFunctionStarts(pg.ID().String())
+	defer log.LogFunctionEnds(time.Now(), pg.ID().String())
 	var err error
 	if pg.openDB == nil {
 		log.Log.Debugf("%s Open with transaction enabled", pg.ID().String())
@@ -1229,7 +1225,7 @@ func (pg *PostGres) StartTransaction() (pgx.Tx, context.Context, error) {
 	if err != nil {
 		pg.ctx = nil
 		pg.tx = nil
-		log.Log.Debugf("Begin of transaction fails: %v", err)
+		log.Log.Debugf("%s Begin of transaction fails: %v", pg.ID().String(), err)
 		return nil, nil, err
 	}
 	log.Log.Debugf("%s Start transaction begin (pg=%p/tx=%p)", pg.ID().String(), pg, pg.tx)
