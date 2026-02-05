@@ -29,7 +29,7 @@ func searchDataDriver(id RegDbID) (Database, error) {
 	log.Log.Debugf("%s search DataDriver in all entries", id)
 	if v, ok := databases.Load(id); ok {
 		d := v.(Database)
-		log.Log.Debugf("Found id %d", d.ID())
+		log.Log.Debugf("%s: Found id", d.ID().String())
 		return d, nil
 	}
 	log.Log.Debugf("DataDriver id not found")

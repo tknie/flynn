@@ -335,6 +335,8 @@ func (pg *PostGres) BeginTransaction() error {
 }
 
 func (pg *PostGres) EndTransaction(commit bool) (err error) {
+	log.LogFunctionStarts(pg.ID().String())
+	defer log.LogFunctionEnds(time.Now(), pg.ID().String())
 	if pg == nil || !pg.IsTransaction() {
 		return nil
 	}
@@ -353,7 +355,7 @@ func (pg *PostGres) EndTransaction(commit bool) (err error) {
 		log.Log.Debugf("%s End transaction rollback ...(pg=%p/tx=%p) %v", pg.ID().String(), pg, pg.tx, pg.IsTransaction())
 		err = pg.tx.Rollback(pg.ctx)
 	}
-	log.Log.Debugf("Tx cleared pg=%p/tx=%p", pg, pg.tx)
+	log.Log.Debugf("%s Tx cleared pg=%p/tx=%p", pg.ID().String(), pg, pg.tx)
 	if pg.cancel != nil {
 		pg.cancel()
 	}
