@@ -50,6 +50,8 @@ github.com/tknie/errorrepo v0.1.0 h1:pOt79EWL4P4UjPzXknNcdAr01fjgF38XY1u1ZzHttqo
 github.com/tknie/errorrepo v0.1.0/go.mod h1:K4bEhPce5B7ybIptX2D2mpRfjWehStjeUG1fiegwoq0=
 github.com/tknie/log v0.3.0 h1:fg3AdzFTegzIl3NXNPZ1LCJpN2/8Rr34MVlcdMqYzG0=
 github.com/tknie/log v0.3.0/go.mod h1:UKCtV8Q9CdW6x/B9iJwxdMoefZ7NcrPfMSVNmSbj0z0=
+github.com/tknie/log v0.4.0 h1:dDk1F1raRK8k1eMOjt8X23oGLsbYGMMpIiicbIhyAUc=
+github.com/tknie/log v0.4.0/go.mod h1:UKCtV8Q9CdW6x/B9iJwxdMoefZ7NcrPfMSVNmSbj0z0=
 go.uber.org/goleak v1.3.0 h1:2K3zAYmnTNqV73imy9J1T3WC+gmCePx2hEGkimedGto=
 go.uber.org/goleak v1.3.0/go.mod h1:CoHD4mav9JJNrW/WLlf7HGZPjdw8EucARQHekz1X6bE=
 go.uber.org/multierr v1.11.0 h1:blXXJkSxSSfBVBlC76pxqeO+LN3aDfLQo+309xJstO0=

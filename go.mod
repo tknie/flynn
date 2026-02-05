@@ -4,7 +4,7 @@ go 1.24.0
 
 require (
 	github.com/jackc/pgx/v5 v5.8.0
-	github.com/tknie/log v0.3.0
+	github.com/tknie/log v0.4.0
 )
 
 require github.com/rogpeppe/go-internal v1.9.0 // indirect
