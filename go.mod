@@ -10,7 +10,7 @@ require (
 require github.com/rogpeppe/go-internal v1.9.0 // indirect
 
 require (
-	filippo.io/edwards25519 v1.1.0 // indirect
+	filippo.io/edwards25519 v1.1.1 // indirect
 	github.com/VictoriaMetrics/easyproto v1.1.3 // indirect
 	github.com/go-logfmt/logfmt v0.6.1 // indirect
 	github.com/godror/knownpb v0.3.0 // indirect
