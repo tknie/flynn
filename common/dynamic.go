@@ -593,6 +593,8 @@ func (vd *ValueDefinition) ShiftNormalValues(d int, v any) error {
 				if err != nil {
 					return err
 				}
+			case *bool:
+				*vt = vv.(bool)
 			case *string:
 				*vt = vv.(string)
 			case *time.Time:
