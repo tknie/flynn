@@ -603,7 +603,26 @@ func (vd *ValueDefinition) ShiftNormalValues(d int, v any) error {
 				log.Log.Fatalf("Unknown type for shifting %s at index %d value %T <- %T", vd.dynamic.RowFields[d], d, vd.Values[d], vv)
 			}
 		} else {
-			log.Log.Debugf("SQL interface value nil")
+			log.Log.Debugf("SQL interface value nil %T reseting struct values", vd.Values[d])
+			switch vt := vd.Values[d].(type) {
+			case *uint64:
+				*vt = 0
+			case *int64:
+				*vt = 0
+			case *float64:
+				*vt = 0
+			case *float32:
+				*vt = 0
+			case *int:
+				*vt = 0
+			case *bool:
+				*vt = false
+			case *string:
+				*vt = ""
+			case *time.Time:
+				*vt = time.Time{}
+			default:
+			}
 		}
 	} else {
 		log.Log.Debugf("Error sql interface: %T", v)
