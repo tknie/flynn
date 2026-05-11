@@ -104,12 +104,14 @@ func TestPostgresInit(t *testing.T) {
 	m, err := pg.Maps()
 	sort.Strings(m)
 	assert.NoError(t, err)
-	assert.Contains(t, m, "TESTTABLE")
-	assert.Contains(t, m, "AlbumPictures")
-	assert.Contains(t, m, "Albums")
-	assert.Contains(t, m, "TestStructTableData")
-	assert.Contains(t, m, "TestTableData")
-	assert.Contains(t, m, "TestCreateAdaptTable")
+	assert.Contains(t, m, "picturelocations")
+	assert.Contains(t, m, "albumpictures")
+	assert.Contains(t, m, "albums")
+	assert.Contains(t, m, "pictures")
+	assert.Contains(t, m, "teststructtabledata")
+	assert.Contains(t, m, "testtable")
+	assert.Contains(t, m, "testtabledata")
+	assert.Contains(t, m, "testcreateadapttable")
 	// assert.Equal(t, []string{"albumpictures", "albums",
 	// 	"employees", "picturelocations",
 	// 	"pictures", "testcreateadapttable", "teststructtabledata",
