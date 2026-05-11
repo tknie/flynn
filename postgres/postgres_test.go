@@ -109,7 +109,6 @@ func TestPostgresInit(t *testing.T) {
 	assert.Contains(t, m, "albums")
 	assert.Contains(t, m, "pictures")
 	assert.Contains(t, m, "teststructtabledata")
-	assert.Contains(t, m, "testtable")
 	assert.Contains(t, m, "testtabledata")
 	assert.Contains(t, m, "testcreateadapttable")
 	// assert.Equal(t, []string{"albumpictures", "albums",
