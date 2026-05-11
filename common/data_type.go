@@ -39,11 +39,12 @@ const (
 	Date
 	BLOB
 	Character
+	Boolean
 )
 
 var sqlTypes = []string{"", "VARCHAR", "TEXT", "UNICODE", "INTEGER", "bigint",
 	"DECIMAL", "NUMERIC", "BIT", "BINARY",
-	"TIMESTAMP", "DATE", "BLOB", "CHAR"}
+	"TIMESTAMP", "DATE", "BLOB", "CHAR", "BOOLEAN"}
 
 func (dt DataType) SqlType(arg ...any) string {
 	if dt == Bytes {
@@ -95,6 +96,8 @@ func SqlDataType(sqlType string) DataType {
 func Unpointer(data []interface{}) []interface{} {
 	for i, d := range data {
 		switch v := d.(type) {
+		case *bool:
+			data[i] = *v
 		case *int32:
 			data[i] = *v
 		case *int64:
@@ -195,6 +198,13 @@ func CreateTypeData(ct []*sql.ColumnType) []interface{} {
 				scanData = append(scanData, &NullUint{})
 			} else {
 				v := uint64(0)
+				scanData = append(scanData, &v)
+			}
+		case "BOOLEAN":
+			if nok, _ := t.Nullable(); nok {
+				scanData = append(scanData, &sql.NullBool{})
+			} else {
+				v := false
 				scanData = append(scanData, &v)
 			}
 		default:
