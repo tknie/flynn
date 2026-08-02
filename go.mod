@@ -17,8 +17,8 @@ require (
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.28.0 // indirect
-	golang.org/x/net v0.47.0 // indirect
-	golang.org/x/sync v0.22.0 // indirect
+	golang.org/x/net v0.55.0 // indirect
+	golang.org/x/sync v0.20.0 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 )
@@ -34,8 +34,8 @@ require (
 	github.com/stretchr/testify v1.11.1
 	github.com/tknie/adabas-go-api v1.7.12
 	github.com/tknie/errorrepo v0.1.0
-	golang.org/x/exp v0.0.0-20260727155853-b88d891fe743
-	golang.org/x/sys v0.38.0 // indirect
-	golang.org/x/text v0.40.0 // indirect
+	golang.org/x/exp v0.0.0-20260508232706-74f9aab9d74a
+	golang.org/x/sys v0.45.0 // indirect
+	golang.org/x/text v0.37.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1
 )
