@@ -122,7 +122,7 @@ func (s *SubField) Data() []byte {
 	if s == nil {
 		return []byte("")
 	}
-	return []byte(fmt.Sprintf("%s:%03d", s.SubName, s.Number))
+	return fmt.Appendf(nil, "%s:%03d", s.SubName, s.Number)
 }
 
 func (s *SubField) ParseData(sub []byte) error {
