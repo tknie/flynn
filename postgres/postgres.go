@@ -707,7 +707,8 @@ func (pg *PostGres) AdaptTable(name string, col any) error {
 		log.Log.Debugf("%s: Found %d SQL columns", pg.ID(), len(columns))
 		var buffer bytes.Buffer
 
-		buffer.WriteString(`ALTER TABLE ` + name)
+		buffer.WriteString(`ALTER TABLE `)
+		buffer.WriteString(name)
 		i := 0
 		for _, c := range columns {
 			if i > 0 {
@@ -735,14 +736,16 @@ func (pg *PostGres) AdaptTable(name string, col any) error {
 		return err
 	}
 	var buffer bytes.Buffer
-	buffer.WriteString(`ALTER TABLE ` + name)
+	buffer.WriteString(`ALTER TABLE `)
+	buffer.WriteString(name)
 	i := 0
 	for _, f := range strings.Split(columStruct, ",") {
 		if i > 0 {
 			buffer.WriteString(",")
 		}
 		i++
-		buffer.WriteString(` ADD COLUMN ` + f)
+		buffer.WriteString(` ADD COLUMN `)
+		buffer.WriteString(f)
 	}
 
 	_, err = db.Query(buffer.String())
@@ -938,7 +941,7 @@ func createMaps(insert *common.Entries) ([]string, [][]any, error) {
 	insertValues := make([][]any, 0)
 	if slices.Contains(insert.Fields, "*") {
 		insertFields = make([]string, 0)
-		for n, _ := range insert.Values[0][0].(map[string]interface{}) {
+		for n := range insert.Values[0][0].(map[string]interface{}) {
 			insertFields = append(insertFields, n)
 		}
 	}
