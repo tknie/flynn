@@ -26,7 +26,7 @@ require (
 
 require (
 	github.com/go-sql-driver/mysql v1.10.1
-	github.com/godror/godror v0.51.4
+	github.com/godror/godror v0.51.5
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/sirupsen/logrus v1.10.2
